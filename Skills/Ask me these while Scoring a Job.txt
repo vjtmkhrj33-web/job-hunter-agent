@@ -1,0 +1,21 @@
+Ask me these while Scoring a Job 
+
+[PASTE JOB DESCRIPTION]
+Company: [COMPANY]
+Role: [ROLE]
+Link: [LINK]
+
+Compare it against my master CV and selected CV variant.
+
+Return:
+1. Match score out of 100, with a breakdown:
+   - Must-have skills: score and evidence
+   - Nice-to-have skills: score and evidence
+   - Domain relevance
+   - Seniority fit
+   - Location/work-mode fit
+2. A fit-gap table:
+   | Job requirement | My evidence | Fit level | How to position it truthfully | Gap? |
+3. The 5 most important keywords and themes to reflect in my CV and cover letter.
+4. Requirements I do not meet. Do not conceal or invent around them.
+5. A recommendation: Apply / Apply with positioning / Skip, plus reasoning.

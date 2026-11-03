@@ -1,0 +1,409 @@
+Act as an experienced recruiter, ATS resume specialist, hiring manager, company researcher, and interview coach.
+
+Your goal is to help me apply for the target job using only truthful information from my resume and the job description. Do not invent skills, responsibilities, metrics, employers, certifications, tools, achievements, or qualifications.
+
+INPUTS
+
+Target job title:
+Staff Product Manager, Global Expansion
+
+Company name:Stripe
+
+
+Job description:
+"Who we are
+About Stripe
+Stripe is a financial infrastructure platform for businesses. Millions of companies—from the world’s largest enterprises to the most ambitious startups—use Stripe to accept payments, grow their revenue, and accelerate new business opportunities. Our mission is to increase the GDP of the internet, and we have a staggering amount of work ahead. That means you have an unprecedented opportunity to put the global economy within everyone’s reach while doing the most important work of your career.
+
+What you’ll do
+We’re hiring a Product Manager to lead Stripe’s India business strategy and product roadmap. We are seeking a highly entrepreneurial, data-driven product leader who will own growth, go-to-market, and product execution for India. You will shape how Stripe serves India’s rapidly evolving digital economy - from domestic merchants and platforms to ambitious Indian companies scaling globally - and move quickly to capture significant market opportunities.
+
+India is one of the fastest-growing markets in the world: vast consumer demand, rapid merchant digitization, and a vibrant startup ecosystem. At the same time, Indian businesses are increasingly global - building products and services that sell across borders. This role sits at the intersection of domestic market expansion and global enablement: you’ll build products and commercial plays that unlock revenue across India and empower Indian companies to reach customers worldwide. The impact you drive will influence Stripe’s position in an increasingly strategic market.
+
+Responsibilities
+Own the India product strategy and roadmap end-to-end: define vision, prioritize initiatives, and measure outcomes tied to growth, revenue, and merchant satisfaction.
+Lead cross-functional teams (engineering, design, data science, ops, legal/compliance, sales, partnerships) to deliver product features, integrations, and commercial programs tailored to India.
+Move quickly from insight to experiment: design and run rapid experiments, launch localized features and pricing, and iterate based on quantitative and qualitative feedback.
+Deeply understand Indian merchants, platforms, PSPs, gateways, regulators and payment rails; translate market dynamics into product differentiation and commercial opportunity.
+Build products and flows that make it simpler for Indian businesses to sell globally — cross-border routing, FX and reconciliation, compliance, payout rails, and developer experience improvements.
+Partner with partnerships and business development teams to secure and scale strategic distribution and platform integrations.
+Represent the product and market perspective to regional and global stakeholders; provide clear decision-making and trade-off rationale.
+Who you are
+We’re looking for someone who meets the minimum requirements to be considered for the role. If you meet these requirements, you are encouraged to apply. The preferred qualifications are a bonus, not a requirement.
+
+Minimum requirements
+Demonstrated product leadership in payments, fintech, marketplaces, or developer platform products, with 12+ years of experience in product management or equivalent roles.
+Deep knowledge of the Indian payments and commerce ecosystem: local payment methods, banks, regulatory landscape.
+Track record of shipping localized products and scaling go-to-market plays in India (or similar complex emerging markets).
+Strong analytical instincts: experience running experiments, using metrics to drive decisions.
+Comfortable with ambiguity and skilled at prioritizing high-impact initiatives while moving quickly and iterating.
+Excellent communicator and collaborator who can influence across engineering, legal, operations, and sales.
+Customer-obsessed with first-hand experience talking to merchants, partners, and developer communities; able to translate feedback into product requirements.
+Entrepreneurial mindset, bias for action, and experience operating with limited resources to unlock outsized outcomes.
+Preferred qualifications
+Experience with cross-border payments, currency conversion, payouts, or compliance for global trade.
+Prior work with developer platforms, SDKs/APIs, or businesses that serve platforms and marketplaces.
+Experience liaising with regulators or navigating complex compliance requirements.
+In-office expectations
+Office-assigned Stripes in most of our locations are currently expected to spend at least 50% of the time in a given month in their local office or with users. This expectation may vary depending on role, team and location. For example, Stripes in Stripe Delivery Center roles in Mexico City, Mexico, Bengaluru, India, and Dublin, Ireland work 100% from the office. Also, some teams have greater in-office attendance requirements, to appropriately support our users and workflows, which the hiring manager will discuss. This approach helps strike a balance between bringing people together for in-person collaboration and learning from each other, while supporting flexibility when possible.
+
+Pay and benefits
+Stripe does not yet include pay ranges in job postings in every country. Stripe strongly values pay transparency and is working toward pay transparency globally.
+
+We look forward to hearing from you.
+At Stripe, we're looking for people with passion, grit, and integrity. You're encouraged to apply even if your experience doesn't precisely match the job description. Your skills and passion will stand out—and set you apart—especially if your career has taken some extraordinary twists and turns. At Stripe, we welcome diverse perspectives and people who think rigorously and aren't afraid to challenge assumptions. Join us."
+
+Job posting URL:
+https://stripe.com/careers/listing/staff-product-manager-global-expansion/7570242
+
+Company website:
+https://stripe.com/
+
+My current resume: Attached
+
+Additional background:
+[Add projects, achievements, tools, certifications, domain knowledge, or context not clearly mentioned in the resume]
+
+Target location:
+Bangalore
+
+Target resume length: Two pages
+
+Preferred writing style:
+Professional, direct, natural, confident, and human. Avoid exaggerated corporate language.
+
+IMPORTANT RULES
+
+1. Use only information supported by my resume, job description, or additional background.
+2. Never claim that I used a tool, technology, methodology, or process unless my background supports it.
+3. If an important metric or detail is missing, write [NEED INPUT] instead of inventing one.
+4. Do not force keywords into the resume. Use a keyword only when it accurately reflects my experience.
+5. Use the exact job-description wording when it truthfully matches my experience. Include both the full term and acronym where useful, for example, “Payment Card Industry Data Security Standard (PCI DSS).”
+6. Prioritize recent and relevant experience.
+7. Keep the resume ATS-friendly:
+   - Use plain text formatting.
+   - Use standard headings such as Summary, Skills, Experience, Education, Certifications, and Projects.
+   - Do not use tables, text boxes, columns, graphics, icons, emojis, logos, decorative lines, headers, footers, or skill bars.
+   - Use consistent job titles, company names, locations, and dates.
+   - Do not hide keywords in the document.
+8. Do not add an objective statement unless the job specifically requires one.
+9. Do not use first-person pronouns such as “I,” “me,” or “my” in the resume.
+10. Use strong but natural verbs. Prefer words such as built, analyzed, reduced, improved, automated, resolved, launched, monitored, investigated, delivered, tested, coordinated, supported, and implemented when they accurately describe my work.
+11. Avoid repetitive bullet structures. Do not make every bullet sound like:
+    “Spearheaded X, leveraging Y to drive Z.”
+12. Remove generic AI-style and corporate phrases such as:
+    - results-driven professional
+    - dynamic individual
+    - proven track record
+    - spearheaded
+    - orchestrated
+    - leveraged
+    - synergized
+    - game-changing
+    - unparalleled
+    - visionary
+    - transformative
+    - best-in-class
+    - thought leader
+    - passionate about
+    - highly motivated
+    - go-getter
+    - strategic thinker
+    - responsible for
+    - played a pivotal role
+    - robust solutions
+    - seamless experience
+    - drove synergies
+    - fostered collaboration
+    - navigated complex challenges
+    - delved into
+    - tapestry
+13. Replace vague language with clear evidence, practical wording, scope, and outcomes.
+14. Keep the tone credible. A hiring manager should believe that a real professional wrote it.
+15. Preserve the truth even if that means leaving a requirement unmatched.
+16. Do not claim that the resume is guaranteed to pass an ATS or AI detector.
+
+WORKFLOW
+
+Complete the work in the following stages.
+
+STAGE 1: JOB DESCRIPTION ANALYSIS
+
+Analyze the job description and provide:
+
+A. Target role
+- Exact job title
+- Seniority level
+- Main purpose of the role
+- The five most important responsibilities
+
+B. Requirement classification
+Create a table with these columns:
+
+| Requirement from job description | Category | Priority | Evidence from my background | Match |
+|---|---|---|---|---|
+
+Use these categories:
+- Must-have technical skill
+- Preferred technical skill
+- Domain knowledge
+- Responsibility
+- Soft skill
+- Certification or education
+- Tool, platform, or methodology
+- Business or leadership requirement
+
+Use these match labels:
+- Strong match
+- Partial match
+- Transferable match
+- No evidence
+- Not applicable
+
+C. Keyword analysis
+Extract and group:
+- Exact job title
+- Technical skills
+- Tools and platforms
+- Industry and domain terms
+- Certifications
+- Processes and methodologies
+- Soft skills
+- Repeated or high-priority terms
+
+For every keyword, indicate:
+- Whether it appears in my resume
+- Where it should be added if it is truthful
+- Whether it should not be added because there is no evidence
+
+D. Hiring-manager priorities
+Explain what the hiring manager is most likely trying to solve by hiring for this role. Identify the likely business outcomes expected during the first 6–12 months.
+
+STAGE 2: COMPANY AND ROLE RESEARCH
+
+If browsing is available, research the company using reliable and recent sources, prioritizing:
+- Official company website
+- Official careers page
+- Annual report or investor information
+- Recent company announcements
+- Product and business model information
+- Relevant regulatory, technology, or industry developments
+- Reliable news and professional sources
+
+Clearly separate verified facts from reasonable inferences. Do not present assumptions as facts.
+
+Provide:
+
+1. What the company does
+2. Its main products, customers, markets, and revenue model, if publicly available
+3. Recent developments relevant to this role
+4. Competitors or market context
+5. Company values or working style, if available
+6. Why this role may be important now
+7. What I should understand before the interview
+8. Five company-specific points I can naturally mention in the interview
+9. Any concerns or questions I should investigate further
+
+If browsing is not available, state what information is missing and provide a research checklist instead of guessing.
+
+STAGE 3: CANDIDATE POSITIONING
+
+Based on my actual background, create:
+
+A. Positioning statement
+Write one concise statement explaining why my experience is relevant to this job.
+
+B. Strongest evidence
+Identify the five strongest experiences or achievements from my background that support this role.
+
+C. Gaps and risks
+List:
+- Missing requirements
+- Skills that need stronger evidence
+- Experience that may need clarification
+- Possible objections from the hiring manager
+- Honest ways to address these gaps
+
+D. Resume tailoring plan
+Recommend what should be:
+- Added
+- Removed
+- Reordered
+- Shortened
+- Rewritten
+- Kept unchanged
+
+STAGE 4: HUMANIZED ATS-OPTIMIZED RESUME
+
+Rewrite my resume for this specific job.
+
+Use this order:
+
+1. Name and contact details
+2. Target headline
+3. Professional summary
+4. Core skills
+5. Professional experience
+6. Education
+7. Certifications
+8. Projects or additional information, only when relevant
+
+Resume requirements:
+
+- Write a concise summary of 3–4 lines.
+- Mention the target role or closely related role title naturally.
+- Include the most relevant skills and domain terms without stuffing keywords.
+- Focus experience bullets on actions, scope, tools, problems solved, and outcomes.
+- Use measurable results only when provided or clearly supported.
+- Keep approximately 4–6 bullets for the most recent relevant role and 2–4 bullets for older roles.
+- Start bullets with clear action verbs.
+- Vary the sentence structure and bullet length.
+- Do not use identical phrases repeatedly.
+- Do not write every bullet in a rigid “action + method + result” formula.
+- Use natural professional language that I could comfortably explain in an interview.
+- Keep genuine technical detail where it demonstrates competence.
+- Do not simplify technical work into vague business language.
+- Use industry terminology naturally.
+- Do not use first-person pronouns.
+- Do not include references, salary information, photographs, date of birth, marital status, religion, or other personal information unless specifically required by the job or local application norms.
+- Do not change dates, job titles, employer names, qualifications, or locations.
+
+For every rewritten bullet, use the strongest truthful structure available:
+
+- What I did
+- How I did it
+- What problem or responsibility it addressed
+- The result, scale, or business impact
+- Why it mattered
+
+If the outcome is unknown, describe the work accurately without inventing an outcome.
+
+STAGE 5: HUMAN-WRITING EDIT
+
+After writing the resume, review every sentence and make it sound like a real person wrote it.
+
+Perform the following checks:
+
+1. Remove inflated adjectives and unnecessary buzzwords.
+2. Replace vague phrases with specific actions.
+3. Remove repeated use of “spearheaded,” “orchestrated,” “leveraged,” “strategic,” “robust,” “seamless,” and “transformative.”
+4. Replace “responsible for” with the actual action whenever possible.
+5. Keep the language direct and concise.
+6. Use a natural mix of short and medium-length bullets.
+7. Avoid unnatural keyword repetition.
+8. Avoid phrases that sound copied from the job description unless they are necessary ATS terms.
+9. Make sure each bullet reflects a real activity I could explain with a specific example.
+10. Read the resume as a hiring manager would and identify any sentence that sounds generic, exaggerated, or machine-written.
+
+Provide a table:
+
+| Original or AI-sounding phrase | Problem | More natural replacement |
+|---|---|---|
+
+Then provide the final clean resume without comments, brackets, explanations, or tracked changes.
+
+STAGE 6: ATS QUALITY CHECK
+
+Evaluate the final resume and provide:
+
+| Check | Result | Notes |
+|---|---|---|
+| Target job title included naturally | Pass/Needs work | |
+| Important must-have keywords included truthfully | Pass/Needs work | |
+| Keywords used in context | Pass/Needs work | |
+| No keyword stuffing | Pass/Needs work | |
+| Standard section headings | Pass/Needs work | |
+| No tables or complex formatting in final resume | Pass/Needs work | |
+| Dates and job history are consistent | Pass/Needs work | |
+| Achievements are specific | Pass/Needs work | |
+| Metrics are supported | Pass/Needs work | |
+| Resume is easy for a human to scan | Pass/Needs work | |
+| Resume sounds natural | Pass/Needs work | |
+
+Estimate the match level as:
+- Strong alignment
+- Moderate alignment
+- Limited alignment
+
+Explain that this is an informed review, not a guaranteed ATS score.
+
+STAGE 7: INTERVIEW PREPARATION
+
+Prepare interview material specifically for this job.
+
+A. Elevator pitch
+Write:
+- A 30-second introduction
+- A 60-second “Tell me about yourself” answer
+- A 90-second version for a senior-level interview
+
+B. Likely interview questions
+Create questions and answer guidance for:
+
+1. Recruiter or HR round
+2. Hiring-manager round
+3. Technical or functional round
+4. Behavioural round
+5. Leadership and stakeholder-management round
+6. Case-study or situational round
+7. Company and motivation questions
+
+C. STAR answers
+Create 8 likely questions and draft concise STAR-style answers using only my real experience.
+
+For each answer, identify:
+- Situation
+- Task
+- Action
+- Result
+- What I learned
+
+If the result is unknown, use [NEED INPUT] and suggest what information I should add.
+
+D. Role-specific questions
+Create at least 10 technical or domain questions based on the job description. For each question provide:
+- What the interviewer is testing
+- A strong answer structure
+- Important terms to mention
+- A realistic example from my background, if available
+
+E. Questions for the interviewer
+Provide 10 thoughtful questions divided into:
+- Role expectations
+- Team and stakeholders
+- Success measures
+- Technology or processes
+- Company direction
+- Development and growth
+
+F. Interview risk areas
+List questions I may struggle with and prepare honest, positive responses for:
+- Missing skills
+- Career changes or gaps
+- Short tenures
+- Limited experience with a required tool
+- Salary expectations
+- Why I want to leave
+- Why this company
+- Why this role
+
+G. 30-60-90 day plan
+Create a practical 30-60-90 day plan for this role based on the job description. Clearly label assumptions.
+
+FINAL OUTPUT ORDER
+
+Return the answer in this order:
+
+1. Executive assessment
+2. Job-description analysis
+3. Company and role research
+4. Candidate strengths and gaps
+5. Keyword map
+6. Humanized tailored resume
+7. AI-sounding phrase cleanup
+8. ATS quality check
+9. Interview preparation
+10. Questions to ask the interviewer
+11. Missing information I should provide before finalizing
+
+Do not give generic advice where specific evidence from my resume or the job description can be used.

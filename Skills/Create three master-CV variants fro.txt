@@ -1,0 +1,19 @@
+Create three master-CV variants from the approved master CV:
+
+1. PRODUCT MANAGEMENT — Generalist
+2. PRODUCT LEADERSHIP — for Senior PM / GPM / Head of Product roles
+3. [DOMAIN VARIANT] — for [e.g., AI products, fintech, B2B SaaS, marketplaces]
+
+For each variant:
+- Rewrite the headline and executive summary for that positioning.
+- Reorder skills and experience to lead with the most relevant proof.
+- Keep every claim truthful and sourced from the master CV.
+- Use XYZ bullets.
+- Highlight product strategy, discovery, prioritisation, execution, metrics, cross-functional leadership, stakeholder management, and business outcomes where genuinely applicable.
+- Keep the CV to two pages maximum.
+- Make it ATS-safe: no tables, columns, graphics, headers/footers, or unusual formatting.
+
+Output each variant separately in Markdown, followed by:
+- Best job titles for that variant
+- Primary keywords
+- Roles where this variant should NOT be used

@@ -1,0 +1,14 @@
+I have an interview for [Company — Role] on [date].
+
+Based on the job description, my tailored CV, and my master CV:
+1. Identify the 10 most likely interview questions.
+2. For each, provide:
+   - What the interviewer is testing
+   - A strong answer structure
+   - A draft answer using my real experience
+   - Follow-up questions I should expect
+3. Create 8 questions I should ask them, tailored to the company, product, team, and role.
+4. Identify my three biggest perceived risks and how to address them confidently and honestly.
+5. Create a 60-second “Tell me about yourself” answer aligned to this role.
+
+Use only verified facts. Do not fabricate examples.

@@ -1,0 +1,52 @@
+{
+  "gmail": {
+    "enabled": false,
+    "email": "vjtmkhrj33@gmail.com",
+    "app_password": "",
+    "check_interval_minutes": 30,
+    "keywords": ["interview", "invitation", "schedule a chat", "recruiter", "next round", "assessment"]
+  },
+  "calendar": {
+    "enabled": false,
+    "ical_feed_url": "",
+    "prep_alarm_minutes_before": 60
+  },
+  "linkedin_and_web_crawler": {
+    "enabled": true,
+    "scan_interval_hours": 3,
+    "target_titles": [
+      "Senior Product Manager",
+      "Principal Product Manager",
+      "Lead Product Manager",
+      "Group Product Manager",
+      "Technical Product Manager"
+    ],
+    "target_locations": [
+      "Bengaluru",
+      "Bangalore",
+      "India (Remote)",
+      "Dubai",
+      "UAE",
+      "London",
+      "Singapore"
+    ],
+    "target_companies": [
+      "Razorpay",
+      "Adyen",
+      "Stripe",
+      "PayPal",
+      "Worldpay",
+      "Airwallex",
+      "PhonePe",
+      "Juspay",
+      "Commercial Bank of Dubai",
+      "Checkout.com"
+    ]
+  },
+  "drive_storage": {
+    "enabled": true,
+    "local_applications_dir": "c:\\Users\\BHASWATI\\Downloads\\binary\\job-agent-starter\\job-agent\\applications",
+    "google_drive_mirror_folder": ""
+  }
+}
+

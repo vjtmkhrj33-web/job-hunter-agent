@@ -1,0 +1,16 @@
+Run my weekly job-search review.
+
+Using my application tracker and the latest job search:
+1. Show new high-fit roles posted in the last 7 days.
+2. Show roles where I have not yet applied.
+3. Show applications needing follow-up.
+4. Identify patterns: which CV variant, job family, or company type is getting the best response.
+5. Recommend the top 5 applications to prioritise this week.
+6. Suggest one improvement to my master CV, positioning, or search strategy based on the results.
+
+Present the output as:
+- Priority applications
+- Follow-ups due
+- New roles to evaluate
+- Positioning improvements
+- This week’s action plan

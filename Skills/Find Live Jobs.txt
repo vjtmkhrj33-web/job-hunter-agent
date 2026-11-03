@@ -1,0 +1,18 @@
+Search for current Product Management roles matching my profile.
+
+Search parameters:
+- Titles: [paste approved titles]
+- Location: Bengaluru, Karnataka, India; also include Remote-India roles
+- Posted within: last 7 days
+- Sources: LinkedIn Jobs, Naukri, Instahyre, Cutshort, Wellfound, company career pages
+- Exclude: unpaid internships, commission-only roles, staffing agencies unless the end client is named, and roles requiring relocation I have excluded
+
+For every relevant opening, return a table with:
+| Rank | Job title | Company | Location / work mode | Posted date | Apply link | Match score /10 | Why it fits | Key requirements | Potential gaps |
+
+Rules:
+- Verify that the posting appears live.
+- Rank by fit, not merely keyword overlap.
+- Include only roles where I meet at least 70% of the core requirements, or clearly mark lower-fit roles as “stretch.”
+- Do not invent postings, links, salaries, or deadlines.
+- After the table, recommend the top 5 roles to apply to first and explain why.

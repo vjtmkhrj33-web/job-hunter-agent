@@ -1,0 +1,29 @@
+Using only verified information from my master CV and my answers to your questions, rewrite my CV into a comprehensive MASTER CV in Markdown.
+
+Use the Google XYZ formula for every experience bullet:
+“Accomplished [X], as measured by [Y], by doing [Z].”
+
+Requirements:
+- Start every bullet with a strong past-tense action verb.
+- Include a quantified or verifiable outcome wherever the source data supports it.
+- If a metric is unavailable, use: “[ADD METRIC: e.g., adoption, revenue, retention, conversion, cost saved, time saved]”.
+- Do not fabricate numbers.
+- Organise the master CV into:
+  1. Name and contact details
+  2. Target-role headline
+  3. Executive summary — max 4 lines
+  4. Core skills — grouped by product, technical, analytical, leadership, and domain skills
+  5. Professional experience — reverse chronological
+  6. Selected projects / products
+  7. Education and certifications
+  8. Additional information — awards, publications, languages, volunteering, if relevant
+
+For each role, produce:
+- Company, title, location, dates
+- 5–8 XYZ bullets
+- A short “Most relevant achievements” list for tailoring later
+
+Output:
+1. The complete master CV in Markdown.
+2. A change log showing: original bullet → rewritten bullet → reason.
+3. A list of missing evidence I should collect: metrics, product outcomes, team size, budget, stakeholders, tools, and business impact.

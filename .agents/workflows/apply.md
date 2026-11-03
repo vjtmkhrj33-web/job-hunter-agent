@@ -1,0 +1,1 @@
+For the job link I give you: run fit-scorer, and if the score is 7+ run resume-tailor and outreach-drafter. Add it to tracker.csv as "applying". Stop and show me everything for approval. Do not submit or send anything.

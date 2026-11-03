@@ -1,0 +1,13 @@
+It has been [X days] since I applied to [Company — Role] on [date].
+
+Draft a concise follow-up message to [recruiter/hiring manager name], maximum 120 words.
+
+Include:
+- The role and application date
+- One specific reason my background fits the role
+- A polite request for an update or conversation
+- No desperation, repeated explanations, or excessive flattery
+
+If I do not have a named contact, give me:
+1. A LinkedIn search strategy to find the hiring manager or product leader.
+2. Two message versions: connection request and follow-up DM.

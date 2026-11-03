@@ -1,0 +1,20 @@
+Using the job description and my tailored CV, draft concise answers for typical application questions.
+
+For each answer:
+- Keep it between 50 and 150 words unless the form specifies otherwise.
+- Use the STAR structure where a story is needed: Situation, Task, Action, Result.
+- Use XYZ framing in the Result.
+- Use only facts from my master CV.
+- Flag any question where I need to provide a new fact, metric, or example.
+
+Cover these question types:
+1. Relevant experience
+2. Product impact
+3. Cross-functional collaboration
+4. Handling ambiguity or conflicting priorities
+5. Data-driven decision-making
+6. Stakeholder management
+7. Failure or lessons learned
+8. Salary expectation
+9. Notice period
+10. Reason for leaving / interest in the company

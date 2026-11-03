@@ -1,0 +1,41 @@
+Ask me these while Scoring a Job 
+
+[PASTE JOB DESCRIPTION]
+Company: [COMPANY]
+Role: [ROLE]
+Link: [LINK]
+
+Compare it against my master CV and selected CV variant.Tailor my CV for the job description above.
+
+Use my [SELECTED VARIANT] master CV as the source of truth.
+
+Instructions:
+1. Identify the 3–5 requirements the employer weights most heavily.
+2. Rewrite the headline and executive summary around those requirements, using only truthful evidence.
+3. Reorder experience bullets so the most relevant proof appears first.
+4. Rewrite the top 3–4 bullets per relevant role using the Google XYZ formula.
+5. Mirror the job description’s terminology only where it accurately matches my experience.
+6. Add a targeted “Core Skills” section using only skills I actually have.
+7. Keep the CV ATS-safe, maximum two pages, no tables, graphics, or columns.
+8. Do not add unsupported experience, tools, certifications, metrics, or seniority.
+9. If the JD requires something I lack, state it clearly under “Honest gaps” rather than hiding it.
+
+Output:
+A. Final tailored CV in Markdown.
+B. Change log: original bullet → tailored bullet → reason.
+C. Keywords incorporated naturally.
+D. Honest gaps and suggested ways to address them without fabrication.
+E. A recruiter’s 10-second first impression: what they will notice and any remaining concern.
+
+Return:
+1. Match score out of 100, with a breakdown:
+   - Must-have skills: score and evidence
+   - Nice-to-have skills: score and evidence
+   - Domain relevance
+   - Seniority fit
+   - Location/work-mode fit
+2. A fit-gap table:
+   | Job requirement | My evidence | Fit level | How to position it truthfully | Gap? |
+3. The 5 most important keywords and themes to reflect in my CV and cover letter.
+4. Requirements I do not meet. Do not conceal or invent around them.
+5. A recommendation: Apply / Apply with positioning / Skip, plus reasoning.

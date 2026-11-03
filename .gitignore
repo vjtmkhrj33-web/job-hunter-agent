@@ -1,0 +1,45 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Sensitive API credentials / tokens (prevent accidental leaks)
+config/credentials.json
+config/token.json
+.env
+
+# Word lock and temporary files
+~$*.docx
+~$*.doc
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini

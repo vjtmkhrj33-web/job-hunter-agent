@@ -1,0 +1,16 @@
+Before I submit this application, perform a final quality review.
+
+Check:
+1. Accuracy: every claim traces back to my master CV or information I provided.
+2. Job alignment: the CV addresses the employer’s top priorities.
+3. ATS compatibility: standard headings, no tables/graphics, clean formatting, relevant keywords.
+4. Recruiter readability: clear hierarchy, strong first screen, no vague claims.
+5. Consistency: dates, titles, companies, and skills match across CV, cover letter, and LinkedIn.
+6. Tone: confident but not exaggerated.
+7. Completeness: no placeholder text, missing metrics, or unexplained gaps.
+
+Give me:
+- A submission readiness score out of 100
+- Critical fixes before applying
+- Optional improvements
+- Final approval: READY / NOT READY

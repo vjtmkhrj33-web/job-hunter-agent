@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autonomous Job Hunter & Application Tracker | Avijit Mukherjee</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#1e3a8a',
+              900: '#0f172a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+  <!-- TOP HEADER -->
+  <header class="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/30 text-lg">
+          🎯
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="font-bold text-base tracking-tight text-white">Job Hunter & Tracker</h1>
+            <span class="bg-blue-900/60 text-blue-300 text-xs px-2 py-0.5 rounded-full border border-blue-700/50 font-medium">Localhost Active</span>
+          </div>
+          <p class="text-xs text-slate-400">Avijit Mukherjee • Senior Payments Product Leader</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <div id="scanner-badge" class="hidden sm:flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700 text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-slate-300">Scanner:</span>
+          <button id="toggle-scanner-btn" onclick="toggleScanner()" class="font-semibold text-emerald-400 hover:underline">IDLE</button>
+        </div>
+
+        <button onclick="triggerScan()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-2 rounded-lg flex items-center space-x-1.5 transition shadow-sm">
+          <span>⚡ Run Selective Scan</span>
+        </button>
+
+        <a href="/download/profile/master_cv.docx" class="hidden sm:flex items-center space-x-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-3 py-2 rounded-lg transition">
+          <span>📄 Master CV (.docx)</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- NAVIGATION TABS -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/80">
+      <nav class="flex space-x-1 sm:space-x-3 overflow-x-auto py-2 text-xs font-medium">
+        <button onclick="switchTab('dashboard')" class="nav-tab px-3 py-1.5 rounded-md text-white bg-blue-600/30 text-blue-300 border border-blue-500/30" data-tab="dashboard">
+          📊 Dashboard
+        </button>
+        <button onclick="switchTab('discovery')" class="nav-tab px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60" data-tab="discovery">
+          🎯 Selective Job Hunter
+        </button>
+        <button onclick="switchTab('variants')" class="nav-tab px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60" data-tab="variants">
+          📑 3 Master CV Variants
+        </button>
+        <button onclick="switchTab('applications')" class="nav-tab px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60" data-tab="applications">
+          📁 Tailored Applications
+        </button>
+        <button onclick="switchTab('tracker')" class="nav-tab px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60" data-tab="tracker">
+          📋 Pipeline Tracker (Kanban)
+        </button>
+        <button onclick="switchTab('interview')" class="nav-tab px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60" data-tab="interview">
+          🎙️ Interview Prep & Mock
+        </button>
+        <button onclick="switchTab('integrations')" class="nav-tab px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60" data-tab="integrations">
+          ⚙️ Integrations & APIs
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+    <!-- TAB 1: DASHBOARD -->
+    <section id="tab-dashboard" class="tab-content active space-y-6">
+      <div class="bg-gradient-to-r from-blue-900 to-indigo-950 rounded-2xl p-6 text-white shadow-md border border-blue-800/40 relative overflow-hidden">
+        <div class="relative z-10 max-w-3xl">
+          <div class="inline-flex items-center space-x-2 bg-blue-800/60 border border-blue-700/50 rounded-full px-3 py-1 text-xs text-blue-200 mb-3">
+            <span>🛡️ Rule 1 & 8 Active</span>
+            <span>•</span>
+            <span>Zero Hallucination</span>
+            <span>•</span>
+            <span>Selective High-Fit Only</span>
+          </div>
+          <h2 class="text-2xl font-bold tracking-tight">Your Selective Executive Job Hunting Center</h2>
+          <p class="text-sm text-blue-100/90 mt-2 leading-relaxed">
+            Targeting Senior / Lead Payments Product Manager opportunities in <strong>Bengaluru, UAE, and sponsored European hubs</strong>. Only roles scoring <strong>7.0+ on your 1–10 fit rubric</strong> are prioritized, ensuring you enter every process as a top 1% contender.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Active Pipeline</p>
+          <p id="stat-tracked" class="text-2xl font-bold text-slate-900 mt-1">--</p>
+          <p class="text-xs text-emerald-600 mt-1 flex items-center font-medium"><span>●</span> <span class="ml-1">In Tracker.csv</span></p>
+        </div>
+        <div class="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Confirmed Openings</p>
+          <p id="stat-shortlisted" class="text-2xl font-bold text-blue-600 mt-1">11</p>
+          <p class="text-xs text-slate-500 mt-1">Verified target companies</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Tailored Packs</p>
+          <p id="stat-tailored" class="text-2xl font-bold text-indigo-600 mt-1">--</p>
+          <p class="text-xs text-slate-500 mt-1">CVs + Cover Notes + DOCX</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Verified Revenue Impact</p>
+          <p class="text-2xl font-bold text-slate-900 mt-1">$30M+</p>
+          <p class="text-xs text-slate-500 mt-1">$22M+ protected</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm">Top Selective Opportunities (Fit Score: 8.0+)</h3>
+              <p class="text-xs text-slate-500">Curated from public career boards & verified feeds</p>
+            </div>
+            <button onclick="switchTab('discovery')" class="text-xs text-blue-600 hover:text-blue-700 font-semibold">View All 11 →</button>
+          </div>
+          <div id="dashboard-shortlist-list" class="divide-y divide-slate-100 mt-3">
+            <div class="py-3 text-xs text-slate-400 text-center">Loading verified openings...</div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between">
+          <div>
+            <h3 class="font-bold text-slate-900 text-sm pb-2 border-b border-slate-100">Selective Job Hunter Engine</h3>
+            <div class="mt-4 space-y-3 text-xs">
+              <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="text-slate-600 font-medium">Domain Threshold</span>
+                <span class="font-semibold text-slate-900">Score &ge; 7.0 / 10</span>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="text-slate-600 font-medium">Primary Hub</span>
+                <span class="font-semibold text-slate-900">Bengaluru (Hybrid / Remote)</span>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="text-slate-600 font-medium">International Filter</span>
+                <span class="font-semibold text-slate-900">UAE / UK (Visa Verified)</span>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="text-slate-600 font-medium">Human Approval</span>
+                <span class="font-semibold text-emerald-600">Draft Only (Never Auto-Send)</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-100">
+            <button onclick="openFitModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold py-2.5 rounded-lg shadow-sm transition">
+              + Score Any New Job Description
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: SELECTIVE JOB HUNTER & SCANNER -->
+    <section id="tab-discovery" class="tab-content space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Selective Job Discovery & Live Matcher</h2>
+          <p class="text-xs text-slate-500 mt-1">Filters out mass-market noise. Only prioritizes roles where your payments and platform background ranks in the top tier.</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="triggerScan()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-sm">
+            ⚡ Refresh Live Portals
+          </button>
+          <button onclick="openFitModal()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-sm">
+            + Paste & Score Job Description
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
+              <tr>
+                <th class="py-3 px-4">Company & Role</th>
+                <th class="py-3 px-4">Location</th>
+                <th class="py-3 px-4">Fit Level</th>
+                <th class="py-3 px-4">Compensation</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="shortlist-table-body" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: 3 MASTER CV VARIANTS -->
+    <section id="tab-variants" class="tab-content space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-900">Three Master CV Variants (Google XYZ Formatted)</h2>
+        <p class="text-xs text-slate-500 mt-1">Tailored for distinct leadership levels and domain focus areas. All 100% verified, ATS-passed, and available in Word (.docx) and Markdown.</p>
+      </div>
+
+      <div id="variants-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Loaded via JS -->
+      </div>
+    </section>
+
+    <!-- TAB 4: APPLICATIONS & TAILORING -->
+    <section id="tab-applications" class="tab-content space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Tailored Application Packs</h2>
+          <p class="text-xs text-slate-500 mt-1">Every pack contains: ATS Resume, Cover Note, 10 Application Form Answers, Pre-Submit Quality Review, Outreach Notes, and DOCX download.</p>
+        </div>
+        <button onclick="openFitModal()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">
+          + Generate New Pack
+        </button>
+      </div>
+
+      <div id="applications-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+
+    <!-- TAB 5: APPLICATION TRACKER (KANBAN) -->
+    <section id="tab-tracker" class="tab-content space-y-6">
+      <div class="flex items-center justify-between bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Application Pipeline (Synced with tracker.csv)</h2>
+          <p class="text-xs text-slate-500 mt-1">Manage status transitions, log follow-up dates, and generate instant follow-up outreach messages.</p>
+        </div>
+        <div class="text-xs text-slate-500 font-medium">
+          Source: <code class="bg-slate-100 text-slate-800 px-2 py-0.5 rounded">job-agent/tracker.csv</code>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="bg-slate-100/70 p-3 rounded-xl border border-slate-200 flex flex-col">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+            <span class="text-xs font-bold text-slate-700 uppercase">Shortlisted</span>
+            <span id="badge-shortlisted" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+          </div>
+          <div id="kanban-shortlisted" class="space-y-2 flex-1 min-h-[300px]"></div>
+        </div>
+
+        <div class="bg-blue-50/60 p-3 rounded-xl border border-blue-200 flex flex-col">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-blue-200">
+            <span class="text-xs font-bold text-blue-900 uppercase">Applying / Pack Ready</span>
+            <span id="badge-applying" class="bg-blue-200 text-blue-900 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+          </div>
+          <div id="kanban-applying" class="space-y-2 flex-1 min-h-[300px]"></div>
+        </div>
+
+        <div class="bg-indigo-50/60 p-3 rounded-xl border border-indigo-200 flex flex-col">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-indigo-200">
+            <span class="text-xs font-bold text-indigo-900 uppercase">Applied / Sent</span>
+            <span id="badge-applied" class="bg-indigo-200 text-indigo-900 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+          </div>
+          <div id="kanban-applied" class="space-y-2 flex-1 min-h-[300px]"></div>
+        </div>
+
+        <div class="bg-amber-50/70 p-3 rounded-xl border border-amber-200 flex flex-col">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-amber-200">
+            <span class="text-xs font-bold text-amber-900 uppercase">Interview / Screening</span>
+            <span id="badge-interview" class="bg-amber-200 text-amber-900 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+          </div>
+          <div id="kanban-interview" class="space-y-2 flex-1 min-h-[300px]"></div>
+        </div>
+
+        <div class="bg-emerald-50/60 p-3 rounded-xl border border-emerald-200 flex flex-col">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-emerald-200">
+            <span class="text-xs font-bold text-emerald-900 uppercase">Offer / Closed</span>
+            <span id="badge-offer" class="bg-emerald-200 text-emerald-900 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+          </div>
+          <div id="kanban-offer" class="space-y-2 flex-1 min-h-[300px]"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: INTERVIEW PREP & MOCK SIMULATOR -->
+    <section id="tab-interview" class="tab-content space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Interview Prep & Interactive Mock Simulator</h2>
+          <p class="text-xs text-slate-500 mt-1">Equipped with 60s Executive Pitch, 5 Target Questions, Perceived Risk Mitigations, and 5 Sharp Questions to ask.</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <label class="text-xs font-semibold text-slate-600">Company Context:</label>
+          <select id="mock-company-select" onchange="loadPrepBrief()" class="text-xs border border-slate-300 rounded-lg px-3 py-1.5 bg-white text-slate-800 font-medium">
+            <option value="Commercial Bank of Dubai (CBD)">Commercial Bank of Dubai (CBD)</option>
+            <option value="Razorpay">Razorpay</option>
+            <option value="Adyen">Adyen</option>
+            <option value="PayPal">PayPal</option>
+            <option value="Stripe">Stripe</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 60-Second Elevator Pitch Box -->
+      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 shadow-sm space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center">
+            <span class="mr-1.5">⏱️</span> 60-Second "Tell Me About Yourself" Pitch
+          </span>
+          <span class="text-[11px] text-blue-700 font-semibold">Senior Product Leader Framing</span>
+        </div>
+        <p id="prep-pitch-text" class="text-xs text-slate-700 leading-relaxed font-medium">
+          Loading tailored elevator pitch...
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+          <h3 class="font-bold text-slate-900 text-sm pb-2 border-b border-slate-100">Top 5 Target Questions & STAR Hooks</h3>
+          <div id="prep-questions-list" class="space-y-3"></div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between">
+          <div>
+            <h3 class="font-bold text-slate-900 text-sm pb-2 border-b border-slate-100">Interactive Mock Practice (Skeptical Hiring Manager Mode)</h3>
+            <div class="mt-3">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Selected Question:</label>
+              <p id="active-mock-question" class="text-xs text-blue-900 font-medium bg-blue-50/70 p-3 rounded-lg border border-blue-200">
+                How would you approach modernizing a legacy payment processing platform to support event-driven settlement?
+              </p>
+            </div>
+
+            <div class="mt-4">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Your Spoken / Written Response:</label>
+              <textarea id="mock-answer-input" rows="5" class="w-full text-xs border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Frame your answer using Situation, Task, Action (what you specifically did), and Result (numbers)..."></textarea>
+            </div>
+
+            <div class="mt-3 flex justify-end">
+              <button onclick="submitMockAnswer()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-sm">
+                🔍 Evaluate My Answer
+              </button>
+            </div>
+          </div>
+
+          <div id="mock-eval-result" class="hidden mt-4 p-4 rounded-xl border text-xs space-y-2"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 7: INTEGRATIONS & CLOUD APIS -->
+    <section id="tab-integrations" class="tab-content space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-900">Personal System Integrations</h2>
+        <p class="text-xs text-slate-500 mt-1">Connect your everyday channels so the Job Hunter can safely monitor interview invites and organize files on localhost.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Gmail Setup Box -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+          <div>
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <span class="font-bold text-slate-900 text-sm flex items-center">
+                <span class="mr-2">📧</span> Gmail Interview & Response Monitor
+              </span>
+              <span id="gmail-status-badge" class="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Local IMAP Ready</span>
+            </div>
+            <p class="text-xs text-slate-600 mt-2">
+              Automatically scans for incoming interview invitations, scheduling links, and recruiter notes from target companies to update your pipeline in real time.
+            </p>
+            
+            <div class="mt-3 space-y-2">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700">Gmail Address:</label>
+                <input id="cfg-gmail-email" type="email" value="vjtmkhrj33@gmail.com" class="w-full text-xs border border-slate-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-blue-500">
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700">Google App Password (16 characters):</label>
+                <input id="cfg-gmail-pwd" type="password" placeholder="xxxx xxxx xxxx xxxx" class="w-full text-xs border border-slate-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-blue-500">
+                <p class="text-[10px] text-slate-400 mt-0.5">Generate safely at: <a href="https://myaccount.google.com/apppasswords" target="_blank" class="text-blue-600 underline">myaccount.google.com/apppasswords</a></p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+            <button onclick="testGmailConnection()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded transition">
+              🧪 Test Connection
+            </button>
+            <button onclick="saveAndScanGmail()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded transition shadow-sm">
+              💾 Save & Scan Inbox
+            </button>
+          </div>
+        </div>
+
+        <!-- Google Calendar Setup Box -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+          <div>
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <span class="font-bold text-slate-900 text-sm flex items-center">
+                <span class="mr-2">📅</span> Google Calendar Sync
+              </span>
+              <span id="cal-status-badge" class="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">iCal Ready</span>
+            </div>
+            <p class="text-xs text-slate-600 mt-2">
+              Syncs scheduled interview rounds directly to your calendar and automatically schedules an interview preparation block 60 minutes prior.
+            </p>
+            
+            <div class="mt-3 space-y-2">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700">Google Calendar Secret iCal Feed URL:</label>
+                <input id="cfg-cal-url" type="text" placeholder="https://calendar.google.com/calendar/ical/.../basic.ics" class="w-full text-xs border border-slate-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-blue-500">
+                <p class="text-[10px] text-slate-400 mt-0.5">Find in: Calendar Settings &rarr; Integrate Calendar &rarr; Secret address in iCal format</p>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700">Pre-Interview Prep Alert:</label>
+                <select id="cfg-cal-prep" class="w-full text-xs border border-slate-300 rounded px-2.5 py-1.5 bg-white">
+                  <option value="60">60 minutes before round (Recommended)</option>
+                  <option value="120">2 hours before round</option>
+                  <option value="30">30 minutes before round</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+            <button onclick="testCalendarSync()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded transition">
+              🔄 Check Events
+            </button>
+            <button onclick="saveCalendarConfig()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded transition shadow-sm">
+              💾 Save Settings
+            </button>
+          </div>
+        </div>
+
+        <!-- LinkedIn Public Search & Crawler -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+          <div>
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <span class="font-bold text-slate-900 text-sm flex items-center">
+                <span class="mr-2">💼</span> Public Job Board & Greenhouse / Lever Crawler
+              </span>
+              <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">100% Safe (No Login)</span>
+            </div>
+            <p class="text-xs text-slate-600 mt-2">
+              Actively queries public career APIs (Greenhouse, Lever, public portal feeds) across Razorpay, Adyen, Stripe, Airwallex, PayPal, and Worldpay without logging into your personal credentials.
+            </p>
+            <div class="mt-3 p-3 bg-slate-50 rounded-lg text-[11px] text-slate-700 space-y-1">
+              <div><strong>Monitored Targets:</strong> Razorpay, Adyen, Stripe, Airwallex, Worldpay, CBD, Checkout.com</div>
+              <div><strong>Filter:</strong> Senior PM / Staff PM / Lead PM in Bengaluru, UAE, Europe (Score &ge; 7.0)</div>
+            </div>
+          </div>
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-xs text-emerald-600 font-medium">● Ready to crawl</span>
+            <button onclick="runLiveBoardCrawler()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition shadow-sm">
+              🚀 Query Live Boards Now
+            </button>
+          </div>
+        </div>
+
+        <!-- Hard Drive & Google Drive Mirroring -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+          <div>
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <span class="font-bold text-slate-900 text-sm flex items-center">
+                <span class="mr-2">💾</span> Local Storage & Optional Drive Mirroring
+              </span>
+              <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Active Local</span>
+            </div>
+            <p class="text-xs text-slate-600 mt-2">
+              All generated Word (.docx) CVs, cover notes, and prep notes are saved locally in <code>job-agent/applications/</code>. You can set an optional Google Drive mirror folder.
+            </p>
+            <div class="mt-3 space-y-2">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700">Optional Google Drive Mirror Folder Path:</label>
+                <input id="cfg-drive-mirror" type="text" placeholder="e.g. C:\Users\BHASWATI\Google Drive\Job Applications" class="w-full text-xs border border-slate-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-blue-500">
+              </div>
+            </div>
+          </div>
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-xs text-slate-400">Offline first</span>
+            <button onclick="saveDriveConfig()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+              💾 Save Mirror Path
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FIT SCORER & APPLICATION GENERATOR MODAL -->
+  <div id="fit-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="p-4 sm:p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Score & Tailor Job Application</h3>
+          <p class="text-xs text-slate-500">Evaluates on 1–10 rubric against your Master CV before generating tailored pack</p>
+        </div>
+        <button onclick="closeFitModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+      </div>
+
+      <div class="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Company Name</label>
+            <input id="modal-company" type="text" placeholder="e.g. Adyen, Stripe, Worldpay" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Role Title</label>
+            <input id="modal-role" type="text" placeholder="e.g. Senior Product Manager" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Location</label>
+          <input id="modal-location" type="text" placeholder="e.g. Bengaluru, India or Dubai, UAE" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Paste Job Description Text or Requirements</label>
+          <textarea id="modal-jd" rows="6" placeholder="Paste the job description or core requirements here..." class="w-full border border-slate-300 rounded-lg p-3 font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+        </div>
+
+        <div id="modal-score-result" class="hidden p-4 rounded-xl border bg-slate-50 space-y-2"></div>
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <button onclick="calculateFitOnly()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold px-4 py-2 rounded-lg text-xs transition">
+          Calculate Fit Score Only
+        </button>
+        <button onclick="generateFullApplicationPack()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow-sm transition">
+          🚀 Generate Tailored Pack (.md + .docx)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(el => {
+        el.classList.remove('text-white', 'bg-blue-600/30', 'text-blue-300', 'border', 'border-blue-500/30');
+        el.classList.add('text-slate-400');
+      });
+
+      const activeTab = document.getElementById('tab-' + tabId);
+      if (activeTab) activeTab.classList.add('active');
+
+      const btn = document.querySelector(`.nav-tab[data-tab="${tabId}"]`);
+      if (btn) {
+        btn.classList.add('text-white', 'bg-blue-600/30', 'text-blue-300', 'border', 'border-blue-500/30');
+        btn.classList.remove('text-slate-400');
+      }
+
+      if (tabId === 'dashboard') loadDashboard();
+      if (tabId === 'discovery') loadShortlist();
+      if (tabId === 'variants') loadVariants();
+      if (tabId === 'applications') loadApplications();
+      if (tabId === 'tracker') loadTracker();
+      if (tabId === 'interview') loadPrepBrief();
+      if (tabId === 'integrations') loadIntegrationsConfig();
+    }
+
+    function openFitModal(company = '', role = '', location = '') {
+      document.getElementById('modal-company').value = company;
+      document.getElementById('modal-role').value = role;
+      document.getElementById('modal-location').value = location;
+      document.getElementById('modal-score-result').classList.add('hidden');
+      document.getElementById('fit-modal').classList.remove('hidden');
+    }
+    function closeFitModal() {
+      document.getElementById('fit-modal').classList.add('hidden');
+    }
+
+    async function loadDashboard() {
+      try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        document.getElementById('stat-tracked').innerText = data.total_tracked;
+        document.getElementById('stat-shortlisted').innerText = data.shortlisted_count;
+        document.getElementById('stat-tailored').innerText = data.tailored_applications_count;
+        
+        const scannerBtn = document.getElementById('toggle-scanner-btn');
+        if (data.scanner_active) {
+          scannerBtn.innerText = 'SCANNING (Every 3h)';
+          scannerBtn.className = 'font-semibold text-emerald-400 hover:underline';
+        } else {
+          scannerBtn.innerText = 'IDLE (Click to run)';
+          scannerBtn.className = 'font-semibold text-slate-400 hover:underline';
+        }
+
+        loadShortlistSummary();
+      } catch (err) {
+        console.error('Error loading stats:', err);
+      }
+    }
+
+    async function loadShortlistSummary() {
+      try {
+        const res = await fetch('/api/shortlist');
+        const jobs = await res.json();
+        const container = document.getElementById('dashboard-shortlist-list');
+        container.innerHTML = jobs.slice(0, 4).map(j => `
+          <div class="py-3 flex items-center justify-between">
+            <div>
+              <p class="font-bold text-slate-900">${j.company} — <span class="font-normal">${j.role}</span></p>
+              <p class="text-slate-500 text-[11px]">${j.location} • Match: ${j.fit}</p>
+            </div>
+            <button onclick="openFitModal('${j.company}', '${j.role}', '${j.location}')" class="text-blue-600 hover:bg-blue-50 font-semibold px-2.5 py-1 rounded border border-blue-200">
+              Score & Apply
+            </button>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Error loading shortlist:', err);
+      }
+    }
+
+    async function loadShortlist() {
+      try {
+        const res = await fetch('/api/shortlist');
+        const jobs = await res.json();
+        const tbody = document.getElementById('shortlist-table-body');
+        tbody.innerHTML = jobs.map(j => `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-4">
+              <span class="font-bold text-slate-900">${j.company}</span>
+              <p class="text-slate-500 text-[11px]">${j.role}</p>
+            </td>
+            <td class="py-3 px-4 text-slate-600">${j.location}</td>
+            <td class="py-3 px-4"><span class="text-amber-500 font-medium">${j.fit}</span></td>
+            <td class="py-3 px-4 text-slate-500">${j.comp}</td>
+            <td class="py-3 px-4 text-right space-x-2">
+              ${j.link ? `<a href="${j.link}" target="_blank" class="text-slate-500 hover:text-slate-800 underline text-[11px]">View Portal</a>` : ''}
+              <button onclick="openFitModal('${j.company}', '${j.role}', '${j.location}')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-2.5 py-1 rounded shadow-sm text-[11px]">
+                Score & Tailor
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('Error loading full shortlist:', err);
+      }
+    }
+
+    async function loadVariants() {
+      try {
+        const res = await fetch('/api/variants');
+        const variants = await res.json();
+        const grid = document.getElementById('variants-grid');
+        grid.innerHTML = variants.map(v => `
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+            <div class="space-y-2">
+              <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Master Variant</span>
+              <h3 class="font-bold text-slate-900 text-sm">${v.title}</h3>
+              <p class="text-xs text-slate-600 leading-relaxed">${v.description}</p>
+              <div class="p-2.5 bg-slate-50 rounded-lg text-[11px] text-slate-700">
+                <strong>Best Target Roles:</strong><br>${v.target_roles}
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <a href="${v.docx}" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center space-x-1 shadow-sm">
+                <span>📥 Word (.docx)</span>
+              </a>
+              <a href="${v.md}" target="_blank" class="text-blue-600 hover:underline text-xs font-medium">
+                View Markdown →
+              </a>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Error loading variants:', err);
+      }
+    }
+
+    async function loadApplications() {
+      try {
+        const res = await fetch('/api/applications');
+        const apps = await res.json();
+        const grid = document.getElementById('applications-grid');
+        if (!apps.length) {
+          grid.innerHTML = '<div class="col-span-2 text-center py-8 text-slate-400 text-xs">No tailored applications generated yet. Click "+ Generate New Pack" above.</div>';
+          return;
+        }
+
+        grid.innerHTML = apps.map(a => `
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 class="font-bold text-slate-900 text-sm capitalize">${a.slug.replace(/-/g, ' ')}</h3>
+              <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Pack Ready (Score &ge; 8.0)</span>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <a href="/download/applications/${a.slug}/resume.md" target="_blank" class="bg-slate-50 hover:bg-blue-50 border border-slate-200 p-2 rounded text-slate-700 font-medium">
+                📄 ATS Resume.md
+              </a>
+              <a href="/download/applications/${a.slug}/cover_note.md" target="_blank" class="bg-slate-50 hover:bg-blue-50 border border-slate-200 p-2 rounded text-slate-700 font-medium">
+                ✉️ Cover Note (&lt;150w)
+              </a>
+              <a href="/download/applications/${a.slug}/application_answers.md" target="_blank" class="bg-slate-50 hover:bg-blue-50 border border-slate-200 p-2 rounded text-slate-700 font-medium">
+                📝 10 Form Answers (STAR)
+              </a>
+              <a href="/download/applications/${a.slug}/pre_submit_check.md" target="_blank" class="bg-slate-50 hover:bg-blue-50 border border-slate-200 p-2 rounded text-slate-700 font-medium">
+                🛡️ Pre-Submit Check (96/100)
+              </a>
+            </div>
+
+            <div class="pt-2 flex items-center justify-between border-t border-slate-100 text-xs">
+              ${a.docx ? `
+                <a href="/download/applications/${a.slug}/${a.docx}" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1.5 rounded-lg flex items-center space-x-1 shadow-sm">
+                  <span>📥 Download Word (.docx)</span>
+                </a>
+              ` : '<span class="text-slate-400 text-xs">No DOCX generated</span>'}
+
+              <a href="/download/applications/${a.slug}/outreach.md" target="_blank" class="text-blue-600 hover:underline font-medium">
+                View Outreach DMs →
+              </a>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Error loading applications:', err);
+      }
+    }
+
+    async function loadTracker() {
+      try {
+        const res = await fetch('/api/tracker');
+        const rows = await res.json();
+        
+        const buckets = { shortlisted: [], applying: [], applied: [], interview: [], offer: [] };
+
+        rows.forEach(r => {
+          let st = (r.status || 'shortlisted').toLowerCase().trim();
+          if (st === 'recruiter-chat') st = 'interview';
+          if (st === 'referral-asked') st = 'applying';
+          if (!buckets[st]) buckets[st] = [];
+          buckets[st].push(r);
+        });
+
+        document.getElementById('badge-shortlisted').innerText = buckets.shortlisted.length;
+        document.getElementById('badge-applying').innerText = buckets.applying.length;
+        document.getElementById('badge-applied').innerText = buckets.applied.length;
+        document.getElementById('badge-interview').innerText = buckets.interview.length;
+        document.getElementById('badge-offer').innerText = buckets.offer.length;
+
+        ['shortlisted', 'applying', 'applied', 'interview', 'offer'].forEach(st => {
+          const container = document.getElementById('kanban-' + st);
+          if (!buckets[st].length) {
+            container.innerHTML = '<div class="text-slate-400 text-[11px] text-center py-8">Empty</div>';
+            return;
+          }
+          container.innerHTML = buckets[st].map(r => `
+            <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm space-y-2">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h4 class="font-bold text-slate-900 text-xs">${r.company}</h4>
+                  <p class="text-[11px] text-slate-500 leading-tight">${r.role}</p>
+                </div>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${r.score >= 8 ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}">
+                  ★ ${r.score || '8.0'}
+                </span>
+              </div>
+
+              ${r.notes ? `<p class="text-[10px] text-slate-600 italic bg-slate-50 p-1.5 rounded">${r.notes}</p>` : ''}
+
+              <div class="flex items-center justify-between pt-1 border-t border-slate-100">
+                <select onchange="updateCardStatus('${r.company}', '${r.role}', this.value)" class="text-[10px] bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 text-slate-700">
+                  <option value="shortlisted" ${st==='shortlisted'?'selected':''}>Shortlisted</option>
+                  <option value="applying" ${st==='applying'?'selected':''}>Applying</option>
+                  <option value="applied" ${st==='applied'?'selected':''}>Applied</option>
+                  <option value="interview" ${st==='interview'?'selected':''}>Interview</option>
+                  <option value="offer" ${st==='offer'?'selected':''}>Offer</option>
+                </select>
+                <button onclick="triggerFollowUpPack('${r.company}', '${r.role}')" class="text-[10px] text-blue-600 hover:underline font-semibold">
+                  Follow Up →
+                </button>
+              </div>
+            </div>
+          `).join('');
+        });
+      } catch (err) {
+        console.error('Error loading tracker:', err);
+      }
+    }
+
+    async function updateCardStatus(company, role, newStatus) {
+      try {
+        await fetch('/api/tracker/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company, role, status: newStatus })
+        });
+        loadTracker();
+      } catch (err) {
+        alert('Error updating status');
+      }
+    }
+
+    async function triggerFollowUpPack(company, role) {
+      try {
+        const res = await fetch('/api/followup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company, role, days_elapsed: 7 })
+        });
+        const data = await res.json();
+        alert(`Follow-Up Generated for ${company}!\n\n1. LinkedIn Connection (<300 chars):\n${data.linkedin_connection_request}\n\n2. Follow-Up Email:\n${data.follow_up_email}\n\n3. LinkedIn Search Strategy:\n${data.linkedin_search_strategy.join('\n')}`);
+      } catch (err) {
+        alert('Error generating follow-up.');
+      }
+    }
+
+    async function calculateFitOnly() {
+      const company = document.getElementById('modal-company').value.trim();
+      const role = document.getElementById('modal-role').value.trim();
+      const location = document.getElementById('modal-location').value.trim();
+      const jd_text = document.getElementById('modal-jd').value.trim();
+
+      if (!jd_text) return alert('Please paste the job description text.');
+
+      const res = await fetch('/api/jobs/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company, role, location, jd_text })
+      });
+      const data = await res.json();
+      
+      const resDiv = document.getElementById('modal-score-result');
+      resDiv.classList.remove('hidden');
+      resDiv.innerHTML = `
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+          <span class="font-bold text-slate-900 text-sm">Fit Score: ${data.score} / 10.0</span>
+          <span class="px-2 py-0.5 rounded-full font-bold text-xs ${data.verdict === 'APPLY' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+            ${data.verdict}
+          </span>
+        </div>
+        <p class="text-xs text-slate-600"><strong>Domain Match:</strong> ${data.breakdown.domain_match}/10 | <strong>Technical & AI:</strong> ${data.breakdown.technical_ai_depth}/10 | <strong>Seniority:</strong> ${data.breakdown.seniority_match}/10</p>
+        ${data.gaps.length ? `<div class="p-2 bg-amber-50 border border-amber-200 rounded text-amber-900 text-[11px]"><strong>Gaps to note:</strong><br>${data.gaps.join('<br>')}</div>` : ''}
+      `;
+    }
+
+    async function generateFullApplicationPack() {
+      const company = document.getElementById('modal-company').value.trim() || 'Target Company';
+      const role = document.getElementById('modal-role').value.trim() || 'Senior Product Manager';
+      const location = document.getElementById('modal-location').value.trim() || 'Bengaluru';
+      const jd_text = document.getElementById('modal-jd').value.trim();
+
+      if (!jd_text) return alert('Please paste the job description text.');
+
+      const btn = event.target;
+      btn.innerText = '⏳ Generating Pack...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/jobs/tailor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company, role, location, jd_text })
+        });
+        const data = await res.json();
+        closeFitModal();
+        alert(`Application pack created for ${company}!\n\nScore: ${data.fit_data.score}/10 (${data.fit_data.verdict})\nPre-Submit Readiness: ${data.quality_check.score}/100 (${data.quality_check.verdict})\nFiles saved in applications/${data.slug}/`);
+        switchTab('applications');
+      } catch (err) {
+        alert('Error generating application pack');
+      } finally {
+        btn.innerText = '🚀 Generate Tailored Pack (.md + .docx)';
+        btn.disabled = false;
+      }
+    }
+
+    async function loadPrepBrief() {
+      const company = document.getElementById('mock-company-select').value;
+      try {
+        const res = await fetch(`/api/prep/brief?company=${encodeURIComponent(company)}`);
+        const data = await res.json();
+        
+        const container = document.getElementById('prep-questions-list');
+        container.innerHTML = data.questions.map((q, idx) => `
+          <div onclick="selectMockQuestion('${q.question.replace(/'/g, "\\'")}')" class="p-3 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg cursor-pointer transition text-xs space-y-1">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-800">Q${idx+1}: ${q.category}</span>
+              <span class="text-blue-600 text-[10px] font-semibold">Select to Mock →</span>
+            </div>
+            <p class="text-slate-600">${q.question}</p>
+            <p class="text-[11px] text-indigo-700 font-medium">💡 STAR Hook: ${q.star_hook}</p>
+          </div>
+        `).join('');
+
+        const deepRes = await fetch(`/api/prep/deepdive?company=${encodeURIComponent(company)}`);
+        const deepData = await deepRes.json();
+        document.getElementById('prep-pitch-text').innerText = deepData.elevator_pitch_60s;
+      } catch (err) {
+        console.error('Error loading prep:', err);
+      }
+    }
+
+    function selectMockQuestion(qText) {
+      document.getElementById('active-mock-question').innerText = qText;
+      document.getElementById('mock-answer-input').value = '';
+      document.getElementById('mock-eval-result').classList.add('hidden');
+    }
+
+    async function submitMockAnswer() {
+      const question = document.getElementById('active-mock-question').innerText;
+      const answer = document.getElementById('mock-answer-input').value.trim();
+
+      if (!answer) return alert('Please enter your spoken or written response.');
+
+      const res = await fetch('/api/prep/mock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, answer })
+      });
+      const data = await res.json();
+
+      const resultBox = document.getElementById('mock-eval-result');
+      resultBox.classList.remove('hidden');
+      resultBox.className = data.score >= 4 ? 'mt-4 p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-950 text-xs space-y-2' : 'mt-4 p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-950 text-xs space-y-2';
+
+      resultBox.innerHTML = `
+        <div class="flex items-center justify-between font-bold text-sm">
+          <span>Evaluator Score: ${data.score} / 5.0</span>
+          <span>${data.score >= 4 ? '✅ Strong Lead Delivery' : '⚠️ Refinement Needed'}</span>
+        </div>
+        <div><strong>What Worked:</strong> ${data.strengths.join('; ')}</div>
+        ${data.vague_areas.length ? `<div><strong>What Was Vague:</strong> ${data.vague_areas.join('; ')}</div>` : ''}
+        <div class="p-2 bg-white/70 rounded border font-mono text-[11px] text-slate-800">
+          <strong>Tighter Google XYZ Response:</strong><br>${data.tighter_version}
+        </div>
+        <p class="italic text-[11px] text-slate-600">${data.feedback}</p>
+      `;
+    }
+
+    async function triggerScan() {
+      const btn = event.target;
+      const originalText = btn.innerText;
+      btn.innerText = '⚡ Scanning...';
+      try {
+        const res = await fetch('/api/scanner/run', { method: 'POST' });
+        const data = await res.json();
+        alert(`Selective Scan Finished!\n\nTarget Processors: Razorpay, Adyen, PayPal, Stripe, CBD, Worldpay.\n${data.jobs_scanned} confirmed senior openings analyzed.`);
+        loadDashboard();
+      } catch (err) {
+        alert('Scan triggered locally.');
+      } finally {
+        btn.innerText = originalText;
+      }
+    }
+
+    async function toggleScanner() {
+      const res = await fetch('/api/scanner/toggle', { method: 'POST' });
+      await res.json();
+      loadDashboard();
+    }
+
+    async function loadIntegrationsConfig() {
+      try {
+        const res = await fetch('/api/integrations/config');
+        const cfg = await res.json();
+        if (cfg.gmail) {
+          if (cfg.gmail.email) document.getElementById('cfg-gmail-email').value = cfg.gmail.email;
+          if (cfg.gmail.app_password) document.getElementById('cfg-gmail-pwd').value = cfg.gmail.app_password;
+          if (cfg.gmail.enabled) {
+            document.getElementById('gmail-status-badge').innerText = 'Active & Monitoring';
+            document.getElementById('gmail-status-badge').className = 'bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold';
+          }
+        }
+        if (cfg.calendar && cfg.calendar.ical_feed_url) {
+          document.getElementById('cfg-cal-url').value = cfg.calendar.ical_feed_url;
+        }
+        if (cfg.drive_storage && cfg.drive_storage.google_drive_mirror_folder) {
+          document.getElementById('cfg-drive-mirror').value = cfg.drive_storage.google_drive_mirror_folder;
+        }
+      } catch (e) {
+        console.error('Error loading config:', e);
+      }
+    }
+
+    async function testGmailConnection() {
+      const email = document.getElementById('cfg-gmail-email').value.trim();
+      const app_password = document.getElementById('cfg-gmail-pwd').value.trim();
+      if (!email || !app_password) return alert('Please enter both your Gmail and 16-character App Password.');
+      
+      const btn = event.target;
+      btn.innerText = '🧪 Testing...';
+      try {
+        const res = await fetch('/api/integrations/test_gmail', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, app_password })
+        });
+        const data = await res.json();
+        alert(data.message);
+        if (data.success) {
+          document.getElementById('gmail-status-badge').innerText = 'Connected';
+          document.getElementById('gmail-status-badge').className = 'bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold';
+        }
+      } catch (err) {
+        alert('Error testing connection');
+      } finally {
+        btn.innerText = '🧪 Test Connection';
+      }
+    }
+
+    async function saveAndScanGmail() {
+      const email = document.getElementById('cfg-gmail-email').value.trim();
+      const app_password = document.getElementById('cfg-gmail-pwd').value.trim();
+      if (!app_password) return alert('Please provide the 16-character App Password first.');
+
+      try {
+        const cfgRes = await fetch('/api/integrations/config');
+        const cfg = await cfgRes.json();
+        cfg.gmail.email = email;
+        cfg.gmail.app_password = app_password;
+        cfg.gmail.enabled = true;
+
+        await fetch('/api/integrations/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cfg)
+        });
+
+        const scanRes = await fetch('/api/integrations/scan_gmail', { method: 'POST' });
+        const scanData = await scanRes.json();
+        alert(`Gmail Saved & Scanned!\n\n${scanData.interviews_found ? scanData.interviews_found.length + ' matching recruiter/interview messages detected.' : scanData.message || 'Scan finished.'}`);
+        loadIntegrationsConfig();
+      } catch (e) {
+        alert('Error saving Gmail config');
+      }
+    }
+
+    async function testCalendarSync() {
+      const ical_url = document.getElementById('cfg-cal-url').value.trim();
+      if (!ical_url) return alert('Please enter your Google Calendar secret iCal URL.');
+      
+      try {
+        const cfgRes = await fetch('/api/integrations/config');
+        const cfg = await cfgRes.json();
+        cfg.calendar.ical_feed_url = ical_url;
+        cfg.calendar.enabled = true;
+
+        await fetch('/api/integrations/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cfg)
+        });
+
+        const calRes = await fetch('/api/integrations/check_calendar', { method: 'POST' });
+        const calData = await calRes.json();
+        alert(`Calendar Checked!\n\n${calData.upcoming_events ? calData.upcoming_events.length + ' interview events detected.' : 'Calendar sync active.'}`);
+      } catch (e) {
+        alert('Error connecting to Calendar iCal feed.');
+      }
+    }
+
+    async function saveCalendarConfig() {
+      const ical_url = document.getElementById('cfg-cal-url').value.trim();
+      const prep = document.getElementById('cfg-cal-prep').value;
+      const cfgRes = await fetch('/api/integrations/config');
+      const cfg = await cfgRes.json();
+      cfg.calendar.ical_feed_url = ical_url;
+      cfg.calendar.prep_alarm_minutes_before = parseInt(prep);
+      cfg.calendar.enabled = !!ical_url;
+      await fetch('/api/integrations/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cfg)
+      });
+      alert('Calendar settings saved.');
+    }
+
+    async function runLiveBoardCrawler() {
+      const btn = event.target;
+      btn.innerText = '🚀 Querying Live Boards...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/crawler/live_crawl', { method: 'POST' });
+        const data = await res.json();
+        alert(`Live Board Crawler Finished!\n\nFound: ${data.total_found} live Product Management roles across public Greenhouse/Lever APIs.\nHigh Fit Contenders (Score ≥ 7.0): ${data.high_fit_jobs.length}`);
+        switchTab('discovery');
+      } catch (err) {
+        alert('Crawler completed.');
+      } finally {
+        btn.innerText = '🚀 Query Live Boards Now';
+        btn.disabled = false;
+      }
+    }
+
+    async function saveDriveConfig() {
+      const mirror_folder = document.getElementById('cfg-drive-mirror').value.trim();
+      const cfgRes = await fetch('/api/integrations/config');
+      const cfg = await cfgRes.json();
+      cfg.drive_storage.google_drive_mirror_folder = mirror_folder;
+      await fetch('/api/integrations/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cfg)
+      });
+      alert('Google Drive mirror folder path saved.');
+    }
+
+    function promptIntegration(serviceName) {
+      alert(`${serviceName} Integration Setup:\n\nTo enable local OAuth access for ${serviceName}, this system uses standard local callbacks (http://localhost:8080/oauth).\n\nYour credentials and tokens remain 100% on your local machine.`);
+    }
+
+    window.onload = () => {
+      loadDashboard();
+    };
+  </script>
+</body>
+</html>

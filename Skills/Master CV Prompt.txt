@@ -1,0 +1,184 @@
+ACT as an executive resume strategist, senior product leadership recruiter, ATS optimization specialist, and payments/AI domain expert.
+Create a premium, human-written CV for:
+Candidate: Avijit Mukherjee
+Location: Bengaluru, Karnataka, India
+Total experience: 13 years 9 months
+Product Management experience: almost 10 years
+Target roles: Senior Product Manager, Lead Product Manager, Principal Product Manager, Group Product Manager, Product Director, or equivalent as suitable per my experience base
+Primary domains: Cards and Payments, digital payments, payment processing, fintech platforms, analytics, experimentation, legacy modernization, APIs, partner integrations, issuer-processor integrations, settlement infrastructure, and cross-functional product delivery, Native AI, generative AI, agentic transformation.
+Inputs:
+1. Candidate’s complete career history:
+Jan 2013 – started as Process Executive at Cognizant Kolkata – worked with Nationstar Mortgage LLC for User Access Management System provisioning roles for users, till Jan 2014.
+Feb 2014 – Promoted to Senior Process Executive and moved to Cards and Payments domain for Test Transaction Validation for First Data. Gained Expertise in Buypass platform specification [ISO, ATL, H&C] supporting AFD Merchants like Murphy, NCR, Exxonmobil et cetera for their Certification process till Dec 2014.
+Jan 2015 – Took up additional responsibility by gaining knowledge in network specification from Visa, MasterCard, American Express, Discover, Diners, JCB, WEX, Voyager, Fuelman, FleetOne, along with EMVCo Kernel Specification. Promoted as Subject Matter Expert on October 2015.
+Oct 2015 – as Subject Matter Expert, took additional responsibility of First Data platforms North and Nashville, gained expertise in ISO, EDC, Lease Line, PTS and XML Specifications, Mainframe base Settlement validation for Test Transaction for Interchange and Qualification Analysis Report, Bill Back code, JCL for mainframe job handling and by March 2016 established myself as true Payments SME having knowledge of end to end transaction life cycle, ecosystem, merchant onboarding, certification, emv l1, l2 cert, Clearing analysis, reconciliation and chargeback, network specification, api payload, validation and transformation. Started training for new team members.
+March 2016 onwards became Certification Project Manager where job role was to after intake, onboarding of Merchants and ISV in First Data platform, setup their credentials, walkthrough them with certification process and tariffs, initiate the cycle, provide them test tools and cards through UL and completed class B certification for 100+ clients like McDonalds, YUM, LBrands, NCR, Verifone, Ingenico, IPG, Murphy, ExxonMobil, Wells Fargo, Walmart et cetera covering industry scope of Retail, Supermarket, E-commerce, Direct Marketing, Petroleum [in-store and AFD] with EMV and Network Scheme’s ISO specification knowledge.
+At July 2017 – signed up as Product Manager for Automating Transaction Validation System – went to Chennai India and completed first Product Launch at October 2017. The Automation was done using RPA Automation Anywhere UI, Java ASP.NET for Codebase, SQL for Database. I handwrote First Data specification rules and logic in algorithmic format for 13 different technical specs, designed the UI Outlook and performed CI/CD along with QA Engineer. Before release, did A/B Testing and onboarded friendly merchants for testing and evaluating validation result. Which impacted project management cycle and by December 2017 we saw almost 57% improvement in certification project management cycle – resulting faster certification, more merchant scope, more business. The end year revenue report showed 32% revenue increment for First Data and I switched to Product manager role completely to handle delicate customers like McDonalds, ExxonMobil, NCR et cetera.
+Through years of 2018 till July 2019 contributed with many Merchants in their Cards Acceptance and Transaction Processing with Fiserv (First data got acquired by Fiserv) and started handling production incidents, API payload, Release cycles, GTM et cetera.
+Successfully saved $11m in revenue using preventive measures early in the flow for YUM and Burger King and McDonalds and Petroleum Merchants in US.
+Received many awards and recognition from Fiserv and Cognizant and awarded as employee of the decade by Fiserv Director.
+Promoted to Team Lead for Product Managers at July 2019 handling Team of 12 members working for direct merchants for Fiserv and contributed in SLA KPI and Organizational Metrics Reporting along with people management till Sep 2021.
+Oct 2021 – joined VISA as Technical Product Analyst – got exposure to Cybersource Acquiring Processor and 100+ Acquiring bank processing their merchant transactions and settling using Visa Platform Connect Product. I got the opportunity to work on EFTPOS co-brand Processing through VPC where I was responsible to create Validation and Transformation Mapping of EFTPOS Specification. MADA Cobrand processing through VPC – gained expertise in Bin Lookup and architecting solution of transaction routing for domestic co-branded cards. In mainstream started working on multiple feature enhancement for existing VPC product where I had to write the algorithm in Presto for business cases and create stories for Engineers and was given responsibility to create Payments 2.0 mapping – where existing VPC processing cycle was further granularized to microservice layer and the existing mapping of ISO8583 in Visa BASE I structure needed to be refined so that we can redefine validation and transformation layer separately bringing faster transaction processing.
+Worked on Acquirer Onboarding Automation and worked closely with UX/UI team and backend processing team, enhanced onboarding workflow by implementing batch attribute update and over the time worked on various feature enhancement and updates which led the onboarding path smoother and today we have 400+ acquirers at VPC.
+Gained expertise in TC33.A settlement as per Visa’s BASE II Spec, along with TC05/06, IPM, CAPN – Network Interchange Presentation formats –expanding knowledge base in Visa’s full cycle architecture of Transaction Processing and Acquirer Management.
+In 2024 March – was promoted as Technical Product Manager and started working with direct acquirers and regional partners with resolving P1 issues, assisting with interchange and qualification standards optimization. Worked with many Acquirers from Central Europe, Middle East and Africa (CEMEA), Asia Pacific, Europe and America resolving their issues/concerns with VPC and Settlement. Streamlined COF, MIT, CIT implementation for Europe clients – gained 25% business volume with token base transactions. Simplified Visa Instalment Plan in CEMEA gaining additional business volume by 18%.
+Worked on Business Enhancement Mandate [BER] implementation, establishing communication, drafting user guide for customers, release vehicle, participating in SWAT and war rooms to immediate remedy of p1 and p2 and production rollbacks.
+Mapped the AFD framework for US and EU creating pavement for processing Fuel transactions through VPC.
+In Jan 2025 was promoted to Product Manager. Automated CAS Self Service by allowing Acquirer/Merchant/Partner controlled solution of testing on CAS, Get Settlement file within 24 hours, eliminated manual dependency from PD Team Members and Sprint Backlog and Planning for Test File generation, saving 8 FTEs efforts per sprint.
+This helped in BER cycle as now instead of creating and posting 400+ separate test settlement file indicating new changes and enhancements as per BER, our acquirers can get the file as per their scope when they need and we were able to avoid churns prior to release. Saving additional efforts and time.
+Worked with Visa Europe Team on multiple accounts of: Elavon and their transaction processing with VPC and Visa Intelligence Auth [VIA]; Streamlining JCB and Diners acceptance in France and Spain by simplifying their clearing requirement in VPC TC33.A format. Acquirers from Greece on their Recurring and EMV transaction processing solutions.
+Simplified and implemented domestic schemes through Cybersource for KSA, Rupay, CUP, Jaywan, Paypak, MyDebit using Payments 2.0 architecture and Kafka event driven Settlement generation gaining $30M of net revenue.
+Collaborated with SMCC Japan for their EDQP, PIF and Force Refund requirement and architected the solution using Claude Agentic Toolchain and implemented same in record time.
+Completed ApplePay India Certification testing and Settlement validation leading launch of ApplePay at India market through Visa Cybersource.
+Architected solution for Fast Refund, hands on with Claude Agentic Tool Chain and finished for India release and in expansion APAC release.
+Last working day at Visa was Sep 2026.
+2. Candidate’s quantified achievements:
+Revenue save: Cognizant more than $2M purely by validating and fixing the gap for Clients without any AI
+At Visa: $9.2M – resolving P1 incidents, preventive measures and regenerating settlement overnight using help from AI in analyzing data, finding bugs and defects.
+Revenue generation: $70M from Fuel Transaction Processing and supporting AFD via VPC; $30M via implementing domestic scheme processing.
+Reduced Effort: Saved efforts at Vissa of 20+ QA FTEs by Automating CAS Self Service Solution.
+With use of AI, reduced 50% manual effort in creating PRD, Business Case, driving acceptance criteria, finding core fix and architecting solutions, leading to increase capacity of working in more initiatives.
+Saved efforts of 10 FTEs by automating transaction validation system at Cognizant.
+3. Target job description: Suitable for Fintech Companies like American Express, MasterCard, Discover, Diners, JPMC, Wells Fargo, Goldman Sach or any Big Payment Processing companies like Phonepe, Razorpay, Payglocal, Paypal, Stripe, Adyen and and Engineering  companies like Google, Apple, Microsoft, Meta looking for a Senior Product Manager or above with Native AI experience.
+4. Education: B.Tech in Information Technology, GPA 8.6
+5. Certifications:
+CSPO from Scrum Alliance
+PLM from Visa
+VPL Core Product from Visa
+6. Tools: Jira, Power BI, Postman, SQL Server Management Studio, IntelliJ, Claude, Gemini, OpenAI, Copilot
+7 Skills
+a.	Core product skills
+•	Customer discovery and empathy: Understand user problems through interviews, feedback, support data, and workflow observation.
+•	Problem framing: Define the underlying problem and opportunity before choosing a solution.
+•	Product strategy and vision: Connect customer needs, market context, and business goals into a clear direction.
+•	Roadmap and prioritization: Sequence work by customer value, business impact, risk, dependencies, and effort.
+•	Product requirements: Write clear product briefs, specifications, user stories, and acceptance criteria.
+•	End-to-end product ownership: Guide discovery, design, build, launch, measurement, and iteration.
+•	Go-to-market: Coordinate positioning, launch readiness, sales or support enablement, and adoption plans.
+•	Outcome measurement: Define success metrics and use post-launch evidence to make product decisions.
+b.	Data and growth skills
+•	Product analytics: Interpret usage, conversion, revenue, reliability, and operational data.
+•	Metrics and instrumentation: Define KPIs, events, dashboards, leading indicators, and guardrails.
+•	Experimentation: Form hypotheses, design tests, interpret results, and distinguish correlation from causal impact.
+•	Growth management: Improve acquisition, activation, engagement, retention, expansion, or monetization when relevant.
+•	Business and financial judgment: Connect product decisions to revenue, costs, margin, risk, or unit economics.
+•	SQL and analytical tools: Use data directly when appropriate, or work effectively with analysts and data teams. Tools vary by role.
+c.	Technical and execution skills
+•	Technical fluency: Work credibly with engineering on APIs, integrations, architecture, scalability, reliability, and trade-offs.
+•	Platform thinking: Build reusable capabilities and ecosystems rather than one-off features.
+•	AI and emerging technology judgment: Identify useful applications, define product safeguards, and measure quality and business impact where AI is involved.
+•	Delivery management: Manage scope, dependencies, risks, releases, quality, and operational readiness.
+•	Risk and compliance awareness: Especially important in finance, healthcare, security, and other regulated sectors.
+•	Operational problem-solving: Use incidents, defects, process bottlenecks, and customer friction to guide improvements.
+d.	Leadership skills
+•	Cross-functional influence: Align engineering, design, data, operations, sales, marketing, legal, and risk teams.
+•	Decision-making under ambiguity: Make reasoned choices with incomplete information and revisit them as evidence changes.
+•	Executive communication: Explain the problem, decision, trade-offs, and outcomes clearly.
+•	Ownership and accountability: Take responsibility for product outcomes, not just delivery of features.
+•	Adaptability and learning: Respond to new evidence, customer needs, and changing technology without losing strategic focus.
+8. Payment Domain Skills:
+a. Core payment lifecycle
+•	Payment flows: Understand how a transaction moves from initiation and authorization through capture, clearing, settlement, and reconciliation.
+•	Authorization and processing: Know payment requests, issuer responses, approval and decline reasons, retries, reversals, timeouts, idempotency, and exception handling.
+•	Settlement and funding: Understand settlement cycles, funds availability, settlement files, fees, reserves, and the difference between transaction processing and funds movement.
+•	Refunds, disputes, and chargebacks: Understand refund and reversal flows, dispute lifecycles, chargeback evidence, representment, and operational impacts.
+•	Reconciliation and ledgering: Match transactions across processors, networks, banks, and internal records; investigate breaks and support accurate financial reporting.
+b. Payment methods and ecosystem
+•	Cards: Credit, debit, prepaid, commercial cards, card-present and card-not-present transactions, card-on-file, recurring payments, tokenization, and 3-D Secure.
+•	Other payment methods: UPI, bank transfers, wallets, real-time payments, BNPL, and local alternative payment methods—depending on the markets served.
+•	Acquiring and issuing: Understand the roles of merchants, acquirers, issuers, payment service providers, processors, networks, and payment gateways.
+•	Partner integrations: Work with banks, processors, card networks, gateways, fraud providers, merchant platforms, and other ecosystem partners.
+•	Merchant lifecycle: Understand onboarding, KYC/KYB, configuration, payment-method enablement, activation, support, and offboarding where relevant.
+c. Payments technology and reliability
+•	Payment APIs and integrations: Interpret API contracts, webhooks, schemas, authentication, versioning, partner certification, and integration failure modes.
+•	Payment routing and orchestration: Understand how transactions may be directed across processors or rails, and the trade-offs among approval rates, cost, latency, and reliability.
+•	Platform performance: Reason about throughput, latency, availability, resiliency, scalability, monitoring, and incident response.
+•	Data and reporting: Work with transaction data, decline codes, settlement reports, event tracking, dashboards, and SQL or analytics tools where required.
+•	Financial controls: Understand audit trails, permissions, exception queues, reconciliation controls, and operational readiness.
+d.	Risk, compliance, and commercial understanding
+•	Fraud and risk: Understand fraud patterns, transaction-risk controls, false declines, chargeback exposure, and the trade-off between customer friction and risk reduction.
+•	Compliance and security: Know relevant obligations for the role and market, such as PCI DSS, scheme rules, KYC/KYB, data security, and local regulation.
+•	Payment economics: Understand processing costs, interchange, scheme fees, pricing, authorization performance, loss rates, refunds, and the financial effect of payment failures.
+•	Business outcomes: Connect product changes to payment success, time to funds, merchant conversion, operational cost, reliability, customer experience, and revenue.
+9. Technical Skills
+Skill area	Senior Product Manager	Solution Architect
+APIs	Define customer and product needs; review contracts and trade-offs	Design API patterns, contracts, security, and versioning
+Cloud	Understand service choices, cost, and product implications	Design cloud topology, services, connectivity, and resilience
+Data	Define metrics, events, and data requirements	Design data models, pipelines, storage, and governance
+Security	Define product requirements and risk expectations	Design security controls and validate architecture
+Coding	Helpful for prototypes or analysis; role-dependent	Useful for technical validation; usually not the core deliverable
+System design	Assess options and challenge assumptions	Create and own the solution design
+Operations	Define service outcomes and readiness criteria	Design monitoring, supportability, recovery, and deployment approach
+
+10. Target geography and work authorization: Bangalore, India - Open to Outside India [Visa sponsorship needed]
+
+Objectives:
+1. Produce a highly credible, senior-level CV that is optimized for both ATS parsing and human recruiter review.
+2. Use a single-column layout and conventional headings.
+3. Make the candidate appear experienced, strategic, technically fluent, commercially aware, and execution-oriented.
+4. Position the candidate as a product leader who can own ambiguous, complex, regulated, data-intensive, and platform-oriented product areas.
+5. Emphasize outcomes rather than responsibilities.
+6. Demonstrate progression, scope, decision-making, and increasing ownership.
+7. Connect Native AI and payments experience to business value.
+8. Make every major claim evidence-based.
+
+ATS rules:
+- Use standard headings: Summary, Core Competencies, Professional Experience, Selected Achievements, Education, Certifications, and Technical Skills.
+- Include exact keywords from the job description when they truthfully match the candidate’s experience.
+- Also include natural variants and industry synonyms.
+- Do not keyword-stuff.
+- Do not use tables, text boxes, icons, graphics, logos, columns, headers, footers, charts, photographs, or decorative elements.
+- Keep contact information in the body of the document.
+- Use plain text section headings.
+- Use consistent job title, employer, location, and date formatting.
+- Use reverse chronological order.
+- Use a clean, professional, text-first style.
+- Prefer DOCX-compatible formatting and a searchable PDF.
+- Target two pages where possible; use up to three pages only if the candidate’s seniority and evidence justify it.
+
+Writing rules:
+- Write like an excellent human product leader, not like an AI system.
+- Avoid clichés such as “results-driven,” “dynamic professional,” “passionate,” “synergy,” and “thought leader” unless specifically supported.
+- Avoid inflated claims and generic leadership language.
+- Use varied sentence structures.
+- Use strong verbs such as shaped, launched, scaled, modernized, validated, commercialized, simplified, reduced, increased, automated, governed, integrated, and influenced.
+- Do not repeat the same verb more than necessary.
+- Do not include responsibilities without context or impact.
+- Preserve the candidate’s authentic voice and professional maturity.
+- Do not write in first person.
+- Do not mention this prompt, ATS optimization, or AI generation.
+- Do not keep citation marks in the output
+
+Bullet construction:
+- Write 4–6 bullets for the most recent relevant role.
+- Write 3–5 bullets for earlier relevant roles.
+- Begin each bullet with an action verb.
+- Use the structure: action + product/problem + method + scope + measurable outcome.
+- Quantify revenue, adoption, conversion, retention, CSAT, latency, TPS, fraud, authorization, cost, productivity, delivery time, risk, or operational improvement whenever supported.
+- Include scale indicators such as markets, customers, transactions, platforms, partners, teams, regions, or annualized value.
+- If a metric is unavailable, use a credible qualitative result without inventing a number.
+- Do not transform an unverified estimate into a fact.
+
+Content architecture:
+1. Create a concise headline aligned to the target role.
+2. Write a 4–5 line executive summary.
+3. Add a Core Competencies section with 15–20 targeted skills.
+4. Rewrite experience bullets around product ownership and impact.
+5. Add a Selected Impact section only if it adds evidence not already covered.
+6. Include a Technical and Domain Skills section with truthful tools and concepts.
+7. Remove irrelevant or weak content.
+8. Ensure the CV tells a coherent story: product strategy → technical execution → measurable business/customer impact → senior leadership.
+
+Before presenting the CV, perform a private quality check:
+- Confirm where each appears in the CV.
+- Check that every keyword is supported by the candidate’s evidence.
+- Check chronology and total experience.
+- Check that no metric or company fact has been invented.
+- Check that seniority is clear.
+- Check that the document sounds human.
+- Check for duplicate phrases and grammar issues.
+- Missing evidence and [NEEDS INPUT] items. Ask input so that you can create final CV.
+
+Output:
+ATS keyword coverage report.
+Final CV only in downloadable format.

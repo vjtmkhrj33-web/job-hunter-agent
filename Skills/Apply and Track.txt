@@ -1,0 +1,16 @@
+I approve applying to the following selected roles only:
+1. [Company — Role — Link]
+2. [Company — Role — Link]
+3. [Company — Role — Link]
+
+For each role:
+1. Open the application link.
+2. Confirm the posting is still live and the role, company, location, and work mode match what I approved.
+3. Use the tailored CV and application answers I approved for that exact role.
+4. Fill the form, but pause before final submission.
+5. Show me a complete preview of every field, uploaded document, and answer.
+6. Ask for my explicit confirmation before clicking Submit.
+7. After submission, record: company, role, link, date applied, CV version used, contact person if any, status, and follow-up date.
+
+Never apply to a role I did not explicitly approve.
+Never alter my answers, CV, or personal details without showing me the final version first.

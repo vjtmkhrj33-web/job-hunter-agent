@@ -1,0 +1,17 @@
+Act as a specialist recruiter for senior Product roles in India.
+
+Based on my approved master CV and target preferences, identify the roles I am most competitive for.
+
+Produce:
+1. 20 target job titles, ranked by likely interview conversion.
+2. For each title:
+   - Typical seniority and compensation range in Bengaluru/India
+   - Core requirements
+   - Common ATS keywords
+   - My likely fit score out of 10
+   - Evidence from my CV that supports the fit
+   - Gaps or risks
+3. A prioritised shortlist of 10 companies or job families to target.
+4. Search queries I can use on LinkedIn, Naukri, Instahyre, Cutshort, Wellfound, and company career pages.
+
+Do not fabricate job openings. If you cannot verify live openings, clearly label recommendations as “targeting strategy,” not current vacancies.

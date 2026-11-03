@@ -1,0 +1,1 @@
+Run the job-discovery skill using profile/targets.md. Then run fit-scorer on the top 8 new roles and update jobs/shortlist.md with scores. Show me the top 5 and which ones need a referral. Do not apply or message anyone.

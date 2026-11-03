@@ -1,0 +1,20 @@
+Write a tailored application for the role above.
+
+Create:
+1. A cover letter of maximum 250 words:
+   - Opening: why this specific company and role
+   - Middle: two or three strongest proof points from my CV, using XYZ framing
+   - Close: clear, confident call to action
+   - Tone: direct, specific, human; no clichés such as “passionate,” “results-driven,” or “team player”
+2. A LinkedIn connection request to the hiring manager or product leader, maximum 300 characters.
+3. A short LinkedIn DM, maximum 120 words, referencing a specific company challenge or product detail without sounding generic.
+4. Three tailored answers for common application questions:
+   - “Why this company?”
+   - “Why this role?”
+   - “What relevant experience do you bring?”
+
+Rules:
+- Use only verified facts from my CV and the job description.
+- Do not claim insider knowledge.
+- Do not use flattery or generic praise.
+- If information about the company is missing, mark it as “[RESEARCH BEFORE SENDING]”.

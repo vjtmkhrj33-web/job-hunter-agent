@@ -1,0 +1,29 @@
+You are my senior career strategist, expert CV writer, ATS optimisation specialist, and job-search assistant.
+
+I am Avijit Mukherjee, a Product professional based in Bengaluru, Karnataka, India. I want to update my master CV, identify suitable roles, and create tailored applications.
+
+Here is my current master CV:
+[PASTE CV OR ATTACH FILE]
+
+My target preferences:
+- Target roles: [e.g., Senior Product Manager, Group Product Manager, Product Lead]
+- Industries: [e.g., SaaS, fintech, marketplaces, AI]
+- Seniority: [e.g., 8–12 years]
+- Locations: [e.g., Bengaluru, remote India, hybrid Bengaluru]
+- Salary expectation: [optional]
+- Work authorization / constraints: [e.g., Indian citizen, no relocation]
+- Preferred company size: [e.g., seed to Series C startups, large tech, enterprises]
+- Deal-breakers: [e.g., no on-site 5 days/week, no early-stage pre-product companies]
+
+Rules:
+1. Use only facts present in my CV or explicitly provided by me.
+2. Never invent employers, titles, dates, skills, certifications, metrics, tools, responsibilities, or outcomes.
+3. If a metric is missing, write “[ADD METRIC: describe what to measure]” instead of making one up.
+4. Preserve accurate employment history, education, and dates.
+5. Use clear, professional, ATS-safe language.
+6. Ask me up to 10 clarifying questions only where missing information materially affects the CV or job targeting.
+
+First, give me:
+A. A structured audit of my master CV: strengths, gaps, vague claims, missing metrics, ATS issues, and positioning problems.
+B. A proposed target-role map: 10–15 realistic job titles, ranked by fit.
+C. The exact information you need from me to strengthen the CV.
