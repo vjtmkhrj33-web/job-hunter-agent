@@ -16,6 +16,11 @@ Senior Payments Product Leader with 14 years of deep domain expertise across mer
 - **Incident Response & Revenue Protection: ** P1 Settlement Remediation ($9.2M protected), Automated Settlement Regeneration, Upstream Payload Validation ($11M protected at Fiserv), MTTR Reduction
 - **Modern Tooling & AI Delivery: ** Claude & Gemini Agentic Toolchains, Jira, Power BI, Postman, SSMS, IntelliJ, Automation Anywhere RPA, CSPO Agile Delivery
 
+### AI Product Management & Generative AI
+- **AI Product Concepts:** LLMs, Tokens, Context Windows, Inference, Prompt Engineering, System Prompts, Temperature, Embeddings, RAG, Vector Databases, Fine-tuning, Hallucination Management, Guardrails, Model Routing, Evals
+- **AI Application Architecture:** API Integration, Tool Calling, MCP (Model Context Protocol), AI Workflows, Agentic Workflows, Retrieval Pipelines, Context Management, Human-in-the-Loop
+- **AI Product Practices:** AI Use-Case Discovery, Prompt Design, Evaluation & Evals, Quality & Reliability, Latency & Cost Optimization, AI Safety & Guardrails, Workflow Automation, AI-assisted Product Discovery and SDLC
+
 ---
 
 ## PROFESSIONAL EXPERIENCE

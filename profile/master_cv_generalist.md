@@ -16,6 +16,11 @@ Accomplished Senior Product Manager with nearly 10 years in product management a
 - **AI & Automation: ** AI-Assisted Product Workflows (Claude, Gemini), Agentic Solution Design, Automated Requirements Generation, Robotic Process Automation (Automation Anywhere)
 - **Leadership & Stakeholders: ** Cross-Functional Team Leadership (managed 12-member product team), Executive Stakeholder Communication, Partner & Vendor Collaboration
 
+### AI Product Management & Generative AI
+- **AI Product Concepts:** LLMs, Tokens, Context Windows, Inference, Prompt Engineering, System Prompts, Temperature, Embeddings, RAG, Vector Databases, Fine-tuning, Hallucination Management, Guardrails, Model Routing, Evals
+- **AI Application Architecture:** API Integration, Tool Calling, MCP (Model Context Protocol), AI Workflows, Agentic Workflows, Retrieval Pipelines, Context Management, Human-in-the-Loop
+- **AI Product Practices:** AI Use-Case Discovery, Prompt Design, Evaluation & Evals, Quality & Reliability, Latency & Cost Optimization, AI Safety & Guardrails, Workflow Automation, AI-assisted Product Discovery and SDLC
+
 ---
 
 ## PROFESSIONAL EXPERIENCE

@@ -370,7 +370,10 @@ class JobAgentEngine:
 
         tech_keywords = [
             "api", "kafka", "rest", "architecture", "microservice", "ai", "llm", "agentic",
-            "automation", "specs", "event-driven", "sql", "rice", "prd", "agile", "scrum", "cspo"
+            "automation", "specs", "event-driven", "sql", "rice", "prd", "agile", "scrum", "cspo",
+            "rag", "vector database", "mcp", "model context protocol", "tool calling", "prompt",
+            "evals", "guardrails", "embeddings", "fine-tuning", "human-in-the-loop", "inference",
+            "model routing", "hallucination", "context window", "sdlc",
         ]
         matched_tech = [kw for kw in tech_keywords if kw in text_lower]
         tech_score = min(10.0, max(5.2, 5.2 + len(matched_tech) * 0.85))
@@ -764,6 +767,9 @@ class JobAgentEngine:
             "scrum", "cspo", "sql", "ai", "llm", "agentic", "automation", "cross-border", "fx", "upi",
             "lending", "bnpl", "b2b", "b2c", "kyc", "aml", "fraud", "risk", "analytics", "experimentation",
             "a/b testing", "stakeholder", "enterprise", "saas", "fintech", "sdk", "checkout", "pos",
+            "rag", "vector database", "embeddings", "prompt engineering", "system prompts", "evals",
+            "guardrails", "hallucination", "tool calling", "mcp", "model context protocol", "fine-tuning",
+            "model routing", "inference", "context window", "human-in-the-loop", "latency", "sdlc",
         ]
         jd_present_vocab = [kw for kw in ats_target_vocab if kw in text_lower]
         matched_ats = [kw for kw in jd_present_vocab if kw in candidate_lower or kw in ("payments", "ai", "automation")]
@@ -874,7 +880,7 @@ class JobAgentEngine:
         # PERSONA 3: TECH LEAD / SYSTEM ARCHITECT
         # ------------------------------------------------------------------
         core_rails_hits = [k for k in ["iso 8583", "base i", "base ii", "tc33", "clearing", "settlement", "kafka", "microservice", "api", "rest", "webhook", "token", "emv", "bin"] if k in text_lower]
-        ai_hits = [k for k in ["ai", "llm", "agent", "genai", "rag", "eval", "automation"] if k in text_lower]
+        ai_hits = [k for k in ["ai", "llm", "agent", "genai", "rag", "eval", "automation", "mcp", "tool calling", "guardrails", "prompt", "vector", "embeddings", "human-in-the-loop"] if k in text_lower]
         tech_score_5 = 4.0 + min(0.7, len(core_rails_hits) * 0.14) + min(0.3, len(ai_hits) * 0.1)
         if not core_rails_hits and not ai_hits:
             tech_score_5 = 3.6
@@ -1270,7 +1276,7 @@ Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/aviji
 
 ## PROFESSIONAL SUMMARY
 
-Payments product leader with nearly 14 years of experience across acquiring platforms, transaction processing, payment APIs, and settlement infrastructure, including nearly 10 years in product management at Visa (CyberSource / Visa Platform Connect) and Cognizant (Fiserv / First Data). Generated $30M in net revenue by launching domestic-scheme processing across KSA, RuPay, CUP, Jaywan, PayPak, and MyDebit, and protected over $22M in transaction/merchant revenue (Visa figures attributed to Customer Support post-release). Certified Scrum Product Owner (CSPO) and 2-time Visa STAR Award recipient combining deep payments rails mastery (ISO 8583, BASE I/II, Kafka) with shipped AI product optimization (Fast Refund: 24h refunds, 97% success rate).
+Payments & AI-enabled product leader with nearly 14 years of experience across acquiring platforms, transaction processing, payment APIs, and settlement infrastructure, including nearly 10 years in product management at Visa (CyberSource / Visa Platform Connect) and Cognizant (Fiserv / First Data). Generated $30M in net revenue by launching domestic-scheme processing across KSA, RuPay, CUP, Jaywan, PayPak, and MyDebit, and protected over $22M in transaction/merchant revenue (Visa figures attributed to Customer Support post-release). Certified Scrum Product Owner (CSPO) and 2-time Visa STAR Award recipient combining deep payments rails mastery (ISO 8583, BASE I/II, Kafka) with hands-on Generative AI & agentic product workflows (Fast Refund: 24h refunds, 97% success rate; SMCC Japan specs cut from 6 weeks to 2 weeks).
 
 ---
 
@@ -1278,7 +1284,13 @@ Payments product leader with nearly 14 years of experience across acquiring plat
 
 - **Product Strategy & Delivery:** Product Roadmaps (RICE), PRDs & Business Cases, Backlog Prioritization, CSPO Agile Delivery (4 Scrum Teams), KPI Scorecards & Release Governance, P1 Escalation Leadership
 - **Payments & Acquiring:** Merchant Processing, Authorization, Clearing & Settlement, Domestic & Regional Schemes (Jaywan, RuPay, KSA, CUP, MyDebit), Network Tokenization (COF/MIT/CIT), Interchange & EMV Compliance
-- **Architecture & AI:** ISO 8583, Visa BASE I & BASE II, TC33.A, Kafka Event-Driven Architecture, REST APIs, Microservices, AI-Assisted Workflow Optimization (Fast Refund, Claude Agentic Specs)
+- **Architecture & Rails:** ISO 8583, Visa BASE I & BASE II, TC33.A, Kafka Event-Driven Architecture, REST APIs, Microservices, Payments 2.0
+
+### AI Product Management & Generative AI
+
+- **AI Product Concepts:** LLMs, Tokens, Context Windows, Inference, Prompt Engineering, System Prompts, Temperature, Embeddings, RAG, Vector Databases, Fine-tuning, Hallucination Management, Guardrails, Model Routing, Evals
+- **AI Application Architecture:** API Integration, Tool Calling, MCP (Model Context Protocol), AI Workflows, Agentic Workflows, Retrieval Pipelines, Context Management, Human-in-the-Loop
+- **AI Product Practices:** AI Use-Case Discovery, Prompt Design, Evaluation & Evals, Quality & Reliability, Latency & Cost Optimization, AI Safety & Guardrails, Workflow Automation, AI-assisted Product Discovery and SDLC
 
 ---
 
@@ -1691,7 +1703,7 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
                 r.font.bold = True
                 r.font.size = Pt(10)
                 r.font.color.rgb = RGBColor(15, 23, 42)
-            elif l.startswith("**") and ("|" in l or "–" in l or "-" in l or any(kw in l for kw in ["Manager", "Analyst", "Lead", "Executive", "SME", "Engineer", "Officer", "VP", "Head"])):
+            elif l.startswith("**") and ":**" not in l and ("|" in l or "–" in l or "-" in l or any(kw in l for kw in ["Manager", "Analyst", "Lead", "Executive", "SME", "Engineer", "Officer", "VP", "Head"])):
                 p = doc.add_paragraph()
                 p.paragraph_format.space_before = Pt(0)
                 p.paragraph_format.space_after = Pt(1)

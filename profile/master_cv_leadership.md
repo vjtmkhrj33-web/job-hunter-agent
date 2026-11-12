@@ -16,6 +16,11 @@ Product Leader with 14 years of experience across platform modernization, enterp
 - **Process & Operational Excellence: ** Release Management & Governance, P1/P2 Incident Command, SLA Management (97% post-release accuracy), Automated Self-Service Tooling (saved 8 FTEs/sprint)
 - **AI Transformation: ** Agentic AI Integration in Product Delivery, Generative AI for Requirement Engineering, AI-Driven Incident Triage, Organizational Tooling Adoption
 
+### AI Product Management & Generative AI
+- **AI Product Concepts:** LLMs, Tokens, Context Windows, Inference, Prompt Engineering, System Prompts, Temperature, Embeddings, RAG, Vector Databases, Fine-tuning, Hallucination Management, Guardrails, Model Routing, Evals
+- **AI Application Architecture:** API Integration, Tool Calling, MCP (Model Context Protocol), AI Workflows, Agentic Workflows, Retrieval Pipelines, Context Management, Human-in-the-Loop
+- **AI Product Practices:** AI Use-Case Discovery, Prompt Design, Evaluation & Evals, Quality & Reliability, Latency & Cost Optimization, AI Safety & Guardrails, Workflow Automation, AI-assisted Product Discovery and SDLC
+
 ---
 
 ## PROFESSIONAL EXPERIENCE

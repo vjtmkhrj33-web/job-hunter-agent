@@ -18,6 +18,12 @@ Payments product leader with 14 years of experience across acquiring platforms, 
 - **Analytical & Operations:** Funnel & Transaction Drop-Off Analysis, SLA/KPI Tracking & Reporting, Production Defect Analysis, Interchange Optimization, Root-Cause Investigation, Settlement Regeneration.
 - **Leadership & Governance:** Cross-Functional Team Leadership (managed 12-member product team), Executive Stakeholder Management, Enterprise Acquirer & Merchant Collaboration, Vendor & Network Governance.
 
+### AI Product Management & Generative AI
+
+- **AI Product Concepts:** LLMs, Tokens, Context Windows, Inference, Prompt Engineering, System Prompts, Temperature, Embeddings, RAG, Vector Databases, Fine-tuning, Hallucination Management, Guardrails, Model Routing, Evals
+- **AI Application Architecture:** API Integration, Tool Calling, MCP (Model Context Protocol), AI Workflows, Agentic Workflows, Retrieval Pipelines, Context Management, Human-in-the-Loop
+- **AI Product Practices:** AI Use-Case Discovery, Prompt Design, Evaluation & Evals, Quality & Reliability, Latency & Cost Optimization, AI Safety & Guardrails, Workflow Automation, AI-assisted Product Discovery and SDLC
+
 ---
 
 ## PROFESSIONAL EXPERIENCE

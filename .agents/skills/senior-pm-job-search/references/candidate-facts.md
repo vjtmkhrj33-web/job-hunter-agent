@@ -39,7 +39,10 @@ Source: the user's own statements in the "Lets find a new job" project, up to 20
 - Led 12 people at Cognizant; mentoring and scorecards at Visa without formal reports.
 
 ## AI
-- Studying AI and the PM role since the layoff: Claude and Agentic AI for PM courses (undated). Pair with the Fast Refund AI example, which is real shipped work.
+- Studying AI and the PM role since September 2026 alongside real shipped Visa Fast Refund AI optimization (24-hour refunds, 97% success) and Claude agentic specification workflows (SMCC Japan: 6 weeks -> 2 weeks).
+- **AI Product Concepts:** LLMs, Tokens, Context Windows, Inference, Prompt Engineering, System Prompts, Temperature, Embeddings, RAG, Vector Databases, Fine-tuning, Hallucination Management, Guardrails, Model Routing, Evals.
+- **AI Application Architecture:** API Integration, Tool Calling, MCP (Model Context Protocol), AI Workflows, Agentic Workflows, Retrieval Pipelines, Context Management, Human-in-the-Loop.
+- **AI Product Practices:** AI Use-Case Discovery, Prompt Design, Evaluation & Evals, Quality & Reliability, Latency & Cost Optimization, AI Safety & Guardrails, Workflow Automation, AI-assisted Product Discovery and SDLC.
 
 ## Known gaps (never claim these)
 - No UPI, lending, insurance, mutual funds or digital gold exposure.
