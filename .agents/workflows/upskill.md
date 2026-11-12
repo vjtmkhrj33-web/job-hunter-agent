@@ -1,0 +1,2 @@
+Run the `upskill` skill (`.agents/skills/upskill/SKILL.md`) in either aggregate mode (analyzing `tracker.csv` + ranked entries in `job_scraper/seen_jobs.json`) or targeted mode (analyzing a single job URL gated through `python tools/posting_guard.py`). Compare against `profile/master_cv.md` and `.agents/skills/senior-pm-job-search/references/candidate-facts.md`, print the gap heatmap, build a web-searched learning plan, and save the report under `upskill/`.
+
