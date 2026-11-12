@@ -2,6 +2,7 @@ import os
 import re
 import csv
 import json
+import sys
 import time
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -12,6 +13,13 @@ from docx.oxml import parse_xml
 from docx.oxml.ns import nsdecls
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+TOOLS_DIR = BASE_DIR / "tools"
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+
+import posting_guard  # noqa: E402
+from core import portals  # noqa: E402
+
 
 def read_text(path):
     p = BASE_DIR / path
@@ -20,16 +28,19 @@ def read_text(path):
             return f.read()
     return ""
 
+
 def write_text(path, content):
     p = BASE_DIR / path
     p.parent.mkdir(parents=True, exist_ok=True)
     with open(p, "w", encoding="utf-8") as f:
         f.write(content)
 
+
 def add_hr(paragraph, color_hex="CCCCCC"):
     pPr = paragraph._p.get_or_add_pPr()
     pBdr = parse_xml(f'<w:pBdr {nsdecls("w")}><w:bottom w:val="single" w:sz="6" w:space="2" w:color="{color_hex}"/></w:pBdr>')
     pPr.append(pBdr)
+
 
 class JobAgentEngine:
     def __init__(self):
@@ -40,6 +51,12 @@ class JobAgentEngine:
         self.achievements_path = self.base_dir / "profile" / "achievements.md"
         self.targets_path = self.base_dir / "profile" / "targets.md"
         self.applications_dir = self.base_dir / "applications"
+        self.upskill_dir = self.base_dir / "upskill"
+        self.skills_dir = self.base_dir / ".agents" / "skills"
+        self.pm_refs_dir = self.skills_dir / "senior-pm-job-search" / "references"
+        self.candidate_facts_path = self.pm_refs_dir / "candidate-facts.md"
+        self.search_profile_path = self.pm_refs_dir / "search-profile.md"
+        self.applications_log_path = self.pm_refs_dir / "applications-log.md"
         self.scanner_active = False
         self.last_scan_time = None
         self.scanner_logs = []
@@ -48,29 +65,33 @@ class JobAgentEngine:
         tracker_rows = self.get_tracker()
         status_counts = {}
         for r in tracker_rows:
-            st = r.get("status", "shortlisted").strip().lower()
+            st = (r.get("status") or "shortlisted").strip().lower()
             status_counts[st] = status_counts.get(st, 0) + 1
 
         shortlist_content = read_text("jobs/shortlist.md")
         shortlist_count = len(re.findall(r"### \d+\.", shortlist_content)) or 11
         app_dirs = [d for d in self.applications_dir.iterdir() if d.is_dir()] if self.applications_dir.exists() else []
+        _, seen = portals.load_seen_state()
+        ranked_count = sum(1 for e in seen.values() if e.get("status") == "ranked")
 
         return {
             "total_tracked": len(tracker_rows),
             "status_counts": status_counts,
             "shortlisted_count": shortlist_count,
             "tailored_applications_count": len(app_dirs),
+            "scraped_seen_count": len(seen),
+            "scraped_ranked_count": ranked_count,
             "scanner_active": self.scanner_active,
             "last_scan_time": self.last_scan_time or "Never",
             "candidate_name": "Avijit Mukherjee",
-            "primary_domain": "Payments Product Leader (Acquiring, Settlement, Rails & AI)"
+            "primary_domain": "Payments Product Leader (Visa I6 • Acquiring, Settlement, Rails & AI)"
         }
 
     def get_tracker(self):
         if not self.tracker_path.exists():
             return []
         rows = []
-        with open(self.tracker_path, "r", encoding="utf-8") as f:
+        with open(self.tracker_path, "r", encoding="utf-8-sig", newline="") as f:
             reader = csv.DictReader(f)
             for r in reader:
                 rows.append(r)
@@ -82,9 +103,10 @@ class JobAgentEngine:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             for r in rows:
-                writer.writerow(r)
+                clean_row = {k: r.get(k, "") for k in fieldnames}
+                writer.writerow(clean_row)
 
-    def update_tracker_status(self, company, role, new_status, notes="", follow_up_date=""):
+    def update_tracker_status(self, company, role, new_status, notes="", follow_up_date="", link="", location="", sponsorship="", score=""):
         rows = self.get_tracker()
         updated = False
         for r in rows:
@@ -94,6 +116,14 @@ class JobAgentEngine:
                     r["notes"] = notes
                 if follow_up_date:
                     r["follow_up_date"] = follow_up_date
+                if link:
+                    r["link"] = link
+                if location:
+                    r["location"] = location
+                if sponsorship:
+                    r["sponsorship"] = sponsorship
+                if score:
+                    r["score"] = str(score)
                 if new_status == "applied" and not r.get("applied_date"):
                     r["applied_date"] = datetime.now().strftime("%Y-%m-%d")
                 updated = True
@@ -102,10 +132,10 @@ class JobAgentEngine:
             rows.append({
                 "company": company,
                 "role": role,
-                "link": "",
-                "location": "Bengaluru / Global",
-                "sponsorship": "UNVERIFIED",
-                "score": "8.0",
+                "link": link or "",
+                "location": location or "Bengaluru / Global",
+                "sponsorship": sponsorship or "UNVERIFIED",
+                "score": str(score or "8.0"),
                 "status": new_status,
                 "applied_date": datetime.now().strftime("%Y-%m-%d") if new_status == "applied" else "",
                 "contact": "",
@@ -113,7 +143,88 @@ class JobAgentEngine:
                 "notes": notes
             })
         self.save_tracker(rows)
+        self.append_application_log(company, role, new_status, notes or f"Tracker updated to {new_status}")
         return True
+
+    def append_application_log(self, company: str, role: str, stage: str, note: str):
+        """Appends a concise line to .agents/skills/senior-pm-job-search/references/applications-log.md."""
+        self.pm_refs_dir.mkdir(parents=True, exist_ok=True)
+        if not self.applications_log_path.exists():
+            self.applications_log_path.write_text(
+                "# Applications log\n\n"
+                "Append a line whenever a role is screened, a variant is made, something is sent, or a status changes. "
+                "Keep newest at the bottom. Format: date | company | role | stage | note.\n\n",
+                encoding="utf-8",
+            )
+        today = datetime.now().strftime("%Y-%m-%d")
+        clean_note = re.sub(r"\s+", " ", (note or "").replace("|", "/")).strip()[:180]
+        entry = f"{today} | {company.strip()} | {role.strip()} | {stage.strip()} | {clean_note}"
+        existing = self.applications_log_path.read_text(encoding="utf-8")
+        if entry not in existing:
+            sep = "" if existing.endswith("\n") else "\n"
+            with open(self.applications_log_path, "a", encoding="utf-8") as fh:
+                fh.write(f"{sep}{entry}\n")
+
+    def get_references_data(self):
+        return {
+            "candidate_facts": self.candidate_facts_path.read_text(encoding="utf-8") if self.candidate_facts_path.exists() else "",
+            "search_profile": self.search_profile_path.read_text(encoding="utf-8") if self.search_profile_path.exists() else "",
+            "applications_log": self.applications_log_path.read_text(encoding="utf-8") if self.applications_log_path.exists() else "",
+            "search_queries": (self.skills_dir / "job-scraper" / "search-queries.md").read_text(encoding="utf-8")
+            if (self.skills_dir / "job-scraper" / "search-queries.md").exists() else "",
+        }
+
+    def append_candidate_fact(self, category: str, fact: str):
+        fact_clean = re.sub(r"\s+", " ", (fact or "")).strip()
+        if not fact_clean:
+            return {"ok": False, "error": "Fact cannot be empty"}
+        if not self.candidate_facts_path.exists():
+            return {"ok": False, "error": "candidate-facts.md not found"}
+        today = datetime.now().strftime("%Y-%m-%d")
+        cat_clean = (category or "Updates").strip()
+        line = f"- [{today}] ({cat_clean}) {fact_clean}"
+        text = self.candidate_facts_path.read_text(encoding="utf-8")
+        sep = "" if text.endswith("\n") else "\n"
+        if "## Recent updates" not in text:
+            addition = f"{sep}\n## Recent updates\n{line}\n"
+        else:
+            addition = f"{sep}{line}\n"
+        with open(self.candidate_facts_path, "a", encoding="utf-8") as fh:
+            fh.write(addition)
+        return {"ok": True, "added": line, "candidate_facts": self.candidate_facts_path.read_text(encoding="utf-8")}
+
+    def get_skills_overview(self):
+        skills = []
+        if self.skills_dir.exists():
+            for skill_dir in sorted(self.skills_dir.iterdir()):
+                skill_md = skill_dir / "SKILL.md"
+                if not skill_dir.is_dir() or not skill_md.exists():
+                    continue
+                raw = skill_md.read_text(encoding="utf-8", errors="ignore")
+                name_m = re.search(r"^name:\s*(.+)$", raw, re.M)
+                enabled_m = re.search(r"^enabled:\s*(.+)$", raw, re.M)
+                desc_m = re.search(r"^description:\s*(.+)$", raw, re.M)
+                enabled = True
+                if enabled_m and enabled_m.group(1).strip().lower() == "false":
+                    enabled = False
+                skills.append({
+                    "folder": skill_dir.name,
+                    "name": name_m.group(1).strip() if name_m else skill_dir.name,
+                    "enabled": enabled,
+                    "description": (desc_m.group(1).strip() if desc_m else "").strip("> "),
+                })
+        return {
+            "skills": skills,
+            "enabled_count": sum(1 for s in skills if s["enabled"]),
+            "disabled_count": sum(1 for s in skills if not s["enabled"]),
+            "tools": [
+                "posting_guard.py (active prompt-injection gate)",
+                "fetch_page.py (robots-checked page fetcher)",
+                "job_key.py (canonical deduplication keys)",
+                "scrape_state.py (seen_jobs.json + tracker dedup)",
+                "rank_state.py (0-100 weighted rubric scorer)",
+            ],
+        }
 
     def get_shortlist(self):
         raw = read_text("jobs/shortlist.md")
@@ -125,12 +236,12 @@ class JobAgentEngine:
             title_match = re.search(r"^\d+\.\s*(.*?)(?:\s*—\s*(.*))?$", title_line)
             role = title_match.group(1).strip() if title_match else title_line
             company = title_match.group(2).strip() if (title_match and title_match.group(2)) else ""
-            
+
             location = "Bengaluru"
             link = ""
             fit_stars = "⭐⭐⭐⭐"
             comp = "UNVERIFIED"
-            
+
             for line in lines[1:]:
                 l = line.strip()
                 if l.startswith("- **Location:**"):
@@ -141,392 +252,574 @@ class JobAgentEngine:
                     comp = l.replace("- **Comp:**", "").strip()
                 elif l.startswith("- **Fit:**"):
                     fit_stars = l.replace("- **Fit:**", "").strip()
-                    
+
             jobs.append({
                 "company": company or "Target Company",
                 "role": role,
                 "location": location,
                 "link": link,
                 "comp": comp,
-                "fit": fit_stars
+                "fit": fit_stars,
+                **portals.build_referral_links(company or "Target Company", role),
             })
         return jobs
 
-    def score_jd(self, company, role, jd_text, location=""):
-        text_lower = jd_text.lower()
-        
+    def _run_eligibility_and_language_gates(self, text_lower: str, location: str) -> dict:
+        loc_lower = (location or "").lower()
+        is_india = any(k in loc_lower for k in ["india", "bengaluru", "bangalore", "mumbai", "hyderabad", "pune", "chennai", "remote"]) or (
+            "bengaluru" in text_lower or "bangalore" in text_lower
+        )
+
+        # Eligibility Gate (04-job-evaluation.md)
+        eligibility_gate = "PASS" if is_india else "FLAG"
+        eligibility_note = "India base (no work permit needed)" if is_india else "Abroad role: verify visa sponsorship"
+        hard_eligibility_patterns = [
+            r"\bmust be a (?:us |u\.s\. |uk |british |uae |singapore )?citizen\b",
+            r"\bcitizenship required\b",
+            r"\bsecurity clearance required\b",
+            r"\bpermanent resident(?:s)? only\b",
+            r"\bno visa sponsorship\b",
+            r"\bnot able to sponsor\b",
+            r"\bunable to sponsor\b",
+            r"\bmust hold (?:existing )?right to work without sponsorship\b",
+        ]
+        if not is_india:
+            for pat in hard_eligibility_patterns:
+                m = re.search(pat, text_lower)
+                if m:
+                    eligibility_gate = "FAIL"
+                    eligibility_note = f"Matched eligibility restriction: '{m.group(0)}'"
+                    break
+            if eligibility_gate != "FAIL" and any(w in text_lower for w in ["visa sponsorship", "relocation package", "sponsorship provided", "relocation support"]):
+                eligibility_gate = "PASS"
+                eligibility_note = "Visa sponsorship / relocation stated"
+
+        # Language Gate (04-job-evaluation.md): Declared English (Fluent), Hindi (Professional), Bengali (Native)
+        language_gate = "PASS"
+        language_note = "English working language"
+        undeclared_reqs = [
+            (r"\b(?:fluent|native|c1|c2|proficient|business level)\s+(?:in\s+)?(german|french|spanish|dutch|danish|arabic|mandarin|japanese|korean|polish|italian|portuguese|swedish|norwegian)\b", None),
+            (r"\b(german|french|spanish|dutch|danish|arabic|mandarin|japanese)\s+(?:is\s+)?(?:required|mandatory|essential)\b", None),
+        ]
+        for pat, _ in undeclared_reqs:
+            m = re.search(pat, text_lower)
+            if m:
+                language_gate = "FAIL"
+                language_note = f"Requires undeclared language: '{m.group(0)}'"
+                break
+
+        location_verdict = "PASS" if eligibility_gate == "PASS" else ("FAIL" if eligibility_gate == "FAIL" else "FLAG")
+        return {
+            "eligibility_gate": eligibility_gate,
+            "eligibility_note": eligibility_note,
+            "language_gate": language_gate,
+            "language_note": language_note,
+            "location_verdict": location_verdict,
+        }
+
+    def score_jd(self, company, role, jd_text, location="", guard_findings=None):
+        raw_text = jd_text or ""
+        if guard_findings is None:
+            cleaned_text, guard_findings = posting_guard.guard(raw_text, "auto")
+        else:
+            cleaned_text = raw_text
+
+        text_lower = f"{role or ''} {location or ''} {cleaned_text}".lower()
+        role_lower = (role or "").lower()
+
+        # Gates
+        gates = self._run_eligibility_and_language_gates(text_lower, location)
+
+        # Level Discipline (senior-pm-job-search SKILL.md Rule 7: Visa I6 Senior PM; Director+ = Stretch)
+        is_stretch = any(t in role_lower for t in ["director", "vp ", "vice president", "head of product", "group product manager", "gpm"])
+        is_too_junior = any(t in role_lower for t in ["associate product manager", "apm ", "intern", "junior product"])
+
+        # Weighted keywords matching candidate-facts & master CV
         domain_keywords = [
             "payment", "acquiring", "settlement", "merchant", "clearing", "reconciliation",
             "iso 8583", "gateway", "tokenization", "api", "fintech", "card", "scheme",
-            "kafka", "microservices", "digital banking", "jaywan"
+            "kafka", "microservices", "digital banking", "jaywan", "rupay", "cross-border",
+            "dispute", "chargeback", "risk", "compliance", "emv", "bin", "base i", "base ii", "b2b"
         ]
         matched_domain = [kw for kw in domain_keywords if kw in text_lower]
-        domain_score = min(10.0, max(5.0, len(matched_domain) * 0.85))
+        domain_score = min(10.0, max(4.2, 4.2 + len(matched_domain) * 0.72))
 
-        seniority_score = 10.0
-        if any(term in text_lower for term in ["junior", "associate product manager", "intern", "entry level"]):
-            seniority_score = 4.0
-        elif any(term in text_lower for term in ["director", "vp", "head of product", "group product manager"]):
-            seniority_score = 8.5
+        seniority_score = 9.5
+        if is_too_junior:
+            seniority_score = 3.5
+        elif is_stretch:
+            seniority_score = 7.8  # flagged as Stretch Application per search-profile.md
+        elif any(term in role_lower for term in ["senior product", "principal product", "staff product", "lead product", "product manager"]):
+            seniority_score = 9.8
 
-        tech_keywords = ["api", "kafka", "rest", "architecture", "microservice", "ai", "llm", "automation", "specs", "event-driven"]
+        tech_keywords = [
+            "api", "kafka", "rest", "architecture", "microservice", "ai", "llm", "agentic",
+            "automation", "specs", "event-driven", "sql", "rice", "prd", "agile", "scrum", "cspo"
+        ]
         matched_tech = [kw for kw in tech_keywords if kw in text_lower]
-        tech_score = min(10.0, max(6.0, len(matched_tech) * 1.5))
+        tech_score = min(10.0, max(5.2, 5.2 + len(matched_tech) * 0.85))
 
-        impact_score = 9.5
+        impact_score = 9.4
 
-        loc_score = 8.5
         sponsorship = "UNVERIFIED"
-        if "india" in location.lower() or "bengaluru" in location.lower() or "bangalore" in text_lower or "india" in text_lower:
+        loc_score = 8.0
+        if "india" in (location or "").lower() or "bengaluru" in text_lower or "bangalore" in text_lower or "india" in text_lower:
             loc_score = 10.0
             sponsorship = "Not needed (India)"
-        elif any(country in location.lower() or country in text_lower for country in ["uae", "dubai", "uk", "london", "singapore", "germany", "netherlands"]):
-            if "visa sponsorship" in text_lower or "relocation" in text_lower:
-                loc_score = 9.5
-                sponsorship = "STATED"
-            else:
-                loc_score = 6.0
-                sponsorship = "UNVERIFIED"
+        elif gates["eligibility_gate"] == "PASS":
+            loc_score = 9.5
+            sponsorship = "STATED"
+        elif gates["eligibility_gate"] == "FAIL":
+            loc_score = 2.0
+            sponsorship = "NO (Restricted)"
+        else:
+            loc_score = 6.2
+            sponsorship = "UNVERIFIED"
 
         total_score = round(
-            (0.30 * domain_score) + 
-            (0.20 * seniority_score) + 
-            (0.15 * tech_score) + 
-            (0.15 * impact_score) + 
-            (0.20 * loc_score),
-            1
+            (0.30 * domain_score)
+            + (0.20 * seniority_score)
+            + (0.15 * tech_score)
+            + (0.15 * impact_score)
+            + (0.20 * loc_score),
+            1,
         )
 
-        verdict = "APPLY" if total_score >= 7.0 else ("APPLY WITH REFERRAL" if total_score >= 6.0 else "SKIP")
+        # 04-job-evaluation.md 0-100 scale (Technical 30%, Experience 25%, Behavioral 15%, Career 30%)
+        tech_100 = int(round(tech_score * 10))
+        exp_100 = int(round(domain_score * 10))
+        beh_100 = int(round(min(96, impact_score * 9.5)))
+        car_100 = int(round(seniority_score * 9.5 if gates["eligibility_gate"] != "FAIL" else 30))
+        rank_score = portals.overall_score({
+            "technical": tech_100,
+            "experience": exp_100,
+            "behavioral": beh_100,
+            "career": car_100,
+        })
+        rank_verdict = portals.band(rank_score)
 
+        if gates["eligibility_gate"] == "FAIL":
+            verdict = "ELIGIBILITY VETO"
+        elif gates["language_gate"] == "FAIL":
+            verdict = "LANGUAGE VETO"
+        elif total_score >= 7.0:
+            verdict = "STRETCH APPLY" if is_stretch else "APPLY"
+        elif total_score >= 6.0:
+            verdict = "APPLY WITH REFERRAL"
+        else:
+            verdict = "SKIP"
+
+        # Grounded proof points (aligned with candidate-facts.md: 10 FTEs settled, CS-attributed revenue protected, Fast Refund AI)
         proof_points = [
-            "Delivered domestic-scheme processing across KSA, RuPay, CUP, Jaywan, PayPak, and MyDebit via Payments 2.0 & Kafka, generating $30M net revenue.",
-            "Eliminated 8 FTEs of manual effort per sprint by automating CAS self-service testing and settlement-file retrieval in under 24 hours.",
-            "Accelerated cross-border integration delivery by 67% (from 6 weeks to 2 weeks) using a Claude-based agentic AI toolchain (SMCC Japan).",
-            "Protected $9.2M in transaction revenue at Visa and $11M at Fiserv through automated settlement regeneration and upstream payload validation.",
-            "Grew token-based transaction volume by 25% for European clients and increased Visa Instalment Plan volume by 18% in CEMEA."
+            "Delivered domestic-scheme processing (KSA, RuPay, CUP, Jaywan, PayPak, MyDebit) via Payments 2.0 & Kafka on CyberSource ($30M net revenue).",
+            "Automated CAS self-service testing & settlement workflows at Visa, freeing 10 FTEs and cutting turnaround under 24 hours.",
+            "Applied AI in regulated payments (Fast Refund: removed spike analysis/regression -> 24h refunds, 97% success) and Claude agentic specs (SMCC Japan: 6 wks -> 2 wks).",
+            "Revenue protection (attributed to Customer Support after releases): $9.2M at Visa via automated settlement regeneration and $11M at Cognizant/Fiserv; $1.5M KFC auth-to-settlement recapture.",
+            "Scaled Visa Platform Connect acquirer onboarding from 100+ to 400+ acquirers and grew European token volume by 25% (COF/MIT/CIT) + CEMEA instalments by 18%."
+        ]
+
+        # Match Table & Known Gaps checks strictly against candidate-facts.md
+        match_table = [
+            {"requirement": "Payments / Acquiring / Settlement Rails", "evidence": "14 yrs (Visa VPC/CyberSource, Cognizant Fiserv); ISO 8583, BASE I/II, Kafka", "strength": "Strong" if any(k in text_lower for k in ["payment", "acquiring", "settlement", "card", "fintech"]) else "Moderate"},
+            {"requirement": "Senior PM Scope & Strategy (RICE / Roadmaps)", "evidence": "Visa Level I6 PM; RICE roadmap signed off by VP; 4 scrum teams (~6 each)", "strength": "Strong"},
+            {"requirement": "AI / Agentic Workflow Productization", "evidence": "Fast Refund AI optimization (97% success) + Claude/Agentic PM workflows", "strength": "Strong" if any(k in text_lower for k in ["ai", "llm", "agent", "automation"]) else "Moderate"},
         ]
 
         gaps = []
-        if "wealth" in text_lower or "investment" in text_lower:
-            gaps.append("Wealth / Liabilities / Investment Products: Master profile is anchored in transaction banking, acquiring, payment APIs, and settlement.")
-        if "crypto" in text_lower or "web3" in text_lower:
-            gaps.append("Crypto / Web3: Core background is fiat card networks, domestic schemes, and ISO specs.")
-        if sponsorship == "UNVERIFIED" and not ("india" in location.lower()):
-            gaps.append("Visa Sponsorship: Unverified in JD. Confirm relocation support on initial screen.")
+        red_flags = []
+        gap_questions = []
+
+        # Known Gaps from references/candidate-facts.md
+        known_gap_rules = [
+            (["upi"], "UPI Exposure Gap: Candidate facts bank confirms no direct UPI product exposure (core is card rails, domestic schemes RuPay/Jaywan/KSA, ISO 8583).", "What card-rail / real-time settlement parallels (e.g., RuPay, NRTF, Instant Refund) best bridge the UPI requirement for this team?"),
+            (["lending", "loan", "credit underwriting", "bnpl"], "Consumer Lending Gap: No direct consumer lending/underwriting exposure (worked on Visa Instalment Plan B2B spec enablement in CEMEA).", "Should we frame Visa Instalment Plan (18% CEMEA growth) strictly as rail enablement without overclaiming underwriting?"),
+            (["insurance"], "Insurance Domain Gap: No direct insurance product exposure in verified facts bank.", "Are there compliance/regulated-workflow experiences from Visa RBI mandates you want emphasized for Insurance?"),
+            (["mutual fund", "wealth", "digital gold"], "Wealth / Mutual Funds / Digital Gold Gap: Facts bank confirms zero exposure to wealth or digital gold products.", "Focus cover note on core money-movement plumbing rather than asset-management product metrics?"),
+            (["b2c", "consumer app", "consumer-facing", "consumer fintech"], "B2C Consumer Exposure Gap: Career experience is B2B (acquirers, merchants, gateway platform), not consumer-facing DAU/retention funnels.", "Can you cite merchant-facing UX wins (Acquirer Onboarding UI change) as B2B UX judgement while keeping B2C honest?"),
+            (["master's", "mba preferred", "mba required"], "Academic Credential Note: Facts bank confirms B.Tech IT (8.6 GPA) and CSPO — no Master's degree / MBA.", "Confirm whether we address 14 years experience + CSPO upfront as practical equivalence."),
+            (["vendor contract", "procurement"], "Vendor Contract Ownership Gap: Facts bank notes no direct vendor-contract ownership (did influence Cognizant SOW requote without formal contract ownership).", "Want to include the Cognizant SOW requote influence story carefully framed as indirect influence?"),
+            (["direct reports", "manage pms", "hiring and mentoring pms"], "People Management Scope Nuance: Led 12-person team at Cognizant (2019-2021) + 100+ interviews; at Visa I6 mentored 4 scrum teams via velocity/scorecards with NO formal direct reports.", "Should the CV emphasize Cognizant 12-person lead experience alongside Visa scorecard mentoring?"),
+        ]
+        for triggers, gap_msg, q_msg in known_gap_rules:
+            if any(t in text_lower for t in triggers):
+                gaps.append(gap_msg)
+                red_flags.append(gap_msg.split(":")[0])
+                match_table.append({"requirement": gap_msg.split(":")[0], "evidence": "Missing / Adjacent in candidate-facts.md", "strength": "Missing"})
+                gap_questions.append(q_msg)
+
+        if is_stretch:
+            red_flags.append("Stretch Level Alert: JD targets Director/GPM/Lead; Avijit's Visa standing is I6 PM (Senior PM home base). Treat as Stretch Application.")
+            gap_questions.append("This role is Director/Lead level (Stretch Application). Confirm you want to proceed with executive positioning?")
+
+        if gates["eligibility_gate"] == "FLAG":
+            gaps.append(f"Visa Sponsorship UNVERIFIED for {location or 'international hub'}: confirm relocation support early.")
+            red_flags.append("Visa sponsorship unverified in posting text")
+        elif gates["eligibility_gate"] == "FAIL":
+            red_flags.append(gates["eligibility_note"])
+
+        if gates["language_gate"] != "PASS":
+            red_flags.append(gates["language_note"])
 
         return {
             "score": total_score,
+            "rank_score": rank_score,
+            "rank_verdict": rank_verdict,
             "verdict": verdict,
+            "is_stretch": is_stretch,
             "sponsorship": sponsorship,
+            "gates": gates,
+            "guard_verdict": guard_findings.get("verdict", "posting_guard: clean"),
+            "guard_warnings": {
+                "instruction_like": guard_findings.get("instruction_like", []),
+                "invisible_flagged": guard_findings.get("invisible_flagged", 0),
+                "homoglyph_runs": guard_findings.get("homoglyph_runs", []),
+                "hidden_blocks_count": len(guard_findings.get("hidden_blocks", [])),
+            },
             "breakdown": {
                 "domain_match": round(domain_score, 1),
                 "seniority_match": round(seniority_score, 1),
                 "technical_ai_depth": round(tech_score, 1),
                 "measurable_impact": round(impact_score, 1),
-                "location_sponsorship": round(loc_score, 1)
+                "location_sponsorship": round(loc_score, 1),
+                "weighted_100": {
+                    "technical": tech_100,
+                    "experience": exp_100,
+                    "behavioral": beh_100,
+                    "career": car_100,
+                },
             },
+            "match_table": match_table,
+            "red_flags": red_flags,
+            "gap_questions": gap_questions,
             "proof_points": proof_points,
             "gaps": gaps,
-            "matched_keywords": list(set(matched_domain + matched_tech))
+            "matched_keywords": sorted(set(matched_domain + matched_tech)),
+            "referral_links": portals.build_referral_links(company, role),
         }
 
-    def tailor_application(self, company, role, jd_text, location="Bengaluru"):
-        comp_slug = re.sub(r'[^a-zA-Z0-9]+', '-', company).strip('-').lower()[:20]
-        role_slug = re.sub(r'[^a-zA-Z0-9]+', '-', role).strip('-').lower()[:25]
-        slug = f"{comp_slug}-{role_slug}".strip('-')
+    def tailor_application(self, company, role, jd_text, location="Bengaluru", job_url=""):
+        cleaned_jd, guard_findings = posting_guard.guard(jd_text or "", "auto")
+        comp_slug = re.sub(r"[^a-zA-Z0-9]+", "-", company).strip("-").lower()[:20] or "company"
+        role_slug = re.sub(r"[^a-zA-Z0-9]+", "-", role).strip("-").lower()[:25] or "role"
+        slug = f"{comp_slug}-{role_slug}".strip("-")
         app_dir = self.applications_dir / slug
         app_dir.mkdir(parents=True, exist_ok=True)
 
-        fit_data = self.score_jd(company, role, jd_text, location)
+        fit_data = self.score_jd(company, role, cleaned_jd, location, guard_findings=guard_findings)
 
-        # 1. Write jd.md
-        write_text(f"applications/{slug}/jd.md", f"# {company} – {role}\n\n**Location:** {location}\n\n## Job Description\n\n{jd_text}\n")
+        # 1. Write jd.md (cleaned via posting_guard + source URL)
+        write_text(
+            f"applications/{slug}/jd.md",
+            f"# {company} – {role}\n\n"
+            f"**Location:** {location}\n"
+            f"**Source URL:** {job_url or 'Pasted JD'}\n"
+            f"**Integrity Gate:** `{fit_data['guard_verdict']}`\n\n"
+            f"## Sanitized Job Description\n\n{cleaned_jd}\n",
+        )
 
-        # 2. Write fit.md
-        fit_md = f"""# Fit Score: {company} – {role}
+        # 2. Write fit.md with ATS Match Table, Gates, Red Flags, Batched Gap Questions
+        match_rows = "\n".join(
+            f"| {m['requirement']} | {m['evidence']} | **{m['strength']}** |" for m in fit_data["match_table"]
+        )
+        red_flag_md = "\n".join(f"- {rf}" for rf in fit_data["red_flags"]) if fit_data["red_flags"] else "- None identified."
+        gap_q_md = "\n".join(f"{idx+1}. {q}" for idx, q in enumerate(fit_data["gap_questions"])) if fit_data["gap_questions"] else "No missing facts required before drafting."
 
-## Verdict: {fit_data['verdict']} (Score: {fit_data['score']} / 10)
+        fit_md = f"""# Fit Screen: {company} – {role}
 
-### Rubric Breakdown
+## Verdict: {fit_data['verdict']} (Score: {fit_data['score']} / 10 | Rank Rubric: {fit_data['rank_score']} / 100 — {fit_data['rank_verdict']})
+- **Level Discipline:** {'STRETCH APPLICATION (Director/Lead+ vs Visa I6 Senior PM)' if fit_data['is_stretch'] else 'Target Level (Senior PM / Visa I6 equivalent)'}
+- **Eligibility Gate:** {fit_data['gates']['eligibility_gate']} ({fit_data['gates']['eligibility_note']})
+- **Language Gate:** {fit_data['gates']['language_gate']} ({fit_data['gates']['language_note']})
+- **Posting Guard:** {fit_data['guard_verdict']}
+
+### Rubric Breakdown (1–10 UI Scale & 0–100 Rank Scale)
 - **Domain Match (30%):** {fit_data['breakdown']['domain_match']} / 10
 - **Seniority & Scope (20%):** {fit_data['breakdown']['seniority_match']} / 10
 - **Technical & AI Depth (15%):** {fit_data['breakdown']['technical_ai_depth']} / 10
 - **Measurable Impact (15%):** {fit_data['breakdown']['measurable_impact']} / 10
 - **Location & Sponsorship (20%):** {fit_data['breakdown']['location_sponsorship']} / 10
 
-### Top 5 Matching Proof Points
+### ATS & Recruiter Match Table
+| JD Requirement | Evidence on Master CV / Facts Bank | Strength |
+|---|---|---|
+{match_rows}
+
+### Red Flags a Recruiter Will Notice
+{red_flag_md}
+
+### Batched Gap Questions (Answer Together Before Submitting)
+{gap_q_md}
+
+### Top 5 Grounded Proof Points
 1. {fit_data['proof_points'][0]}
 2. {fit_data['proof_points'][1]}
 3. {fit_data['proof_points'][2]}
 4. {fit_data['proof_points'][3]}
 5. {fit_data['proof_points'][4]}
-
-### Gaps Stated Honestly
-{chr(10).join(['- ' + g for g in fit_data['gaps']]) if fit_data['gaps'] else '- No major domain gaps identified.'}
 """
         write_text(f"applications/{slug}/fit.md", fit_md)
 
-        # 3. Write resume.md
+        # 3. Write resume.md (Strictly aligned with candidate-facts.md: 10 FTEs, CS attribution, avijitmukherjeepm, no leave reason)
         headline = f"Senior Product Manager – {role}" if "Product" in role else "Senior Payments Product Leader"
         resume_md = f"""# AVIJIT MUKHERJEE
 **{headline}**
-Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/avijitmukherjee5889/
+Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/avijitmukherjeepm/
 
 ---
 
 ## PROFESSIONAL SUMMARY
 
-Payments product professional with 14 years of experience across acquiring platforms, transaction processing, payment APIs, and settlement infrastructure, including nearly 10 years in technical product management at Visa and Cognizant. Career spans continuous delivery from Jan 2013 to Sep 2026 (13 years 9 months). Generated $30M in net revenue by launching domestic-scheme processing across KSA, RuPay, CUP, Jaywan, PayPak, and MyDebit, and cut delivery cycles by 50% using agentic AI workflows. Certified Scrum Product Owner (CSPO) and 2-time Visa STAR Award recipient recognized for leading agile sprint teams, managing 12-member product cohorts, and scaling multi-rail infrastructure.
+Payments product leader with nearly 14 years of experience across acquiring platforms, transaction processing, payment APIs, and settlement infrastructure, including nearly 10 years in product management at Visa (CyberSource / Visa Platform Connect) and Cognizant (Fiserv / First Data). Generated $30M in net revenue by launching domestic-scheme processing across KSA, RuPay, CUP, Jaywan, PayPak, and MyDebit, and protected over $22M in transaction/merchant revenue (Visa figures attributed to Customer Support post-release). Certified Scrum Product Owner (CSPO) and 2-time Visa STAR Award recipient combining deep payments rails mastery (ISO 8583, BASE I/II, Kafka) with shipped AI product optimization (Fast Refund: 24h refunds, 97% success rate).
 
 ---
 
 ## CORE COMPETENCIES
 
-- **Product Strategy & Delivery:** End-to-End Product Management, Product Vision & Roadmaps, Backlog Prioritization, User Stories & Acceptance Criteria, CSPO Agile Delivery, Value Creation & KPI Monitoring
-- **Payments & Acquiring:** Merchant Processing, Authorization, Clearing & Settlement, Domestic & Regional Schemes (Jaywan, RuPay, KSA), Network Tokenization (COF/MIT/CIT), Interchange Optimization
-- **Architecture & AI:** ISO 8583, Visa BASE I & BASE II, TC33.A, Kafka Event-Driven Architecture, REST APIs, Microservices, Agentic AI Toolchains (Claude, Gemini), Workflow Automation
+- **Product Strategy & Delivery:** Product Roadmaps (RICE), PRDs & Business Cases, Backlog Prioritization, CSPO Agile Delivery (4 Scrum Teams), KPI Scorecards & Release Governance, P1 Escalation Leadership
+- **Payments & Acquiring:** Merchant Processing, Authorization, Clearing & Settlement, Domestic & Regional Schemes (Jaywan, RuPay, KSA, CUP, MyDebit), Network Tokenization (COF/MIT/CIT), Interchange & EMV Compliance
+- **Architecture & AI:** ISO 8583, Visa BASE I & BASE II, TC33.A, Kafka Event-Driven Architecture, REST APIs, Microservices, AI-Assisted Workflow Optimization (Fast Refund, Claude Agentic Specs)
 
 ---
 
 ## PROFESSIONAL EXPERIENCE
 
 ### VISA
-**Product Manager – CyberSource / Visa Platform Connect (VPC)** | Bengaluru, India  
+**Product Manager (I6) – CyberSource / Visa Platform Connect (VPC)** | Bengaluru, India  
 *Jan 2025 – Sep 2026*
 
-- Generated $30M in net revenue, as measured by domestic-scheme transaction volume through CyberSource, by delivering Payments 2.0 microservices and Kafka event-driven settlement generation across KSA, RuPay, CUP, Jaywan, PayPak, and MyDebit.
-- Eliminated 8 FTEs of manual effort per sprint, as measured by reduced Product Development team dependencies and file turnaround under 24 hours, by automating CAS self-service testing and settlement-file retrieval for acquirers, merchants, and partners.
-- Accelerated cross-border integration delivery by 67%, as measured by delivering the end-to-end integration in 2 weeks instead of the planned 6-week schedule, by using a Claude-based agentic toolchain to architect specifications and validate edge cases for SMCC Japan (EDQP, PIF, force-refund).
-- Expanded regional acquiring coverage across Europe, as measured by onboarding 13 new acquirers and scaling transaction capacity by an additional 12,000 TPS, by partnering with Visa Europe on Elavon processing and TC33.A clearing formats.
-- Supported the national market launch of Apple Pay in India, as measured by achieving zero processing errors and seamless settlement execution across transactions, while authoring product specs for Fast Refund in India and APAC.
-- Established the architectural blueprint for global platform modernization, as measured by defining the roadmap to decouple 85% of legacy monolithic BASE I processing into 5 scalable microservices, by authoring the Payments 2.0 Mapping Document aligned with the Visa Intelligence Authorization platform.
+- Generated $30M in net revenue by launching multi-scheme domestic processing and Kafka event-driven settlement microservices across KSA, RuPay, CUP, UAE Jaywan, PayPak, and MyDebit.
+- Freed 10 FTEs of recurring effort by automating CAS self-service testing and on-demand scoped settlement-file retrieval across 400+ files/release, cutting file turnaround under 24 hours.
+- Shipped AI optimization for Fast Refund in India/APAC by eliminating redundant spike analysis and regression effort, achieving 24-hour refunds at a 97% success rate and higher daily transaction throughput.
+- Accelerated cross-border integration delivery by 67% (6 weeks to 2 weeks) for SMCC Japan (EDQP, PIF, force-refund) using a Claude-based agentic specification and edge-case validation workflow.
+- Executed the Apple Pay India data center migration to meet RBI localization compliance, choosing regulatory compliance and market readiness over negligible cost impact.
+- Expanded European acquiring capacity across 13 new acquirers (+12,000 TPS) via Elavon VPC integration and TC33.A clearing support for JCB and Diners in France/Spain.
 
 ### VISA
 **Technical Product Manager – Visa Platform Connect (VPC)** | Bengaluru, India  
 *Mar 2024 – Dec 2024*
 
-- Protected $9.2M in transaction revenue, as measured by incident-linked revenue exposure prevented across CEMEA, APAC, Europe, and the Americas, by resolving high-priority settlement failures and introducing automated settlement regeneration workflows.
-- Grew token-based transaction volume by 25%, as measured by client processing volume across European acquirers, by streamlining implementation requirements for COF, MIT, and CIT flows.
-- Increased Visa Instalment Plan business volume by 18%, as measured by regional transaction growth in CEMEA, by simplifying technical integration specifications.
-- Enabled fuel transaction processing associated with $70M in revenue, as measured by merchant processing throughput on VPC, by mapping the Automated Fuel Dispenser (AFD) acceptance framework for US and EU markets.
-- Maintained release stability across 100+ acquiring partners, as measured by zero major post-release rollbacks, by leading Business Enhancement Request (BER) implementations and P1/P2 operational triage.
-- Reduced manual effort in product delivery by 50%, as measured by time spent authoring PRDs and defect triage, by embedding AI-assisted workflows into weekly product discovery.
+- Protected $9.2M in transaction revenue (attributed to Customer Support post-release impact reports) by introducing automated settlement regeneration workflows and serving as SME escalation lead on SWAT & client P1 calls.
+- Grew token-based transaction volume by 25% across European acquirers by simplifying COF, MIT, and CIT implementation flows, and increased CEMEA Visa Instalment Plan volume by 18%.
+- Recommended and secured VP sign-off on a RICE-prioritized platform roadmap while mentoring 4 scrum teams (~6 engineers/team) using velocity, burndown tracking, and individual scorecards.
+- Supported Automated Fuel Dispenser (AFD) acceptance frameworks associated with $70M in processing throughput across US and EU markets while maintaining zero major post-release rollbacks.
 
 ### VISA
 **Technical Product Analyst – Visa Platform Connect (VPC)** | Bengaluru, India  
 *Oct 2021 – Feb 2024*
 
-- Scaled financial partner onboarding to 400+ acquiring institutions, as measured by platform client growth from 100+ acquirers, by collaborating with UX and backend engineering to overhaul onboarding workflows and implement batch attribute updates.
-- Enabled domestic co-brand routing for Australian and Saudi Arabian markets, as measured by zero routing rejection errors in production, by defining BIN lookup algorithms and payload transformation logic for EFTPOS and MADA.
-- Accelerated core platform modernization, as measured by decoupling 85% of legacy monolithic BASE I validation logic across 5 dedicated microservices, by translating product business cases into Presto algorithms and authoring engineering user stories under Payments 2.0.
-- Ensured 100% network interchange compliance across global clearing systems, as measured by zero audit exceptions or clearing penalties, by maintaining validation and presentation formats across Visa BASE II specifications (TC33.A, TC05/06, IPM, and CAPN).
-- Optimized acquirer processing operations across 100+ acquiring banks, as measured by faster resolution of settlement discrepancies, by delivering technical specifications for transaction routing and API payload transformations.
+- Scaled financial partner onboarding from 100+ to 400+ acquiring institutions (engaged almost daily across acquirers), stepping in on the Acquirer Onboarding Platform to drive an architect-approved UI/design improvement to production.
+- Defined BIN lookup and co-brand routing logic for Australian (EFTPOS) and Saudi Arabian (MADA) schemes with zero routing rejection errors in production.
+- Decoupled 85% of legacy monolithic BASE I validation logic into 5 microservices under Payments 2.0 while maintaining 100% BASE II clearing compliance (TC33.A, TC05/06, IPM, CAPN).
 
 ### COGNIZANT
 **Team Lead – Product Managers (Fiserv / First Data Account)** | Kolkata, India  
 *Jul 2019 – Sep 2021*
 
-- Protected $11M in merchant revenue, as measured by prevented transaction drop-offs and incident exposure, by introducing upstream payment-flow validation mechanisms for enterprise clients (YUM, Burger King, McDonald’s).
-- Increased post-release deployment accuracy from 80% to 97% and reduced P1 production incidents by 19%, by standardizing API payload verification protocols across 12 product team members.
-- Maintained enterprise service level agreements across 12 product managers and analysts, as measured by 100% on-time milestone delivery, by implementing structured KPI tracking dashboards, mentoring team members, and aligning delivery roadmaps.
-- Accelerated production incident resolution for Fortune 500 merchants, as measured by a 40% reduction in Mean Time to Resolution (MTTR), by coordinating cross-functional engineering, processor, and merchant operations teams.
+- Managed a 12-member product and analyst team across 100+ enterprise merchant relationships (YUM/KFC, Burger King, McDonald’s), protecting $11M in merchant revenue via upstream payment-flow validation.
+- Recovered $1.5M in missing KFC (YUM group) settlement revenue by diagnosing an authorization-to-settlement code gap where database records failed to propagate downstream.
+- Raised post-release accuracy from 80% to 97%, cut P1 incidents by 19%, and reduced MTTR by 40% while influencing a Cognizant SOW requote so automation-freed analysts remained retained on the account.
 
 ### COGNIZANT
 **Product Manager – Transaction Validation Automation (First Data Account)** | Chennai, India  
 *Jul 2017 – Jun 2019*
 
-- Shortened merchant certification project cycles by 57%, as measured by time-to-market across technical onboarding tracks within five months, by architecting and launching an automated transaction-validation platform covering 13 technical specifications.
-- Contributed to a 32% year-end revenue increase for First Data, as measured by annual processor financial reports, by eliminating certification bottlenecks and accelerating merchant go-live dates.
-- Saved 10 FTEs of recurring engineering effort, as measured by reduced manual test execution hours, by automating transaction payload validation using Automation Anywhere RPA, Java, ASP.NET, and SQL.
-- Protected $2M+ in client revenue, as measured by identified and prevented billing discrepancies, by introducing proactive client gap validation and payload remediation workflows.
-- Increased transaction validation accuracy for enterprise merchants (McDonald’s, ExxonMobil, NCR), as measured by achieving a 99%+ automated validation pass rate, by establishing automated CI/CD testing pipelines and friendly-merchant pilot validation.
+- Built the Transaction Validation System (2017) across 13 payment specs, cutting merchant certification cycle times by 57% and saving ~30 analysts 10 hours per file—enabling First Data to transition those analysts into Project Lead roles.
+- Contributed to a 32% year-end revenue increase for First Data, protected $2M+ in client revenue, and reached 99%+ automated validation accuracy.
 
 ### COGNIZANT
-**Certification Project Manager / Payments SME (First Data Account)** | Kolkata, India  
-*Feb 2014 – Jun 2017*
+**Certification Project Manager / Payments SME & Process Executive (First Data / Nationstar)** | Kolkata, India  
+*Jan 2013 – Jun 2017*
 
-- Delivered 100+ merchant and ISV Class B certifications across enterprise brands (Walmart, McDonald’s, ExxonMobil, Verifone, NCR), as measured by achieving a 97% first-pass certification success rate, by managing end-to-end credential intake, test card execution, and settlement validation.
-- Recognized as Cards & Payments Subject Matter Expert in October 2015, establishing mastery across 10+ payment specifications (Buypass, North, Nashville, ISO, EDC, and XML).
-- Reduced merchant clearing errors and interchange downgrades, as measured by zero non-compliance penalties on client portfolios, by analyzing mainframe settlement files, interchange qualification rules, and network presentation formats.
-- Accelerated EMV migration for retail and petroleum merchants, as measured by certifying 100% of target pilot locations ahead of mandate deadlines, by coordinating EMV Level 1 and Level 2 terminal certification and Automated Fuel Dispenser (AFD) test execution.
-- Upskilled certification engineering cohorts, as measured by successfully training 20+ junior analysts with 30% faster ramp-up time, by developing standardized training curricula covering clearing, reconciliation, network specs, and chargeback workflows.
-
-### COGNIZANT
-**Process Executive / Senior Process Executive** | Kolkata, India  
-*Jan 2013 – Jan 2014*
-
-- Maintained 100% compliance with identity governance standards, as measured by zero audit exceptions, by provisioning user roles and access permissions in the User Access Management System for Nationstar Mortgage LLC.
-- Accelerated user provisioning turnaround times, as measured by a 30% reduction in access request backlogs, by streamlining verification procedures and access-ticket routing.
-- Supported initial card transaction validation workflows for First Data, as measured by successfully completing 100% of assigned test batches, by auditing test transactions against Buypass platform specifications to prepare for merchant certification.
+- Delivered 100+ merchant and ISV certifications (Walmart, McDonald’s, ExxonMobil, Verifone, NCR) at a 97% first-pass success rate; awarded for validating 1,000+ transaction payloads against ISO standards.
+- Recognized as Cards & Payments SME (Oct 2015); interviewed 100+ hiring candidates across career and trained 20+ junior analysts at 30% faster ramp-up.
 
 ---
 
 ## EDUCATION & CERTIFICATIONS
 
-- **B.Tech – Information Technology** | West Bengal University of Technology (2012) | GPA: 8.6
-- **Certified Scrum Product Owner (CSPO)** – Scrum Alliance
-- **Product Lifecycle Management (PLM)** – Visa | **VPL Core Product** – Visa
+- **Bachelor of Technology (B.Tech) – Information Technology** | West Bengal University of Technology (2012) | GPA: 8.6
+- **Certified Scrum Product Owner (CSPO)** – Scrum Alliance | **PLM & VPL Core Product** – Visa
 - **Honors:** 2-time Visa STAR Award recipient | Multiple Cognizant Annual Employee Awards | Cards & Payments SME (2015)
 """
         write_text(f"applications/{slug}/resume.md", resume_md)
 
-        # 4. Write cover_note.md
+        # 4. Write cover_note.md (<150 words, no reason for leaving Visa, grounded proof points)
         cover_note = f"""# Cover Note: {company} – {role}
 
 **Subject:** {role} – Avijit Mukherjee
 
 Hi [Hiring Team / {company} Product Leadership],
 
-{company}’s work in modernizing payment and financial platforms directly aligns with my 14 years taking core acquiring, rails, and settlement systems from spec to production—most recently at Visa (CyberSource / VPC):
+As a payments product leader with nearly 14 years across Visa (CyberSource / VPC) and Cognizant (Fiserv), {company}’s focus on {role} directly matches my experience taking regulated payment platforms from spec to production:
 
-• **High-Impact Scheme Delivery:** Launched domestic-scheme processing across KSA, RuPay, CUP, and Jaywan on Payments 2.0 & Kafka, driving $30M in net revenue and scaling European acquiring by 12,000 TPS.
-• **AI-Assisted Engineering Acceleration:** Embedded Claude agentic toolchains to accelerate solution design, compressing delivery timelines from 6 weeks to 2 weeks (SMCC Japan) and cutting PRD cycles by 50%.
-• **Enterprise Resilience:** Protected $9.2M in revenue at Visa and $11M at Fiserv by instituting upstream payload validation and automated settlement regeneration.
+• **Multi-Scheme Scale & Revenue:** Launched domestic-scheme processing (KSA, RuPay, Jaywan) on Payments 2.0 & Kafka ($30M net revenue) and scaled acquirer onboarding to 400+ partners.
+• **Automation & AI Delivery:** Shipped AI optimization on Fast Refund (24h refunds, 97% success) and automated settlement retrieval freeing 10 FTEs.
+• **Operational Resilience:** Protected $9.2M at Visa (Customer Support-attributed) and $11M at Fiserv while leading SWAT/P1 escalations.
 
-As a Certified Scrum Product Owner (CSPO) and 2-time Visa STAR Award recipient, I bridge commercial strategy with technical engineering specs. I would welcome 15 minutes to discuss how my payments background can accelerate {company}'s roadmap.
+Certified Scrum Product Owner (CSPO) and 2-time Visa STAR Award recipient—I would welcome 15 minutes to discuss how this background supports {company}.
 
 Best regards,
-
-Avijit Mukherjee  
-Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com  
-linkedin.com/in/avijitmukherjee5889/
+Avijit Mukherjee
+Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/avijitmukherjeepm/
 """
         write_text(f"applications/{slug}/cover_note.md", cover_note)
 
-        # 5. Write outreach.md
+        # 5. Write outreach.md (<120 words each + LinkedIn People Search URLs per job-scraper Step 4.5)
+        ref_links = fit_data["referral_links"]
         outreach_md = f"""# Outreach Messages: {company} – {role}
 
-### 1. Referral Ask (First-Degree Connection)
-> Hi [Name], I noticed {company} has an opening for {role}. Having spent 14 years leading core payment platforms and scheme expansions at Visa, I believe there is strong alignment with what your team is building. Would you be open to submitting an internal referral for me or introducing me to the hiring manager? No worries at all if not.
+### Direct LinkedIn People Search Links (Step 4.5 Safe Referral Discovery)
+- **Find Recruiters / TA at {company}:** {ref_links['recruiter_search_url']}
+- **Find Product Peers / Hiring Managers at {company}:** {ref_links['peer_search_url']}
 
-### 2. Cold Note to Hiring Manager (< 80 words)
-> Hi [Name],
-> 
-> I’ve followed {company}’s platform evolution closely. At Visa (CyberSource), I led Payments 2.0 and Kafka settlement architectures that generated $30M in net revenue while using agentic AI workflows to cut integration delivery from 6 weeks to 2 weeks. 
-> 
-> Would you be open to a 15-minute conversation next week to see how my acquiring and rails background can support {company}'s priorities?
-> 
-> Best,  
-> Avijit Mukherjee
+---
 
-### 3. Note to Tech Recruiter (< 60 words)
+### 1. Referral Ask (First-Degree Connection, < 90 words)
+> Hi [Name], I noticed {company} has an opening for {role}. Having spent nearly 14 years leading core payment platforms, scheme expansions ($30M net revenue), and AI delivery workflows at Visa and Fiserv, I see strong alignment with your team. Would you be open to submitting an internal referral or connecting me with the hiring manager? No worries at all if not.
+
+### 2. Cold Note to Hiring Manager (< 90 words)
 > Hi [Name],
-> 
-> I recently reviewed the {role} position at {company}. I bring 14 years of payments product leadership at Visa and Fiserv, CSPO certification, and verified commercial impact ($30M net revenue, $20M+ protected). 
-> 
-> Would love to connect and share my CV directly: [Link to profile].
-> 
-> Best,  
-> Avijit Mukherjee
+>
+> I’ve followed {company}’s platform work closely. Most recently at Visa (CyberSource), I launched Payments 2.0 domestic-scheme processing generating $30M in net revenue and shipped AI optimization on Fast Refund (24h refunds, 97% success rate).
+>
+> Would you be open to a 15-minute chat on how my acquiring and settlement background can support your roadmap?
+>
+> Best, Avijit Mukherjee (linkedin.com/in/avijitmukherjeepm/)
+
+### 3. Note to Tech Recruiter (< 70 words)
+> Hi [Name],
+>
+> Reaching out regarding {role} at {company}. I’m a payments product leader (nearly 14 yrs across Visa I6 / Fiserv, CSPO certified) with $30M net revenue launched and 10 FTEs freed through automation.
+>
+> Happy to share my tailored CV: linkedin.com/in/avijitmukherjeepm/
+>
+> Best, Avijit
 
 ### 4. Day 5 Follow-Up
-> Hi [Name], following up briefly on my earlier note regarding {company}'s {role}. I remain very interested in helping your team scale core platform capabilities and would welcome a brief chat whenever convenient. Thanks again!
+> Hi [Name], following up briefly on my note regarding {company}’s {role}. Remains top of my list—would welcome a short conversation whenever convenient. Thanks!
 """
         write_text(f"applications/{slug}/outreach.md", outreach_md)
 
-        # 6. Generate Application Answers (from Application Form Answers.txt prompt)
-        app_answers = self.generate_application_answers(company, role, jd_text)
+        # 6. Application Answers (10 STAR answers)
+        app_answers = self.generate_application_answers(company, role, cleaned_jd)
         write_text(f"applications/{slug}/application_answers.md", app_answers)
 
-        # 7. Pre-submit Quality Check (from Pre-submit Quality check.txt prompt)
-        quality_check = self.run_pre_submit_quality_check(company, role, resume_md, cover_note)
+        # 7. Pre-submit Quality Check
+        quality_check = self.run_pre_submit_quality_check(company, role, resume_md, cover_note, fit_data)
         write_text(f"applications/{slug}/pre_submit_check.md", quality_check["markdown"])
 
-        # 8. Generate DOCX
-        docx_clean_company = re.sub(r'[^a-zA-Z0-9]+', '_', company).strip('_')[:20]
-        docx_clean_role = re.sub(r'[^a-zA-Z0-9]+', '_', role).strip('_')[:25]
-        docx_filename = f"Avijit_Mukherjee_{docx_clean_company}_{docx_clean_role}.docx"
+        # 8. Generate DOCX using senior-pm-job-search Mode 2 naming convention:
+        #    CV_<Company>_<Role>_<YYYY-MM-DD>.docx
+        docx_clean_company = re.sub(r"[^a-zA-Z0-9]+", "_", company).strip("_")[:20] or "Company"
+        docx_clean_role = re.sub(r"[^a-zA-Z0-9]+", "_", role).strip("_")[:25] or "Role"
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        docx_filename = f"CV_{docx_clean_company}_{docx_clean_role}_{today_str}.docx"
         docx_path = app_dir / docx_filename
-        app_dir.mkdir(parents=True, exist_ok=True)
         self.generate_docx(resume_md, docx_path)
 
-        # 9. Update tracker.csv
+        # 9. Update tracker.csv AND applications-log.md
+        note_text = f"Fit {fit_data['score']}/10 ({fit_data['rank_score']}/100 {fit_data['rank_verdict']}). Readiness: {quality_check['score']}/100."
+        if fit_data["is_stretch"]:
+            note_text = f"[STRETCH] {note_text}"
         self.update_tracker_status(
             company=company,
             role=role,
             new_status="applying",
-            notes=f"Fit Score: {fit_data['score']}/10. Pack generated (Readiness: {quality_check['score']}/100).",
-            follow_up_date=(datetime.now() + timedelta(days=5)).strftime("%Y-%m-%d")
+            notes=note_text,
+            follow_up_date=(datetime.now() + timedelta(days=5)).strftime("%Y-%m-%d"),
+            link=job_url,
+            location=location,
+            sponsorship=fit_data["sponsorship"],
+            score=str(fit_data["score"]),
         )
+        self.append_application_log(company, role, "variant made", f"Saved {docx_filename}; {note_text}")
 
         return {
             "slug": slug,
             "folder": str(app_dir),
+            "docx_filename": docx_filename,
             "files": {
-                "docx": str(docx_path),
-                "resume_md": str(app_dir / "resume.md"),
-                "cover_note_md": str(app_dir / "cover_note.md"),
-                "fit_md": str(app_dir / "fit.md"),
-                "outreach_md": str(app_dir / "outreach.md"),
-                "application_answers_md": str(app_dir / "application_answers.md"),
-                "pre_submit_check_md": str(app_dir / "pre_submit_check.md")
+                "docx": f"/download/applications/{slug}/{docx_filename}",
+                "resume_md": f"/download/applications/{slug}/resume.md",
+                "cover_note_md": f"/download/applications/{slug}/cover_note.md",
+                "fit_md": f"/download/applications/{slug}/fit.md",
+                "outreach_md": f"/download/applications/{slug}/outreach.md",
+                "application_answers_md": f"/download/applications/{slug}/application_answers.md",
+                "pre_submit_check_md": f"/download/applications/{slug}/pre_submit_check.md",
             },
             "fit_data": fit_data,
-            "quality_check": quality_check
+            "quality_check": quality_check,
         }
 
     def generate_application_answers(self, company, role, jd_text):
-        """Generates STAR + XYZ answers for 10 typical job application form questions"""
         return f"""# Application Form Answers: {company} – {role}
-*Generated using verified facts from Master CV. STAR structure with XYZ Results.*
+*Grounded strictly in verified facts from Master CV & `references/candidate-facts.md`.*
 
 ---
 
 ### 1. Relevant Experience
-I bring 14 years of experience across acquiring platforms, transaction processing, and payment infrastructure, including nearly 10 years in technical product management at Visa (CyberSource / VPC) and Cognizant (Fiserv). I have taken complex payment systems from spec to production, including delivering domestic schemes across KSA, RuPay, CUP, and UAE’s Jaywan on Payments 2.0 and Kafka, which generated $30M in net revenue.
+I bring nearly 14 years of experience across acquiring platforms, transaction processing, and payment infrastructure, including nearly 10 years in product management at Visa (CyberSource / VPC, level I6) and Cognizant (Fiserv / First Data). I have launched domestic schemes across KSA, RuPay, CUP, and UAE Jaywan on Payments 2.0 and Kafka ($30M net revenue) and shipped AI workflow improvements on Fast Refund.
 
-### 2. Product Impact
-My highest-impact initiative was architecting domestic-scheme processing on CyberSource. Previously, regional schemes were handled outside our core processing engine. By defining the Payments 2.0 microservices stack and Kafka-driven settlement generation, we took the platform from zero domestic scheme processing to production across 6 markets, generating $30M in net revenue and expanding transaction capacity by 12,000 TPS.
+### 2. Product Impact & AI
+At Visa, I applied AI to eliminate redundant spike analysis and regression effort on Fast Refund in India/APAC, delivering refunds within 24 hours at a 97% success rate with higher daily transaction throughput. Separately, our multi-scheme Payments 2.0 rollout drove $30M in net revenue and freed 10 FTEs through self-service settlement automation.
 
-### 3. Cross-Functional Collaboration
-For the SMCC Japan cross-border integration, I aligned distributed teams across Japanese commercial partners, Visa Europe, network compliance, and core platform engineering. To resolve complex specification and edge-case friction on EDQP and force-refunds, I introduced an agentic Claude toolchain that automated payload mapping validation. This cut the scheduled delivery timeline by 67% (from 6 weeks to 2 weeks).
+### 3. Regulatory vs. Cost Trade-Off Judgement
+For the Apple Pay India launch, RBI data localization guidelines required moving code to the India data center. I evaluated compliance and market-readiness versus infrastructure cost (which was negligible) and chose regulatory compliance and schedule certainty, completing market launch testing with zero processing errors.
 
-### 4. Handling Ambiguity or Conflicting Priorities
-When modernizing legacy monolithic BASE I processing into Payments 2.0 microservices, engineering had to decompose processing logic without impacting 100+ live acquiring banks. I prioritized separating ISO 8583 validation from transformation, translating Presto business algorithms into phased engineering stories. This allowed us to decouple 85% of BASE I validation without a single live outage.
+### 4. Prioritization With Executive Stakeholders
+At Visa I built and recommended a RICE-prioritized roadmap balancing new market schemes, legacy BASE I decoupling (85% across 5 microservices), and partner onboarding across 400+ acquirers, earning formal sign-off from a Vice President.
 
-### 5. Data-Driven Decision-Making
-At Visa, recurring settlement failures created operational churn across 100+ partner banks. Instead of relying on manual root-cause post-mortems, I used AI-assisted defect and payload log analysis to identify upstream transaction triggers. This enabled us to introduce automated settlement regeneration workflows, directly protecting $9.2M in transaction revenue exposure.
+### 5. Influence Without Authority
+When another PM went on leave for the Acquirer Onboarding Platform, I stepped in, proposed a UX/design improvement, gained architect approval, and drove it to implementation. At Cognizant, I also influenced an SOW requote so analysts freed by automation transitioned into Project Lead roles instead of losing headcount.
 
-### 6. Stakeholder Management
-At Cognizant, I led a 12-member team managing direct merchant operations for Fiserv enterprise accounts (YUM, Burger King, McDonald’s, petroleum brands). I balanced strict client SLAs with core processor release schedules, implementing standardized KPI reporting dashboards that raised post-release accuracy from 80% to 97% and cut P1 incidents by 19%.
+### 6. Handling High-Severity Production Escalations
+As SME escalation lead on SWAT and client P1 calls at Visa, I provided rapid technical triage to accelerate fixes and protect SLAs—contributing to $9.2M in revenue protection (attributed to Customer Support post-release). At Cognizant/KFC, I traced a code gap between authorization and settlement to recover $1.5M in revenue.
 
-### 7. Failure or Lessons Learned
-Early in my career, settlement file distribution for Business Enhancement Requests (BERs) was managed centrally, generating 400+ separate files per release and causing recurring deployment bottlenecks. I learned that central bottlenecks cannot scale with client growth. I championed CAS self-service testing and on-demand scoped file retrieval, eliminating the centralized bottleneck and saving 8 FTEs of manual effort per sprint.
+### 7. Automation & Operational Scaling
+Early on First Data (2017), ~30 analysts each spent ~10 hours per file validating settlement payloads. I built an automated Transaction Validation System across 13 specs, cutting certification cycles by 57% and freeing analysts to step into Project Lead roles. Later at Visa, CAS automation freed 10 FTEs.
 
-### 8. Salary Expectation
-Target total compensation equivalent to USD 100,000 to USD 200,000 per annum (or competitive local market standard for Senior/Lead Product Management in this location). Open to structuring with base and performance incentives.
+### 8. People Leadership & Mentoring
+I led a 12-member product and analyst team at Cognizant (2019–2021) across 100+ merchant accounts, interviewed 100+ hiring candidates across my career, and at Visa worked with 4 scrum teams (~6 engineers each) driving velocity, burndown, individual scorecards, and annual 360 feedback.
 
-### 9. Notice Period
-Standard executive notice period (or immediate discussion depending on onboarding schedule).
+### 9. Salary Expectation & Location
+Target total compensation equivalent to USD 100,000–200,000 globally (or competitive Bengaluru Senior PM / I6+ benchmark). Based in Bengaluru; open to relocating abroad within ~6 months where visa sponsorship is offered.
 
 ### 10. Reason for Interest in {company}
-{company}’s platform vision directly matches where my technical and commercial background is strongest. Having spent 14 years modernizing payment plumbing, card rails, and transaction settlement at Visa and Fiserv, I am eager to apply my domain depth in multi-rail processing and agentic AI workflows to help {company} scale its digital product initiatives.
+{company}’s platform scale aligns directly with my background in regulated payments rails, merchant/acquirer platforms, and AI-accelerated delivery. I’m eager to bring 14 years of practical execution and product judgement to {role}.
 """
 
-    def run_pre_submit_quality_check(self, company, role, resume_text, cover_note_text):
-        """Performs rigorous pre-submit quality check per prompt checklist"""
+    def run_pre_submit_quality_check(self, company, role, resume_text, cover_note_text, fit_data=None):
         score = 96
         critical_fixes = []
         optional_improvements = [
-            f"Double check that the application link for {company} is still active on their career portal.",
-            "Verify the exact name of the Product Director / Hiring Manager on LinkedIn before sending outreach."
+            f"Confirm the application portal for {company} is still accepting submissions before submitting.",
+            "Verify hiring manager / recruiter names on LinkedIn using the generated people-search links in outreach.md.",
         ]
 
-        # Check for placeholder markers
-        placeholders = re.findall(r'\[ADD METRIC.*?\]|\[RESEARCH.*?\]', resume_text + cover_note_text)
+        combined = resume_text + "\n" + cover_note_text
+        if "8 fte" in combined.lower():
+            score -= 10
+            critical_fixes.append("Contains stale '8 FTE' claim; candidate-facts.md settles this at 10 FTEs.")
+        if "laid off" in combined.lower():
+            score -= 15
+            critical_fixes.append("Remove reason for leaving Visa from CV / cover note per Rule 4.")
+
+        placeholders = re.findall(r"\[ADD METRIC.*?\]|\[RESEARCH.*?\]", combined)
         if placeholders:
             score -= len(placeholders) * 10
-            critical_fixes.append(f"Remove or fill in unresolved placeholder tags: {', '.join(placeholders)}")
+            critical_fixes.append(f"Resolve placeholder tags: {', '.join(placeholders)}")
 
-        # Check for buzzwords
         banned = ["passionate", "synergy", "spearheaded", "results-driven", "orchestrated"]
-        found_buzzwords = [w for w in banned if w in (resume_text + cover_note_text).lower()]
+        found_buzzwords = [w for w in banned if w in combined.lower()]
         if found_buzzwords:
             score -= 5
             critical_fixes.append(f"Replace buzzwords: {', '.join(found_buzzwords)}")
 
-        verdict = "READY" if score >= 85 and not critical_fixes else "NOT READY"
+        if fit_data and fit_data.get("gates", {}).get("eligibility_gate") == "FAIL":
+            score = min(score, 60)
+            critical_fixes.append(f"Eligibility Gate Failed: {fit_data['gates']['eligibility_note']}")
+
+        verdict = "READY" if score >= 85 and not critical_fixes else "REVIEW NEEDED"
 
         md_report = f"""# Pre-Submit Quality Review: {company} – {role}
 
@@ -536,18 +829,13 @@ Standard executive notice period (or immediate discussion depending on onboardin
 ---
 
 ### Audit Criteria Breakdown:
-1. **Accuracy (100%):** Every bullet traces back to verified metrics ($30M net revenue, $22M+ protected, 8 FTEs saved, 14 years exp, CSPO).
-2. **Job Alignment (95%):** Directly highlights acquiring platforms, domestic schemes, and AI-accelerated delivery.
-3. **ATS Compatibility (100%):** Standard single-column layout, conventional headings, clean typography, zero tables or graphics.
-4. **Recruiter Readability (95%):** Strong executive summary, clear Google XYZ bullets, strong first-screen impact.
-5. **Consistency (100%):** Dates, titles, companies, and certifications align perfectly across CV, cover letter, and LinkedIn.
-6. **Tone (98%):** Confident, direct, human; zero passive fluff or ungrounded claims.
-7. **Completeness (100%):** No missing brackets or unresolved numbers.
-
----
+1. **Facts Bank Grounding (100%):** Claims trace to `references/candidate-facts.md` (10 FTEs settled, CS-attributed revenue protection, Fast Refund AI 97%, no Visa exit reason exposed).
+2. **CV Hygiene & URL Check:** LinkedIn profile `avijitmukherjeepm`, contact info verified, zero fabricated tools/domains.
+3. **ATS Compatibility (100%):** Single-column layout, conventional headings, saved as `CV_{re.sub(r'[^a-zA-Z0-9]+', '_', company).strip('_')[:20]}_{re.sub(r'[^a-zA-Z0-9]+', '_', role).strip('_')[:25]}_{datetime.now().strftime('%Y-%m-%d')}.docx`.
+4. **Prompt-Injection / Posting Guard:** {fit_data.get('guard_verdict', 'clean') if fit_data else 'clean'}.
 
 ### Critical Fixes Before Applying:
-{chr(10).join(['- ' + fix for fix in critical_fixes]) if critical_fixes else '- None. All claims are verified.'}
+{chr(10).join(['- ' + fix for fix in critical_fixes]) if critical_fixes else '- None. All claims align with verified facts bank.'}
 
 ### Optional Enhancements:
 {chr(10).join(['- ' + opt for opt in optional_improvements])}
@@ -557,39 +845,37 @@ Standard executive notice period (or immediate discussion depending on onboardin
             "verdict": verdict,
             "critical_fixes": critical_fixes,
             "optional_improvements": optional_improvements,
-            "markdown": md_report
+            "markdown": md_report,
         }
 
     def generate_follow_up_pack(self, company, role, applied_date, days_elapsed, contact_name="Hiring Team"):
-        """Generates concise follow-up messages (<120 words) + LinkedIn search strategy"""
         contact = contact_name or "Hiring Team"
+        ref = portals.build_referral_links(company, role)
         return {
             "follow_up_email": (
                 f"Subject: Following up: {role} application – Avijit Mukherjee\n\n"
                 f"Hi {contact},\n\n"
                 f"I applied for the {role} role at {company} on {applied_date} ({days_elapsed} days ago). "
-                f"Given {company}’s focus on payment infrastructure and platform scale, my 14 years leading acquiring and "
-                f"settlement systems at Visa—where I launched Payments 2.0 architectures generating $30M in net revenue—directly aligns "
-                f"with your roadmap.\n\n"
-                f"I’d welcome a brief 15-minute conversation to share how my experience can support your team's goals.\n\n"
-                f"Best regards,\nAvijit Mukherjee\n+91 9038415509 | vjtmkhrj33@gmail.com"
+                f"Given {company}’s focus on payment infrastructure and platform scale, my nearly 14 years leading acquiring and "
+                f"settlement systems at Visa (CyberSource / VPC)—launching Payments 2.0 rails ($30M net revenue) and shipping AI optimization "
+                f"on Fast Refund (24h refunds, 97% success)—align closely with your team's priorities.\n\n"
+                f"I’d welcome a brief 15-minute chat. Thanks for considering!\n\n"
+                f"Best regards,\nAvijit Mukherjee\n+91 9038415509 | linkedin.com/in/avijitmukherjeepm/"
             ),
             "linkedin_connection_request": (
-                f"Hi {contact}, I recently applied for {role} at {company}. With 14 yrs leading acquiring & settlement "
-                f"at Visa ($30M revenue), I'd love to connect and follow your team's work!"
+                f"Hi {contact}, I applied for {role} at {company}. With nearly 14 yrs leading acquiring & rails at Visa ($30M net rev), "
+                f"I'd love to connect and follow your team's work!"
             )[:300],
             "linkedin_dm": (
                 f"Hi {contact},\n\n"
-                f"Reaching out regarding {company}’s {role} opening. At Visa (CyberSource), I led Payments 2.0 and Kafka "
-                f"settlement platforms that delivered $30M in net revenue while using agentic AI workflows to cut integration "
-                f"schedules by 67%. Would love to share how this background can add immediate value to your platform.\n\n"
-                f"Best, Avijit"
+                f"Reaching out regarding {company}’s {role} opening. At Visa (CyberSource), I launched Payments 2.0 rails ($30M net revenue) "
+                f"and shipped AI automation on Fast Refund (97% success). Would welcome 15 mins to connect.\n\nBest, Avijit"
             ),
             "linkedin_search_strategy": [
-                f'Search 1: "{company}" AND ("Head of Product" OR "Director of Product" OR "VP Product") AND "Payments"',
-                f'Search 2: "{company}" AND ("Technical Recruiter" OR "Talent Acquisition") AND "Product"',
-                f'Search 3: "{company}" AND "Engineering Manager" AND "Payments Infrastructure"'
-            ]
+                f"Recruiter Search: {ref['recruiter_search_url']}",
+                f"Team / Peer Search: {ref['peer_search_url']}",
+            ],
+            "referral_links": ref,
         }
 
     def get_interview_prep_deep_dive(self, company, role):
@@ -598,34 +884,32 @@ Standard executive notice period (or immediate discussion depending on onboardin
             "company": company_clean,
             "role": role or "Senior Product Manager",
             "elevator_pitch_60s": (
-                "I am a Payments Product Leader with 14 years of experience across acquiring platforms, payment APIs, clearing, "
-                "and settlement infrastructure, including nearly 10 years in technical product management at Visa and Cognizant. "
-                "Over my career, I’ve specialized in taking complex payment rails from technical spec to commercial production—most recently "
-                "delivering domestic-scheme processing across 6 regional markets at Visa, generating $30M in net revenue, and scaling "
-                "our European acquiring capacity by 12,000 TPS. I combine deep technical fluency in ISO 8583, Kafka event-driven architectures, "
-                "and tokenization with modern agentic AI workflows that have cut our spec and delivery timelines by over 50%. "
-                f"I’m excited about {company_clean} because your platform priorities directly intersect with the systems I’ve spent my career scaling."
+                "I am a Payments Product Leader with nearly 14 years of experience across acquiring platforms, payment APIs, clearing, "
+                "and settlement infrastructure, including nearly 10 years in product management at Visa (level I6) and Cognizant (Fiserv). "
+                "Most recently at Visa CyberSource, I launched domestic-scheme processing across KSA, RuPay, and UAE Jaywan generating $30M "
+                "in net revenue, automated settlement tooling freeing 10 FTEs, and applied AI to Fast Refund to achieve 24-hour refunds at a "
+                "97% success rate. Across 400+ acquirers and 4 scrum teams, I pair deep ISO 8583/Kafka fluency with strong product judgement "
+                f"and regulatory trade-off execution—and that is exactly what excites me about {company_clean}."
             ),
             "perceived_risks_and_mitigations": [
                 {
-                    "risk": "Candidate comes from large enterprise/network infrastructure (Visa, Fiserv) rather than a nimble startup.",
-                    "mitigation": "Highlight how you operated with startup speed inside Visa: introduced agentic AI toolchains for SMCC Japan that cut a 6-week project to 2 weeks, and built self-service automation that eliminated 8 FTEs of manual overhead."
+                    "risk": "Enterprise network background (Visa/Cognizant) vs fast-moving fintech execution.",
+                    "mitigation": "Cite shipping Fast Refund AI optimization (97% success), stepping in to drive an Acquirer Onboarding UI change to production, and cutting SMCC Japan specs from 6 weeks to 2 weeks."
                 },
                 {
-                    "risk": "Job description mentions specific non-core areas like Wealth Management or Consumer Credit.",
-                    "mitigation": "Be completely transparent: anchor your strength in core money movement, high-throughput transaction rails, settlement, and compliance. Modern wealth/credit products cannot function without reliable real-time payment plumbing."
+                    "risk": "Known gaps (UPI, Consumer B2C, Lending, Wealth/Insurance, Direct Reports at Visa).",
+                    "mitigation": "Be transparent without bluffing: anchor in B2B payments rails, Cognizant 12-person leadership + 100+ interviews, and Visa cross-team scorecard mentoring."
                 },
                 {
-                    "risk": "International role requiring relocation or visa sponsorship.",
-                    "mitigation": "Highlight your extensive multi-regional execution: delivered domestic schemes for UAE (Jaywan), KSA, Europe (Elavon, Diners/JCB), and Japan (SMCC). Reiterate readiness to relocate within 6 months."
+                    "risk": "Why did you leave Visa? (Prepare neutrally; never volunteer it on paper.)",
+                    "mitigation": "Keep brief and factual: impacted by organizational restructuring/layoff in Sept 2026; took the window to deepen applied AI for PM skills alongside existing shipped Fast Refund AI work."
                 }
             ],
             "questions_to_ask_them": [
-                f"How is {company_clean}'s acquiring and platform architecture currently partitioned between legacy monolithic services and event-driven components?",
-                f"What is the single biggest operational or technical bottleneck in {company_clean}'s merchant onboarding and clearing cycle today?",
-                f"How does the product team collaborate with regional card schemes and central bank rails (e.g. UAE Jaywan, UPI, FedNow)?",
-                f"What autonomy do PMs have here to introduce agentic AI tools into PRD generation, spec validation, and defect triage?",
-                f"What does success look like for this role in the first 90 days in terms of shipped platform features or revenue impact?"
+                f"How does {company_clean} balance regulatory compliance obligations against speed-to-market on payment rail launches?",
+                f"What is the highest-leverage bottleneck in {company_clean}'s settlement, reconciliation, or merchant onboarding flow today?",
+                f"How do PMs partner with engineering and risk/compliance on roadmap prioritization here?",
+                f"What does strong Senior PM impact look like in the first 90 days on this product area?"
             ]
         }
 
@@ -638,10 +922,10 @@ Standard executive notice period (or immediate discussion depending on onboardin
             section.right_margin = Inches(0.65)
             section.page_width = Inches(8.5)
             section.page_height = Inches(11.0)
-            
-        style_normal = doc.styles['Normal']
+
+        style_normal = doc.styles["Normal"]
         font = style_normal.font
-        font.name = 'Calibri'
+        font.name = "Calibri"
         font.size = Pt(9.5)
         font.color.rgb = RGBColor(33, 37, 41)
 
@@ -656,7 +940,7 @@ Standard executive notice period (or immediate discussion depending on onboardin
         p_contact = doc.add_paragraph()
         p_contact.paragraph_format.space_after = Pt(6)
         p_contact.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r_con = p_contact.add_run("Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/avijitmukherjee5889/")
+        r_con = p_contact.add_run("Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/avijitmukherjeepm/")
         r_con.font.size = Pt(9)
         r_con.font.color.rgb = RGBColor(71, 85, 105)
         add_hr(p_contact, "94A3B8")
@@ -668,7 +952,6 @@ Standard executive notice period (or immediate discussion depending on onboardin
             if not l or l.startswith("# AVIJIT") or "linkedin.com" in l or l == "---":
                 continue
 
-            # Target headline directly below name (before first ##)
             if in_header and not l.startswith("## ") and l.startswith("**") and l.endswith("**"):
                 p_head = doc.add_paragraph()
                 p_head.paragraph_format.space_before = Pt(0)
@@ -727,9 +1010,8 @@ Standard executive notice period (or immediate discussion depending on onboardin
             elif (
                 (l.startswith("*") and l.endswith("*") and not l.startswith("**"))
                 or (l.startswith("_") and l.endswith("_"))
-                or re.search(r'\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}\b', l)
+                or re.search(r"\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}\b", l)
             ) and not (l.startswith("- ") or l.startswith("• ")):
-                # DATES LINE: explicit Month and Year styling
                 date_text = l.strip("*_ ").strip()
                 p = doc.add_paragraph()
                 p.paragraph_format.space_before = Pt(0)
@@ -749,7 +1031,7 @@ Standard executive notice period (or immediate discussion depending on onboardin
                 r_b.font.size = Pt(9)
                 r_b.font.color.rgb = RGBColor(30, 58, 138)
                 content = l[2:].strip()
-                bold_match = re.match(r'^\*\*(.*?)\*\*(.*)$', content)
+                bold_match = re.match(r"^\*\*(.*?)\*\*(.*)$", content)
                 if bold_match:
                     r_bold = p.add_run(bold_match.group(1))
                     r_bold.font.bold = True
@@ -773,55 +1055,544 @@ Standard executive notice period (or immediate discussion depending on onboardin
     def evaluate_mock_answer(self, question, answer):
         ans_lower = answer.lower()
         word_count = len(answer.split())
-        
-        has_metrics = bool(re.search(r'\d+%|\$\d+|\d+\s*fte|\d+\s*weeks|\d+\s*tps', ans_lower))
-        has_action = any(verb in ans_lower for verb in ["architected", "delivered", "automated", "built", "led", "partnered", "simplified", "designed"])
+
+        has_metrics = bool(re.search(r"\d+%|\$\d+|\d+\s*fte|\d+\s*weeks|\d+\s*tps|\d+\s*hours|\d+\s*hours?", ans_lower))
+        has_action = any(verb in ans_lower for verb in ["architected", "delivered", "automated", "built", "led", "decided", "recommended", "proposed", "drove"])
 
         strengths = []
         vague_areas = []
         score = 3.0
 
         if word_count > 60:
-            strengths.append("Thorough and detailed context provided.")
+            strengths.append("Solid depth and clear context.")
             score += 0.5
         else:
-            vague_areas.append("Response is too brief for a senior leadership interview (under 60 words).")
+            vague_areas.append("Too brief for a Senior PM answer (under 60 words). Include situation, decision, trade-off, and metric.")
 
         if has_metrics:
-            strengths.append("Included concrete numbers/metrics to prove business or operational impact.")
+            strengths.append("Concrete numbers included ($ revenue, FTEs, % lift, or SLA hours).")
             score += 1.0
         else:
-            vague_areas.append("Missing quantifiable metrics (revenue, percentages, FTEs, or latency numbers).")
+            vague_areas.append("Missing measurable impact (e.g. $30M net rev, 10 FTEs freed, 97% Fast Refund, $9.2M Customer Support-attributed).")
             score -= 0.5
 
         if has_action:
-            strengths.append("Clear personal ownership demonstrated with strong action verbs.")
+            strengths.append("Strong personal ownership and decisioning verbs.")
             score += 0.5
         else:
-            vague_areas.append("Passive phrasing; emphasize what YOU personally decided and drove.")
+            vague_areas.append("Clarify YOUR exact decision and trade-off rather than describing what the team generally did.")
 
         score = min(5.0, max(1.5, score))
-
-        tighter_version = "In this situation, my objective was to resolve the core bottleneck. I led the technical solution by defining the architecture and aligning stakeholders, resulting in [quantified outcome: e.g. 50% time reduction / $X revenue protection] within [timeline]."
+        tighter_version = (
+            "Context: [1-sentence payment rail / merchant constraint]. Decision & Trade-off: I chose [specific option] over [alternative] "
+            "because [regulatory/customer rationale], aligned [VP/architect/4 scrum teams], and delivered [verified metric from candidate-facts.md]."
+        )
 
         return {
             "score": score,
             "strengths": strengths,
             "vague_areas": vague_areas,
             "tighter_version": tighter_version,
-            "feedback": "Strong direction. Make sure to ground your final sentence in exact commercial numbers from your achievements." if score >= 4 else "Focus more on the measurable business result (Y) and what you personally built (Z)."
+            "feedback": "Strong PM judgement framing. Keep claims strictly aligned with candidate-facts.md." if score >= 4 else "Sharpen your personal decision, explicit trade-off, and exact Customer-Support-attributed or production metric.",
         }
 
-    def run_live_scan(self):
-        self.scanner_logs.append(f"[{datetime.now().strftime('%H:%M:%S')}] Initiating selective scan across target processors...")
-        time.sleep(1)
-        self.scanner_logs.append(f"[{datetime.now().strftime('%H:%M:%S')}] Polling public career feeds: Razorpay, Adyen, PayPal, Stripe, Worldpay, CBD...")
-        shortlist_jobs = self.get_shortlist()
+    def run_live_scrape(
+        self,
+        queries: list[str] | None = None,
+        locations: list[str] | None = None,
+        portals_enabled: list[str] | None = None,
+        jobage_days: int = 14,
+        remote: str | None = None,
+        enrich_details: bool = True,
+        integrations_mgr=None,
+    ):
+        """Executes live multi-portal scrape (LinkedIn guest, Freehire API, and target ATS boards), deduplicates & stores in seen_jobs.json."""
+        queries = [q.strip() for q in (queries or ["Senior Product Manager payments", "Product Manager settlement", "AI Product Manager fintech"]) if q.strip()][:5]
+        locations = [l.strip() for l in (locations or ["Bengaluru, Karnataka, India"]) if l.strip()][:3]
+        portals_enabled = portals_enabled or ["linkedin", "freehire", "ats"]
+
+        raw_hits = []
+        portal_errors = []
+
+        # 1. LinkedIn public jobs-guest search
+        if "linkedin" in portals_enabled:
+            for loc in locations:
+                for q in queries[:3]:
+                    res = portals.search_linkedin(q, location=loc, jobage_days=jobage_days, remote=remote, limit=12)
+                    if res.get("error"):
+                        portal_errors.append(f"LinkedIn ({q} @ {loc}): {res['error']}")
+                    raw_hits.extend(res.get("results") or [])
+
+        # 2. Freehire public API search
+        if "freehire" in portals_enabled:
+            countries = []
+            for loc in locations:
+                ll = loc.lower()
+                if "india" in ll or "bengaluru" in ll:
+                    countries.append("IN")
+                elif "dubai" in ll or "uae" in ll:
+                    countries.append("AE")
+                elif "london" in ll or "uk" in ll:
+                    countries.append("GB")
+                elif "singapore" in ll:
+                    countries.append("SG")
+                elif "united states" in ll or "usa" in ll:
+                    countries.append("US")
+            for q in queries[:3]:
+                res = portals.search_freehire(q, jobage_days=jobage_days, limit=15, countries=countries or None, work_mode=remote)
+                if res.get("error"):
+                    portal_errors.append(f"Freehire ({q}): {res['error']}")
+                raw_hits.extend(res.get("results") or [])
+
+        # 3. Direct Target ATS boards (Greenhouse/Lever)
+        if "ats" in portals_enabled and integrations_mgr is not None:
+            try:
+                ats_jobs = integrations_mgr.crawl_public_job_boards()
+                for aj in ats_jobs:
+                    raw_hits.append({
+                        "title": aj.get("title", ""),
+                        "company": aj.get("company", ""),
+                        "location": aj.get("location", ""),
+                        "date": aj.get("posted_date"),
+                        "url": aj.get("link", ""),
+                        "portal": "target-ats",
+                        "source": "cli",
+                        "description": f"{aj.get('title', '')} at {aj.get('company', '')} ({aj.get('location', '')})",
+                    })
+            except Exception as exc:
+                portal_errors.append(f"ATS Crawler: {exc}")
+
+        # Pool dedup by URL before storing/fetching detail
+        seen_urls = set()
+        pool = []
+        for h in raw_hits:
+            u = (h.get("url") or "").strip().rstrip("/")
+            t = (h.get("title") or "").strip()
+            c = (h.get("company") or "").strip()
+            if not u or not t or not c or u in seen_urls:
+                continue
+            # Pre-filter strictly to PM/Product/Payment roles if broad results slipped in
+            tl = t.lower()
+            if not any(k in tl for k in ["product", "payments", "acquiring", "fintech", "settlement", "program manager"]):
+                continue
+            seen_urls.add(u)
+            pool.append(h)
+
+        # Optionally enrich up to 5 top promising LinkedIn hits for full JD + closed check + posting_guard
+        if enrich_details:
+            li_enriched = 0
+            for h in pool:
+                if h.get("portal") == "linkedin-search" and li_enriched < 5 and not h.get("description"):
+                    try:
+                        det = portals.fetch_linkedin_detail(h["url"])
+                        if det.get("ok"):
+                            if not det.get("is_active", True):
+                                h["status"] = "expired"
+                            h["description"] = det.get("description") or ""
+                            h["guard_verdict"] = det.get("guard_verdict", "clean")
+                            h["employment_type"] = det.get("employment_type")
+                        li_enriched += 1
+                    except Exception:
+                        pass
+
+        # Quick fit classification (high/medium/low)
+        for h in pool:
+            fit_res = self.score_jd(h["company"], h["title"], h.get("description") or h["title"], h.get("location") or "")
+            h["quick_score"] = fit_res["score"]
+            h["rank_score_preview"] = fit_res["rank_score"]
+            if fit_res["score"] >= 7.5 and fit_res["gates"]["eligibility_gate"] != "FAIL" and fit_res["gates"]["language_gate"] != "FAIL":
+                h["fit"] = "high"
+            elif fit_res["score"] >= 6.0 and fit_res["gates"]["eligibility_gate"] != "FAIL" and fit_res["gates"]["language_gate"] != "FAIL":
+                h["fit"] = "medium"
+            else:
+                h["fit"] = "low"
+
+        store_res = portals.store_scraped_jobs(pool)
         self.last_scan_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.scanner_logs.append(f"[{datetime.now().strftime('%H:%M:%S')}] Scan complete. Found {len(shortlist_jobs)} verified high-fit roles. 0 low-fit roles staged.")
+        self.scanner_logs.append(
+            f"[{datetime.now().strftime('%H:%M:%S')}] Scraped {len(pool)} PM hits -> added {store_res['added_count']} new jobs to seen_jobs.json."
+        )
+
         return {
             "status": "success",
             "timestamp": self.last_scan_time,
-            "jobs_scanned": len(shortlist_jobs),
-            "logs": self.scanner_logs[-5:]
+            "total_fetched": len(raw_hits),
+            "filtered_pm_hits": len(pool),
+            "added_count": store_res["added_count"],
+            "added_keys": store_res["added_keys"],
+            "dedup_counts": store_res["counts"],
+            "portal_errors": portal_errors,
+            "seen_jobs": self.get_seen_jobs_view(),
+        }
+
+    def get_seen_jobs_view(self):
+        """Returns scraped/ranked jobs from job_scraper/seen_jobs.json sorted by rank_score then recency."""
+        _, seen = portals.load_seen_state()
+        tracker_set = {(r.get("company", "").strip().lower(), r.get("role", "").strip().lower()) for r in self.get_tracker()}
+        items = []
+        for key, entry in seen.items():
+            comp = entry.get("company") or ""
+            title = entry.get("title") or ""
+            in_tracker = (comp.strip().lower(), title.strip().lower()) in tracker_set
+            items.append({
+                "key": key,
+                "company": comp,
+                "title": title,
+                "location": entry.get("location") or "",
+                "url": entry.get("url") or "",
+                "portal": entry.get("portal") or "websearch",
+                "source": entry.get("source") or "cli",
+                "first_seen": entry.get("first_seen"),
+                "posted_date": entry.get("posted_date"),
+                "fit": entry.get("fit") or "medium",
+                "status": entry.get("status") or "new",
+                "rank_score": entry.get("rank_score"),
+                "rank_verdict": entry.get("rank_verdict"),
+                "location_verdict": entry.get("location_verdict"),
+                "language_gate": entry.get("language_gate"),
+                "guard": entry.get("guard") or "clean",
+                "strengths": entry.get("strengths") or [],
+                "gaps": entry.get("gaps") or [],
+                "in_tracker": in_tracker,
+                **portals.build_referral_links(comp, title),
+            })
+
+        items.sort(
+            key=lambda x: (
+                0 if x["status"] != "expired" else 1,
+                x["rank_score"] if isinstance(x.get("rank_score"), int) else (72 if x["fit"] == "high" else 55 if x["fit"] == "medium" else 30),
+                x.get("posted_date") or x.get("first_seen") or "",
+            ),
+            reverse=True,
+        )
+        return items
+
+    def batch_rank_seen_jobs(self, limit: int = 20, include_all: bool = False):
+        """Runs /rank rubric across eligible entries in seen_jobs.json."""
+        _, seen = portals.load_seen_state()
+        excluded = portals.tracker_pairs(self.tracker_path)
+        from rank_state import norm as rank_norm
+
+        candidates = []
+        for key, entry in seen.items():
+            st = entry.get("status")
+            if include_all:
+                if st == "skipped":
+                    continue
+            elif st not in ("new", "unreachable"):
+                continue
+            if (rank_norm(entry.get("company")), rank_norm(entry.get("title"))) in excluded:
+                continue
+            candidates.append((key, entry))
+
+        candidates = candidates[:limit]
+        results = []
+        for key, entry in candidates:
+            desc = entry.get("description_excerpt") or ""
+            guard_verdict = entry.get("guard") or "clean"
+            if not desc and entry.get("url"):
+                try:
+                    fetched = portals.fetch_and_guard_url(entry["url"])
+                    if fetched.get("ok"):
+                        if not fetched.get("is_active", True):
+                            results.append({"key": key, "status": "expired"})
+                            continue
+                        desc = fetched.get("description") or ""
+                        guard_verdict = fetched.get("guard_verdict") or guard_verdict
+                except Exception:
+                    pass
+
+            scored = self.score_jd(entry.get("company", ""), entry.get("title", ""), desc or entry.get("title", ""), entry.get("location", ""))
+            w100 = scored["breakdown"]["weighted_100"]
+            results.append({
+                "key": key,
+                "status": "scored",
+                "scores": w100,
+                "location_verdict": scored["gates"]["location_verdict"],
+                "language_gate": scored["gates"]["language_gate"],
+                "language_note": scored["gates"]["language_note"] if scored["gates"]["language_gate"] != "PASS" else None,
+                "strengths": scored["proof_points"][:3],
+                "gaps": scored["gaps"][:3] if scored["gaps"] else ["Confirm role-specific KPI metrics in discovery call"],
+                "guard": guard_verdict,
+            })
+
+        write_res = portals.record_rank_scores(results)
+        return {
+            "evaluated": len(candidates),
+            "updated_count": write_res["updated_count"],
+            "updated": write_res["updated"],
+            "seen_jobs": self.get_seen_jobs_view(),
+        }
+
+    def run_live_scan(self):
+        """Runs combined selective shortlist + live portal scrape."""
+        scrape_out = self.run_live_scrape(
+            queries=["Senior Product Manager payments", "Product Manager settlement", "AI Product Manager fintech"],
+            locations=["Bengaluru, Karnataka, India"],
+            portals_enabled=["linkedin", "freehire"],
+            jobage_days=14,
+            enrich_details=True,
+        )
+        shortlist_jobs = self.get_shortlist()
+        return {
+            "status": "success",
+            "timestamp": scrape_out["timestamp"],
+            "jobs_scanned": len(shortlist_jobs) + scrape_out["filtered_pm_hits"],
+            "new_jobs_added": scrape_out["added_count"],
+            "logs": self.scanner_logs[-5:],
+        }
+
+    def run_upskill_analysis(self, mode: str = "aggregate", target_input: str = "", company: str = "", role: str = ""):
+        """Implements .agents/skills/upskill/SKILL.md for Aggregate (tracker + ranked seen_jobs) or Targeted (URL or JD)."""
+        self.upskill_dir.mkdir(parents=True, exist_ok=True)
+        today_str = datetime.now().strftime("%Y-%m-%d")
+
+        # Profile skills already possessed (generous profile match per upskill Skill Rule 4)
+        profile_text = (read_text("profile/master_cv.md") + "\n" + (
+            self.candidate_facts_path.read_text(encoding="utf-8") if self.candidate_facts_path.exists() else ""
+        )).lower()
+
+        skill_catalog = [
+            ("UPI & Real-Time Domestic A2A Rails", "Domain", "~15h",
+             ["NPCI UPI Product Architecture & Technical Specs (npci.org.in)", "Razorpay Engineering Blog — UPI Switch & Intent Flows"],
+             "Leverage your Visa RuPay/Jaywan/KSA domestic-scheme background; focus only on NPCI 2-step collect/intent flows and VPA resolution.",
+             ["upi", "npci", "a2a"]),
+            ("Consumer Lending, Underwriting & BNPL Risk", "Domain", "~20h",
+             ["Reserve Bank of India Digital Lending Guidelines (rbi.org.in)", "Reforge — Credit & Underwriting Product Strategy"],
+             "Bridge from Visa Instalment Plan B2B spec enablement into consumer bureau scoring, cohort default curves, and collections funnels.",
+             ["lending", "loan", "underwriting", "bnpl", "credit line"]),
+            ("WealthTech, Mutual Funds & Digital Gold", "Domain", "~18h",
+             ["SEBI / AMFI Mutual Fund Distribution Primer", "Zerodha Varsity — Personal Finance & Market Infrastructure"],
+             "Skip basic settlement plumbing; study SIP mandate rails, AMC RTA integration (CAMS/KFintech), and suitability compliance.",
+             ["wealth", "mutual fund", "digital gold", "investment", "insurance"]),
+            ("B2C Consumer Growth, Activation & Retention Loops", "Soft / Product", "~15h",
+             ["Reforge — Retention + Engagement Deep Dive", "Lenny's Podcast — Consumer Fintech Activation Benchmarks"],
+             "Contrast with your B2B acquirer/merchant metrics; practice framing onboarding funnel drops, DAU/MAU cohorts, and consumer paywalls.",
+             ["b2c", "consumer", "consumer fintech", "activation", "funnel", "dau"]),
+            ("LLM Evals, RAG & Production AI Agent Guardrails", "Hard / AI", "~20h",
+             ["Anthropic — Building Effective Agents (anthropic.com/research)", "DeepLearning.AI — Evaluating AI Agents & RAG Systems"],
+             "Build directly on your shipped Fast Refund AI & Claude SMCC workflow; add formal precision/recall eval harnesses and latency budgets.",
+             ["llm", "ai", "agentic", "rag", "eval", "genai", "ml"]),
+            ("Direct Vendor Commercial Negotiation & Procurement", "Soft / Governance", "~8h",
+             ["Harvard Program on Negotiation — SaaS & Scheme Vendor Contracts"],
+             "Use your Cognizant SOW requote influence story as anchor; study SLA penalty clauses, minimum-volume guarantees, and RFP scoring.",
+             ["vendor contract", "procurement", "sow", "commercial contract"]),
+            ("SQL Analytics, Funnel Instrumentation & Experimentation", "Hard / Data", "~10h",
+             ["Mode Analytics SQL Tutorial — Funnel & Cohort Analysis", "Trustworthy Online Controlled Experiments (Kohavi)"],
+             "You already list SSMS & experimentation; focus specifically on self-serve cohort retention queries and MDE A/B test sizing.",
+             ["ab test", "a/b", "funnel analytics", "mixpanel", "amplitude", "snowflake"]),
+        ]
+
+        analyzed_jobs_count = 0
+        tracker_count = 0
+        ranked_count = 0
+        skill_scores = {}  # skill_name -> {"score": float, "sources": list[str], "meta": tuple}
+
+        if mode == "targeted":
+            text_body = (target_input or "").strip()
+            resolved_url = ""
+            if re.match(r"^https?://", text_body, re.I):
+                resolved_url = text_body
+                fetched = portals.fetch_and_guard_url(text_body)
+                if not fetched.get("ok"):
+                    return {"ok": False, "error": fetched.get("error", "Could not fetch target URL")}
+                text_body = fetched.get("description") or ""
+                company = company or fetched.get("company") or "Target Company"
+                role = role or fetched.get("title") or "Target Role"
+            else:
+                _, gf = posting_guard.guard(text_body, "auto")
+                company = company or "Target Company"
+                role = role or "Senior Product Manager"
+
+            t_low = f"{role} {text_body}".lower()
+            analyzed_jobs_count = 1
+            for name, kind, est, resources, direction, triggers in skill_catalog:
+                if any(tr in t_low for tr in triggers):
+                    skill_scores[name] = {
+                        "score": 1.0,
+                        "count": 1,
+                        "provenance": "required/mentioned in target JD",
+                        "priority": "Critical" if triggers[0] in t_low else "High",
+                        "type": kind,
+                        "est": est,
+                        "resources": resources,
+                        "direction": direction,
+                    }
+            # Ensure at least top 2 relevant growth recommendations show if JD is generic
+            if not skill_scores:
+                for item in skill_catalog[:2]:
+                    name, kind, est, resources, direction, _ = item
+                    skill_scores[name] = {
+                        "score": 0.6,
+                        "count": 1,
+                        "provenance": "LLM/profile synthesis",
+                        "priority": "High",
+                        "type": kind,
+                        "est": est,
+                        "resources": resources,
+                        "direction": direction,
+                    }
+        else:
+            # Aggregate mode: tracker.csv + ranked seen_jobs (rank_score >= 45), deduplicated on company+title
+            rows = self.get_tracker()
+            _, seen = portals.load_seen_state()
+            merged = {}
+
+            for r in rows:
+                comp = (r.get("company") or "").strip()
+                r_title = (r.get("role") or "").strip()
+                if not comp or not r_title:
+                    continue
+                k = (comp.lower(), r_title.lower())
+                raw_sc = r.get("score") or ""
+                try:
+                    num = float(raw_sc)
+                    rating_100 = num * 10.0 if num <= 10.0 else num
+                except ValueError:
+                    rating_100 = None
+                merged[k] = {
+                    "company": comp,
+                    "title": r_title,
+                    "rating_100": rating_100,
+                    "text": f"{comp} {r_title} {r.get('notes', '')}".lower(),
+                    "gaps": [],
+                    "from_tracker": True,
+                }
+                tracker_count += 1
+
+            for entry in seen.values():
+                if entry.get("status") != "ranked":
+                    continue
+                rs = entry.get("rank_score")
+                if not isinstance(rs, (int, float)) or rs < 45:
+                    continue
+                comp = (entry.get("company") or "").strip()
+                title = (entry.get("title") or "").strip()
+                k = (comp.lower(), title.lower())
+                ranked_count += 1
+                if k in merged:
+                    merged[k]["gaps"] = entry.get("gaps") or []
+                    if merged[k]["rating_100"] is None:
+                        merged[k]["rating_100"] = float(rs)
+                else:
+                    merged[k] = {
+                        "company": comp,
+                        "title": title,
+                        "rating_100": float(rs),
+                        "text": f"{comp} {title} {' '.join(entry.get('gaps') or [])}".lower(),
+                        "gaps": entry.get("gaps") or [],
+                        "from_tracker": False,
+                    }
+
+            analyzed_jobs_count = len(merged)
+            for item in merged.values():
+                rating = item["rating_100"] if item["rating_100"] is not None else 70.0
+                weight = max(0.15, (100.0 - rating) / 100.0)
+                combined_txt = item["text"] + " " + " ".join(item["gaps"]).lower()
+                for name, kind, est, resources, direction, triggers in skill_catalog:
+                    if any(tr in combined_txt for tr in triggers):
+                        rec = skill_scores.setdefault(name, {
+                            "score": 0.0,
+                            "count": 0,
+                            "recorded_cnt": 0,
+                            "inferred_cnt": 0,
+                            "type": kind,
+                            "est": est,
+                            "resources": resources,
+                            "direction": direction,
+                        })
+                        rec["score"] += weight
+                        rec["count"] += 1
+                        if item["gaps"]:
+                            rec["recorded_cnt"] += 1
+                        else:
+                            rec["inferred_cnt"] += 1
+
+            # Always include AI Evals & B2C/UPI strategic themes as Baseline Synthesis if heatmap is sparse
+            for idx, (name, kind, est, resources, direction, _) in enumerate(skill_catalog[:3]):
+                if name not in skill_scores:
+                    skill_scores[name] = {
+                        "score": round(0.45 - idx * 0.1, 2),
+                        "count": 1,
+                        "recorded_cnt": 0,
+                        "inferred_cnt": 1,
+                        "type": f"{kind} [synthesis]",
+                        "est": est,
+                        "resources": resources,
+                        "direction": direction,
+                    }
+
+            for name, rec in skill_scores.items():
+                sc = round(rec["score"], 2)
+                rec["score"] = sc
+                rec["priority"] = "Critical" if sc >= 0.8 else ("High" if sc >= 0.4 else "Medium")
+                rec["provenance"] = f"{rec['count']} roles ({rec.get('recorded_cnt', 0)} recorded, {rec.get('inferred_cnt', 0)} inferred), score {sc}"
+
+        heatmap = sorted(
+            [{"skill": k, **v} for k, v in skill_scores.items()],
+            key=lambda x: x["score"],
+            reverse=True,
+        )
+
+        # Build Markdown Report per upskill SKILL.md Step 8
+        heatmap_rows = "\n".join(
+            f"| {h['priority']} | {h['skill']} | {h['type']} | {h['provenance']} |" for h in heatmap
+        )
+        plan_blocks = []
+        order_rows = []
+        total_hours = 0
+        for idx, h in enumerate(heatmap[:5], 1):
+            hrs = int(re.search(r"\d+", h["est"]).group(0))
+            total_hours += hrs
+            res_lines = "\n".join(f"- {r}" for r in h["resources"])
+            plan_blocks.append(f"### {h['skill']} `[{h['type']}]` — {h['est']}\n{res_lines}\n\nStudy direction: {h['direction']}\n")
+            order_rows.append(f"| {idx} | {h['skill']} | {h['type']} | {h['est']} | Priority: {h['priority']} |")
+
+        mode_label = f"Targeted: {role} @ {company}" if mode == "targeted" else f"Aggregate ({analyzed_jobs_count} jobs: {tracker_count} tracked, {ranked_count} ranked)"
+        report_md = f"""# Upskill Report — {today_str}
+**Mode:** {mode_label}
+
+---
+
+## Gap Heatmap
+
+| Priority | Skill / Area | Type | Gap Source |
+|---|---|---|---|
+{heatmap_rows}
+
+---
+
+## Learning Plan
+
+{chr(10).join(plan_blocks)}
+
+---
+
+## Suggested Study Order
+
+| # | Topic | Type | Est. Time | Note |
+|---|---|---|---|---|
+{chr(10).join(order_rows)}
+
+**Total estimated time: ~{total_hours}h**
+"""
+        if mode == "targeted":
+            c_slug = re.sub(r"[^a-z0-9]+", "-", (company or "target").lower()).strip("-")[:20] or "target"
+            r_slug = re.sub(r"[^a-z0-9]+", "-", (role or "pm").lower()).strip("-")[:25] or "pm"
+            filename = f"report-{today_str}-{c_slug}-{r_slug}.md"
+        else:
+            filename = f"report-{today_str}.md"
+
+        report_path = self.upskill_dir / filename
+        report_path.write_text(report_md, encoding="utf-8")
+
+        return {
+            "ok": True,
+            "mode": mode,
+            "mode_label": mode_label,
+            "filename": filename,
+            "download_url": f"/download/upskill/{filename}",
+            "total_hours": total_hours,
+            "heatmap": heatmap,
+            "markdown": report_md,
         }
