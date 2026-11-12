@@ -39,10 +39,12 @@ Source: the user's own statements in the "Lets find a new job" project, up to 20
 - Led 12 people at Cognizant; mentoring and scorecards at Visa without formal reports.
 
 ## AI
-- Studying AI and the PM role since September 2026 alongside real shipped Visa Fast Refund AI optimization (24-hour refunds, 97% success) and Claude agentic specification workflows (SMCC Japan: 6 weeks -> 2 weeks).
-- **AI Product Concepts:** LLMs, Tokens, Context Windows, Inference, Prompt Engineering, System Prompts, Temperature, Embeddings, RAG, Vector Databases, Fine-tuning, Hallucination Management, Guardrails, Model Routing, Evals.
-- **AI Application Architecture:** API Integration, Tool Calling, MCP (Model Context Protocol), AI Workflows, Agentic Workflows, Retrieval Pipelines, Context Management, Human-in-the-Loop.
-- **AI Product Practices:** AI Use-Case Discovery, Prompt Design, Evaluation & Evals, Quality & Reliability, Latency & Cost Optimization, AI Safety & Guardrails, Workflow Automation, AI-assisted Product Discovery and SDLC.
+- Studying AI and the PM role since September 2026 alongside real shipped Visa Fast Refund AI optimization (24-hour refunds, 97% success) and Claude agentic specification workflows (SMCC Japan: 6 weeks -> 2 weeks, covering EDQP, PIF, and force-refund capabilities).
+- Applied Generative AI and agentic workflows (Claude, Gemini, OpenAI Tools, Copilot) across PM activities (PRDs, business cases, acceptance criteria, defect analysis, solution architecture), reducing manual effort by 50% across selected workflows.
+- Applied AI-assisted analysis to payment and settlement validation, comparing transaction data across processing stages, identifying data misalignment, and supporting root-cause analysis and remediation while maintaining human validation, business rules, and engineering review for production decisions.
+- **Generative AI:** LLMs, Prompt Engineering, Context Management, RAG, Embeddings, Vector Databases, Fine-tuning, Hallucination Management, Guardrails, Evals (plus working familiarity with Tokens, Context Windows, Inference, System Prompts, Temperature, Retrieval Pipelines, AI workflow orchestration).
+- **AI Product Architecture:** APIs, Tool Calling, MCP, Model Routing, AI Workflows, Agentic Workflows, Human-in-the-Loop.
+- **Applied AI:** Claude, Gemini, OpenAI Tools, Copilot, AI-assisted PRDs, Business Cases, Acceptance Criteria, Defect Analysis, Solution Architecture, Product Discovery & SDLC Automation.
 
 ## Known gaps (never claim these)
 - No UPI, lending, insurance, mutual funds or digital gold exposure.

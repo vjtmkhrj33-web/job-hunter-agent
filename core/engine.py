@@ -373,7 +373,8 @@ class JobAgentEngine:
             "automation", "specs", "event-driven", "sql", "rice", "prd", "agile", "scrum", "cspo",
             "rag", "vector database", "mcp", "model context protocol", "tool calling", "prompt",
             "evals", "guardrails", "embeddings", "fine-tuning", "human-in-the-loop", "inference",
-            "model routing", "hallucination", "context window", "sdlc",
+            "model routing", "hallucination", "context window", "context management", "orchestration",
+            "copilot", "openai", "defect analysis", "acceptance criteria", "sdlc",
         ]
         matched_tech = [kw for kw in tech_keywords if kw in text_lower]
         tech_score = min(10.0, max(5.2, 5.2 + len(matched_tech) * 0.85))
@@ -767,9 +768,10 @@ class JobAgentEngine:
             "scrum", "cspo", "sql", "ai", "llm", "agentic", "automation", "cross-border", "fx", "upi",
             "lending", "bnpl", "b2b", "b2c", "kyc", "aml", "fraud", "risk", "analytics", "experimentation",
             "a/b testing", "stakeholder", "enterprise", "saas", "fintech", "sdk", "checkout", "pos",
-            "rag", "vector database", "embeddings", "prompt engineering", "system prompts", "evals",
+            "rag", "vector database", "embeddings", "prompt engineering", "context management", "evals",
             "guardrails", "hallucination", "tool calling", "mcp", "model context protocol", "fine-tuning",
-            "model routing", "inference", "context window", "human-in-the-loop", "latency", "sdlc",
+            "model routing", "inference", "context window", "human-in-the-loop", "orchestration",
+            "copilot", "openai", "defect analysis", "acceptance criteria", "latency", "sdlc",
         ]
         jd_present_vocab = [kw for kw in ats_target_vocab if kw in text_lower]
         matched_ats = [kw for kw in jd_present_vocab if kw in candidate_lower or kw in ("payments", "ai", "automation")]
@@ -880,7 +882,7 @@ class JobAgentEngine:
         # PERSONA 3: TECH LEAD / SYSTEM ARCHITECT
         # ------------------------------------------------------------------
         core_rails_hits = [k for k in ["iso 8583", "base i", "base ii", "tc33", "clearing", "settlement", "kafka", "microservice", "api", "rest", "webhook", "token", "emv", "bin"] if k in text_lower]
-        ai_hits = [k for k in ["ai", "llm", "agent", "genai", "rag", "eval", "automation", "mcp", "tool calling", "guardrails", "prompt", "vector", "embeddings", "human-in-the-loop"] if k in text_lower]
+        ai_hits = [k for k in ["ai", "llm", "agent", "genai", "rag", "eval", "automation", "mcp", "tool calling", "guardrails", "prompt", "vector", "embeddings", "human-in-the-loop", "orchestration", "context management", "model routing"] if k in text_lower]
         tech_score_5 = 4.0 + min(0.7, len(core_rails_hits) * 0.14) + min(0.3, len(ai_hits) * 0.1)
         if not core_rails_hits and not ai_hits:
             tech_score_5 = 3.6
@@ -1286,11 +1288,21 @@ Payments & AI-enabled product leader with nearly 14 years of experience across a
 - **Payments & Acquiring:** Merchant Processing, Authorization, Clearing & Settlement, Domestic & Regional Schemes (Jaywan, RuPay, KSA, CUP, MyDebit), Network Tokenization (COF/MIT/CIT), Interchange & EMV Compliance
 - **Architecture & Rails:** ISO 8583, Visa BASE I & BASE II, TC33.A, Kafka Event-Driven Architecture, REST APIs, Microservices, Payments 2.0
 
-### AI Product Management & Generative AI
+### Applied AI & Agentic Product Management
 
-- **AI Product Concepts:** LLMs, Tokens, Context Windows, Inference, Prompt Engineering, System Prompts, Temperature, Embeddings, RAG, Vector Databases, Fine-tuning, Hallucination Management, Guardrails, Model Routing, Evals
-- **AI Application Architecture:** API Integration, Tool Calling, MCP (Model Context Protocol), AI Workflows, Agentic Workflows, Retrieval Pipelines, Context Management, Human-in-the-Loop
-- **AI Product Practices:** AI Use-Case Discovery, Prompt Design, Evaluation & Evals, Quality & Reliability, Latency & Cost Optimization, AI Safety & Guardrails, Workflow Automation, AI-assisted Product Discovery and SDLC
+- Applied **Generative AI and agentic workflows** using Claude and other AI tools across Product Management activities including PRDs, business cases, acceptance criteria, defect analysis and solution architecture, reducing manual effort by **50%** across selected workflows.
+- Used **Claude and an agentic toolchain** to support the architecture and delivery of **EDQP, PIF and force-refund capabilities for SMCC Japan**, accelerating solution definition and implementation.
+- Applied AI-assisted analysis to **payment and settlement validation**, comparing transaction data across processing stages, identifying data misalignment and supporting root-cause analysis and remediation.
+- Integrated AI into product workflows while maintaining **human validation, business rules and engineering review** for production decisions.
+- Working knowledge of **LLMs, RAG, embeddings, vector databases, tool calling, MCP, model routing, evals, guardrails, hallucination management and AI workflow orchestration**.
+
+### AI & GenAI Product Management
+
+**Generative AI:** LLMs, Prompt Engineering, Context Management, RAG, Embeddings, Vector Databases, Fine-tuning, Hallucination Management, Guardrails, Evals
+
+**AI Product Architecture:** APIs, Tool Calling, MCP, Model Routing, AI Workflows, Agentic Workflows, Human-in-the-Loop
+
+**Applied AI:** Claude, Gemini, OpenAI Tools, Copilot, AI-assisted PRDs, Business Cases, Acceptance Criteria, Defect Analysis, Solution Architecture, Product Discovery & SDLC Automation
 
 ---
 
@@ -1664,6 +1676,19 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
         r_con.font.color.rgb = RGBColor(71, 85, 105)
         add_hr(p_contact, "94A3B8")
 
+        def add_formatted_runs(paragraph, text, size_pt=9.5, bold_color=RGBColor(15, 23, 42)):
+            for part in re.split(r"(\*\*.*?\*\*)", text):
+                if not part:
+                    continue
+                if part.startswith("**") and part.endswith("**") and len(part) > 4:
+                    r_seg = paragraph.add_run(part[2:-2])
+                    r_seg.font.bold = True
+                    r_seg.font.size = Pt(size_pt)
+                    r_seg.font.color.rgb = bold_color
+                else:
+                    r_seg = paragraph.add_run(part)
+                    r_seg.font.size = Pt(size_pt)
+
         lines = markdown_text.split("\n")
         in_header = True
         for line in lines:
@@ -1750,24 +1775,13 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
                 r_b.font.size = Pt(9)
                 r_b.font.color.rgb = RGBColor(30, 58, 138)
                 content = l[2:].strip()
-                bold_match = re.match(r"^\*\*(.*?)\*\*(.*)$", content)
-                if bold_match:
-                    r_bold = p.add_run(bold_match.group(1))
-                    r_bold.font.bold = True
-                    r_bold.font.size = Pt(9.5)
-                    r_bold.font.color.rgb = RGBColor(15, 23, 42)
-                    r_rest = p.add_run(bold_match.group(2))
-                    r_rest.font.size = Pt(9.5)
-                else:
-                    r_t = p.add_run(content)
-                    r_t.font.size = Pt(9.5)
+                add_formatted_runs(p, content, size_pt=9.5)
             else:
                 p = doc.add_paragraph()
                 p.paragraph_format.space_before = Pt(2)
                 p.paragraph_format.space_after = Pt(3)
                 p.paragraph_format.line_spacing = 1.15
-                r = p.add_run(l)
-                r.font.size = Pt(9.5)
+                add_formatted_runs(p, l, size_pt=9.5)
 
         doc.save(str(output_path))
 

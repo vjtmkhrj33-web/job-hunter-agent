@@ -16,10 +16,21 @@ Accomplished Senior Product Manager with nearly 10 years in product management a
 - **AI & Automation: ** AI-Assisted Product Workflows (Claude, Gemini), Agentic Solution Design, Automated Requirements Generation, Robotic Process Automation (Automation Anywhere)
 - **Leadership & Stakeholders: ** Cross-Functional Team Leadership (managed 12-member product team), Executive Stakeholder Communication, Partner & Vendor Collaboration
 
-### AI Product Management & Generative AI
-- **AI Product Concepts:** LLMs, Tokens, Context Windows, Inference, Prompt Engineering, System Prompts, Temperature, Embeddings, RAG, Vector Databases, Fine-tuning, Hallucination Management, Guardrails, Model Routing, Evals
-- **AI Application Architecture:** API Integration, Tool Calling, MCP (Model Context Protocol), AI Workflows, Agentic Workflows, Retrieval Pipelines, Context Management, Human-in-the-Loop
-- **AI Product Practices:** AI Use-Case Discovery, Prompt Design, Evaluation & Evals, Quality & Reliability, Latency & Cost Optimization, AI Safety & Guardrails, Workflow Automation, AI-assisted Product Discovery and SDLC
+### Applied AI & Agentic Product Management
+
+- Applied **Generative AI and agentic workflows** using Claude and other AI tools across Product Management activities including PRDs, business cases, acceptance criteria, defect analysis and solution architecture, reducing manual effort by **50%** across selected workflows.
+- Used **Claude and an agentic toolchain** to support the architecture and delivery of **EDQP, PIF and force-refund capabilities for SMCC Japan**, accelerating solution definition and implementation.
+- Applied AI-assisted analysis to **payment and settlement validation**, comparing transaction data across processing stages, identifying data misalignment and supporting root-cause analysis and remediation.
+- Integrated AI into product workflows while maintaining **human validation, business rules and engineering review** for production decisions.
+- Working knowledge of **LLMs, RAG, embeddings, vector databases, tool calling, MCP, model routing, evals, guardrails, hallucination management and AI workflow orchestration**.
+
+### AI & GenAI Product Management
+
+**Generative AI:** LLMs, Prompt Engineering, Context Management, RAG, Embeddings, Vector Databases, Fine-tuning, Hallucination Management, Guardrails, Evals
+
+**AI Product Architecture:** APIs, Tool Calling, MCP, Model Routing, AI Workflows, Agentic Workflows, Human-in-the-Loop
+
+**Applied AI:** Claude, Gemini, OpenAI Tools, Copilot, AI-assisted PRDs, Business Cases, Acceptance Criteria, Defect Analysis, Solution Architecture, Product Discovery & SDLC Automation
 
 ---
 
