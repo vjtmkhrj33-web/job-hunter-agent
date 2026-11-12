@@ -239,6 +239,7 @@ class JobAgentEngine:
 
             location = "Bengaluru"
             link = ""
+            link_note = ""
             fit_stars = "⭐⭐⭐⭐"
             comp = "UNVERIFIED"
 
@@ -247,7 +248,13 @@ class JobAgentEngine:
                 if l.startswith("- **Location:**"):
                     location = l.replace("- **Location:**", "").strip()
                 elif l.startswith("- **Link:**"):
-                    link = l.replace("- **Link:**", "").strip()
+                    raw_link = l.replace("- **Link:**", "").strip()
+                    if "→" in raw_link:
+                        url_part, note_part = raw_link.split("→", 1)
+                        link = url_part.strip()
+                        link_note = note_part.strip()
+                    else:
+                        link = raw_link.split()[0] if raw_link else ""
                 elif l.startswith("- **Comp:**"):
                     comp = l.replace("- **Comp:**", "").strip()
                 elif l.startswith("- **Fit:**"):
@@ -258,6 +265,7 @@ class JobAgentEngine:
                 "role": role,
                 "location": location,
                 "link": link,
+                "link_note": link_note,
                 "comp": comp,
                 "fit": fit_stars,
                 **portals.build_referral_links(company or "Target Company", role),
@@ -266,9 +274,17 @@ class JobAgentEngine:
 
     def _run_eligibility_and_language_gates(self, text_lower: str, location: str) -> dict:
         loc_lower = (location or "").lower()
-        is_india = any(k in loc_lower for k in ["india", "bengaluru", "bangalore", "mumbai", "hyderabad", "pune", "chennai", "remote"]) or (
-            "bengaluru" in text_lower or "bangalore" in text_lower
-        )
+        non_india_remote_markers = [
+            "us - remote", "us-remote", "us remote", "united states", "nyc", "san francisco",
+            "seattle", "austin", "boston", "chicago", "americas", "north america", "latam",
+            "canada", "uk - remote", "uk remote", "united kingdom", "london", "dublin",
+            "eu - remote", "europe", "emea", "amsterdam", "berlin", "singapore", "dubai", "uae",
+            "sydney", "australia", "japan", "tokyo", "jakarta", "manila", "kuala lumpur",
+        ]
+        india_markers = ["india", "bengaluru", "bangalore", "mumbai", "hyderabad", "pune", "chennai", "gurgaon", "gurugram", "noida", "delhi"]
+        has_india = any(k in loc_lower for k in india_markers) or "bengaluru" in text_lower or "bangalore" in text_lower
+        has_foreign_loc = any(m in loc_lower for m in non_india_remote_markers)
+        is_india = has_india or (not has_foreign_loc and loc_lower.strip() in ("remote", "anywhere", "global - remote"))
 
         # Eligibility Gate (04-job-evaluation.md)
         eligibility_gate = "PASS" if is_india else "FLAG"
@@ -1162,20 +1178,24 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
             except Exception as exc:
                 portal_errors.append(f"ATS Crawler: {exc}")
 
-        # Pool dedup by URL before storing/fetching detail
+        # Pool dedup by canonical URL (without ?utm_source=...) before storing/fetching detail
         seen_urls = set()
         pool = []
         for h in raw_hits:
             u = (h.get("url") or "").strip().rstrip("/")
             t = (h.get("title") or "").strip()
-            c = (h.get("company") or "").strip()
-            if not u or not t or not c or u in seen_urls:
+            c = portals.normalize_company_display(h.get("company") or "")
+            if not u or not t or not c:
+                continue
+            h["company"] = c
+            canon_u = re.sub(r"[?&]utm_[^=]+=[^&]+", "", u).rstrip("?&/")
+            if canon_u in seen_urls:
                 continue
             # Pre-filter strictly to PM/Product/Payment roles if broad results slipped in
             tl = t.lower()
             if not any(k in tl for k in ["product", "payments", "acquiring", "fintech", "settlement", "program manager"]):
                 continue
-            seen_urls.add(u)
+            seen_urls.add(canon_u)
             pool.append(h)
 
         # Optionally enrich up to 5 top promising LinkedIn hits for full JD + closed check + posting_guard
@@ -1228,10 +1248,11 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
     def get_seen_jobs_view(self):
         """Returns scraped/ranked jobs from job_scraper/seen_jobs.json sorted by rank_score then recency."""
         _, seen = portals.load_seen_state()
-        tracker_set = {(r.get("company", "").strip().lower(), r.get("role", "").strip().lower()) for r in self.get_tracker()}
+        tracker_set = {(portals.normalize_company_display(r.get("company", "")).strip().lower(), r.get("role", "").strip().lower()) for r in self.get_tracker()}
         items = []
         for key, entry in seen.items():
-            comp = entry.get("company") or ""
+            raw_comp = entry.get("company") or ""
+            comp = portals.normalize_company_display(raw_comp)
             title = entry.get("title") or ""
             in_tracker = (comp.strip().lower(), title.strip().lower()) in tracker_set
             items.append({
@@ -1253,6 +1274,7 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
                 "guard": entry.get("guard") or "clean",
                 "strengths": entry.get("strengths") or [],
                 "gaps": entry.get("gaps") or [],
+                "description_excerpt": entry.get("description_excerpt") or "",
                 "in_tracker": in_tracker,
                 **portals.build_referral_links(comp, title),
             })

@@ -33,6 +33,52 @@ FREEHIRE_BASE_URL = os.environ.get("FREEHIRE_API_URL", "https://freehire.me").st
 LINKEDIN_UA = "Mozilla/5.0 (compatible; linkedin-search-cli/1.0)"
 FREEHIRE_UA = "ai-job-search-dev/ai-job-search/1.0 (freehire-search)"
 
+COMPANY_DISPLAY_MAP = {
+    "razorpaysoftwareprivatelimited": "Razorpay",
+    "razorpay software private limited": "Razorpay",
+    "currenciesdirect": "Redpin (Currencies Direct)",
+    "gokwik commerce solutions pvt. ltd.": "GoKwik",
+    "converse placement services india private limited": "Converse Placement Services",
+    "societe generale global solution centre": "Societe Generale",
+}
+
+KNOWN_GREENHOUSE_DOMAIN_BOARDS = {
+    "stripe.com": "stripe",
+    "careers.godaddy": "godaddy",
+    "godaddy.com": "godaddy",
+    "careers.airbnb.com": "airbnb",
+    "careers.coinbase.com": "coinbase",
+    "razorpay.com": "razorpaysoftwareprivatelimited",
+}
+
+
+def normalize_company_display(raw: str) -> str:
+    """Turn ATS company slugs (e.g. razorpaysoftwareprivatelimited) into clean company names."""
+    s = (raw or "").strip()
+    if not s:
+        return ""
+    low = s.lower()
+    if low in COMPANY_DISPLAY_MAP:
+        return COMPANY_DISPLAY_MAP[low]
+    # Un-slug single lowercase run ending in legal words if present
+    if " " not in s and low.endswith("privatelimited"):
+        base = re.sub(r"(?:software)?privatelimited$", "", s, flags=re.I).strip()
+        if base:
+            return base.title()
+    return s
+
+
+def _company_search_term(raw: str) -> str:
+    """Clean company name for LinkedIn People Search queries."""
+    clean = normalize_company_display(raw)
+    clean = re.sub(
+        r"\b(?:private\s+limited|pvt\.?\s*ltd\.?|limited|ltd\.?|inc\.?|llc|corp\.?|global\s+solution\s+centre)\b",
+        "",
+        clean,
+        flags=re.I,
+    )
+    return re.sub(r"\s+", " ", clean).strip(" ,.-") or clean
+
 
 def is_safe_public_url(url: str) -> tuple[bool, str]:
     """Validate http(s) URL and block loopback/private/link-local hosts (SSRF guard)."""
@@ -349,7 +395,7 @@ def search_freehire(query: str, jobage_days: int = 14, limit: int = 25, countrie
             out.append({
                 "id": j.get("public_slug") or j.get("external_id") or "",
                 "title": html_lib.unescape(j.get("title") or "").strip() or "(untitled)",
-                "company": html_lib.unescape(j.get("company") or "").strip() or "Unknown Company",
+                "company": normalize_company_display(html_lib.unescape(j.get("company") or "").strip()) or "Unknown Company",
                 "location": html_lib.unescape(j.get("location") or "").strip(),
                 "date": posted_date,
                 "url": j.get("url") or "",
@@ -396,8 +442,151 @@ def fetch_freehire_detail(slug_or_url: str) -> dict:
     }
 
 
+def extract_greenhouse_target(url: str) -> tuple[str, str] | None:
+    """Return (board_token, job_id) for Greenhouse hosted or gh_jid-embedded URLs."""
+    try:
+        parsed = urllib.parse.urlsplit((url or "").strip())
+    except Exception:
+        return None
+    host = (parsed.hostname or "").lower()
+    qs = urllib.parse.parse_qs(parsed.query)
+    if "greenhouse.io" in host:
+        m = re.match(r"^/([^/]+)/jobs/(\d+)", parsed.path or "")
+        if m:
+            return m.group(1), m.group(2)
+        tok = (qs.get("token") or qs.get("gh_jid") or [""])[0]
+        board = (qs.get("for") or [""])[0]
+        if tok and board and tok.isdigit():
+            return board, tok
+    gh_jid = (qs.get("gh_jid") or [""])[0]
+    if gh_jid.isdigit():
+        board = (qs.get("for") or [""])[0]
+        if not board:
+            for dom, b in KNOWN_GREENHOUSE_DOMAIN_BOARDS.items():
+                if host == dom or host.endswith("." + dom):
+                    board = b
+                    break
+        if board:
+            return board, gh_jid
+    return None
+
+
+def fetch_greenhouse_detail(board: str, job_id: str, original_url: str) -> dict:
+    api_url = f"https://boards-api.greenhouse.io/v1/boards/{urllib.parse.quote(board)}/jobs/{urllib.parse.quote(job_id)}"
+    code, body = _http_get_with_retry(api_url, headers={"User-Agent": FREEHIRE_UA, "Accept": "application/json"}, max_retries=2, timeout=12.0)
+    if code == 404:
+        return {"ok": False, "is_active": False, "error": f"Posting appears closed or expired at Greenhouse (HTTP 404) for {board}/{job_id}."}
+    if code != 200 or not body:
+        return {"ok": False, "error": f"Greenhouse API returned HTTP {code}"}
+    j = json.loads(body)
+    raw_content = html_lib.unescape(j.get("content") or "")
+    cleaned_desc, findings = posting_guard.guard(raw_content, "html")
+    loc = ((j.get("location") or {}).get("name") or "").strip()
+    title = html_lib.unescape(j.get("title") or "").strip() or "(untitled)"
+    comp = normalize_company_display(j.get("company_name") or board)
+    return {
+        "ok": True,
+        "id": str(j.get("id") or job_id),
+        "title": title,
+        "company": comp,
+        "location": loc,
+        "url": j.get("absolute_url") or original_url,
+        "portal": "greenhouse-api",
+        "is_active": True,
+        "description": cleaned_desc[:18000],
+        "guard_verdict": findings.get("verdict", "posting_guard: clean"),
+        "guard_findings": findings,
+    }
+
+
+def extract_lever_target(url: str) -> tuple[str, str] | None:
+    try:
+        parsed = urllib.parse.urlsplit((url or "").strip())
+    except Exception:
+        return None
+    host = (parsed.hostname or "").lower()
+    if host == "jobs.lever.co" or host.endswith(".lever.co"):
+        parts = [p for p in parsed.path.split("/") if p]
+        if len(parts) >= 2 and re.fullmatch(r"[0-9a-f-]{8,}", parts[1], re.I):
+            return parts[0], parts[1]
+    return None
+
+
+def fetch_lever_detail(board: str, job_id: str, original_url: str) -> dict:
+    api_url = f"https://api.lever.co/v0/postings/{urllib.parse.quote(board)}/{urllib.parse.quote(job_id)}"
+    code, body = _http_get_with_retry(api_url, headers={"User-Agent": FREEHIRE_UA, "Accept": "application/json"}, max_retries=2, timeout=12.0)
+    if code == 404:
+        return {"ok": False, "is_active": False, "error": "Posting appears closed or expired at Lever (HTTP 404)."}
+    if code != 200 or not body:
+        return {"ok": False, "error": f"Lever API returned HTTP {code}"}
+    j = json.loads(body)
+    blocks = [j.get("description") or ""]
+    for lst in j.get("lists") or []:
+        blocks.append(f"<h3>{html_lib.escape(lst.get('text') or '')}</h3>{lst.get('content') or ''}")
+    blocks.append(j.get("additional") or "")
+    cleaned_desc, findings = posting_guard.guard("\n".join(blocks), "html")
+    cats = j.get("categories") or {}
+    return {
+        "ok": True,
+        "id": str(j.get("id") or job_id),
+        "title": html_lib.unescape(j.get("text") or "").strip() or "(untitled)",
+        "company": normalize_company_display(board),
+        "location": (cats.get("location") or "").strip(),
+        "url": j.get("hostedUrl") or original_url,
+        "portal": "lever-api",
+        "is_active": True,
+        "description": cleaned_desc[:18000],
+        "guard_verdict": findings.get("verdict", "posting_guard: clean"),
+        "guard_findings": findings,
+    }
+
+
+def extract_ashby_target(url: str) -> tuple[str, str] | None:
+    try:
+        parsed = urllib.parse.urlsplit((url or "").strip())
+    except Exception:
+        return None
+    host = (parsed.hostname or "").lower()
+    if host == "jobs.ashbyhq.com" or host.endswith(".ashbyhq.com"):
+        parts = [p for p in parsed.path.split("/") if p]
+        if len(parts) >= 2:
+            return parts[0], parts[1]
+    return None
+
+
+def fetch_ashby_detail(board: str, job_id: str, original_url: str) -> dict:
+    api_url = f"https://api.ashbyhq.com/posting-api/job-board/{urllib.parse.quote(board)}"
+    code, body = _http_get_with_retry(api_url, headers={"User-Agent": FREEHIRE_UA, "Accept": "application/json"}, max_retries=2, timeout=12.0)
+    if code != 200 or not body:
+        return {"ok": False, "error": f"Ashby API returned HTTP {code}"}
+    payload = json.loads(body)
+    match = None
+    for j in payload.get("jobs") or []:
+        if str(j.get("id") or "") == job_id or job_id in (j.get("jobUrl") or ""):
+            match = j
+            break
+    if not match:
+        return {"ok": False, "is_active": False, "error": "Posting appears closed or not listed on Ashby board."}
+    raw_desc = match.get("descriptionHtml") or match.get("descriptionPlain") or ""
+    fmt = "html" if match.get("descriptionHtml") else "text"
+    cleaned_desc, findings = posting_guard.guard(raw_desc, fmt)
+    return {
+        "ok": True,
+        "id": str(match.get("id") or job_id),
+        "title": html_lib.unescape(match.get("title") or "").strip() or "(untitled)",
+        "company": normalize_company_display(board),
+        "location": (match.get("location") or "").strip(),
+        "url": match.get("jobUrl") or original_url,
+        "portal": "ashby-api",
+        "is_active": True,
+        "description": cleaned_desc[:18000],
+        "guard_verdict": findings.get("verdict", "posting_guard: clean"),
+        "guard_findings": findings,
+    }
+
+
 def fetch_and_guard_url(url: str) -> dict:
-    """Fetch an arbitrary posting URL cleanly via portal handler or fetch_page + posting_guard."""
+    """Fetch an arbitrary posting URL cleanly via portal/ATS JSON handler or fetch_page + posting_guard."""
     target = (url or "").strip()
     if not target:
         return {"ok": False, "error": "URL is required"}
@@ -413,6 +602,24 @@ def fetch_and_guard_url(url: str) -> dict:
     if normalize_freehire_slug(target):
         res = fetch_freehire_detail(target)
         if res.get("ok"):
+            return res
+
+    gh = extract_greenhouse_target(target)
+    if gh:
+        res = fetch_greenhouse_detail(gh[0], gh[1], target)
+        if res.get("ok") or res.get("is_active") is False:
+            return res
+
+    lv = extract_lever_target(target)
+    if lv:
+        res = fetch_lever_detail(lv[0], lv[1], target)
+        if res.get("ok") or res.get("is_active") is False:
+            return res
+
+    ab = extract_ashby_target(target)
+    if ab:
+        res = fetch_ashby_detail(ab[0], ab[1], target)
+        if res.get("ok") or res.get("is_active") is False:
             return res
 
     # Generic career page / ATS fetch respecting robots_check + fetch_page + posting_guard
@@ -484,8 +691,9 @@ def fetch_and_guard_url(url: str) -> dict:
 
 
 def build_referral_links(company: str, title: str) -> dict:
-    comp = (company or "").strip()
-    role_kw = " ".join((title or "Product Manager").split()[:4])
+    comp = _company_search_term(company or "")
+    cleaned_title = re.sub(r"[,/|–—()]+", " ", title or "Product Manager")
+    role_kw = " ".join(cleaned_title.split()[:4])
     rec_q = urllib.parse.quote(f"{comp} recruiter".strip())
     peer_q = urllib.parse.quote(f"{comp} {role_kw}".strip())
     return {

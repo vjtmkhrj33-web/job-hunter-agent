@@ -254,12 +254,20 @@
 
       <!-- Scraped & Ranked Pool Table -->
       <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 class="font-bold text-slate-900 text-sm">Scraped &amp; Ranked Live Jobs (<span id="seen-jobs-count">0</span>)</h3>
             <p class="text-[11px] text-slate-500">Stored in <code>job_scraper/seen_jobs.json</code> • Includes direct LinkedIn Recruiter &amp; Peer search links (Step 4.5)</p>
           </div>
-          <button onclick="loadSeenJobs()" class="text-xs text-blue-600 hover:underline font-semibold">🔄 Reload List</button>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <input id="seen-filter-text" oninput="applySeenJobsFilter()" type="text" placeholder="Filter company, role, location..." class="border border-slate-300 rounded-lg px-2.5 py-1 bg-white text-xs w-48 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <select id="seen-filter-region" onchange="applySeenJobsFilter()" class="border border-slate-300 rounded-lg px-2 py-1 bg-white text-xs">
+              <option value="all">All Regions</option>
+              <option value="india">India / Bengaluru Only</option>
+              <option value="high">High Fit Only</option>
+            </select>
+            <button onclick="loadSeenJobs()" class="text-xs text-blue-600 hover:underline font-semibold px-2">🔄 Reload List</button>
+          </div>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs">
@@ -576,10 +584,13 @@
       <div class="p-4 sm:p-5 space-y-3 overflow-y-auto flex-1 text-xs">
         <!-- URL Fetch & Guard row -->
         <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-3 space-y-2">
-          <label class="block font-semibold text-blue-950">Option A: Fetch Job Posting URL Directly (LinkedIn, Freehire, Greenhouse, Lever, Career Pages)</label>
+          <div class="flex items-center justify-between">
+            <label class="block font-semibold text-blue-950">Option A: Fetch Job Posting URL Directly (LinkedIn, Freehire, Greenhouse, Lever, Ashby, Career Pages)</label>
+            <a id="modal-open-external" href="#" target="_blank" rel="noopener noreferrer" class="hidden text-[11px] font-semibold text-blue-700 hover:underline">Open Original URL ↗</a>
+          </div>
           <div class="flex space-x-2">
-            <input id="modal-url" type="url" placeholder="https://www.linkedin.com/jobs/view/... or company careers URL" class="flex-1 border border-blue-300 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
-            <button id="btn-fetch-url" onclick="fetchAndGuardJobUrl()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3.5 py-2 rounded-lg whitespace-nowrap transition">
+            <input id="modal-url" type="url" oninput="syncModalExternalLink()" placeholder="https://www.linkedin.com/jobs/view/... or company careers URL" class="flex-1 border border-blue-300 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <button id="btn-fetch-url" onclick="fetchAndGuardJobUrl(false)" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3.5 py-2 rounded-lg whitespace-nowrap transition">
               🛡️ Fetch &amp; Guard
             </button>
           </div>
@@ -669,15 +680,49 @@
       if (tabId === 'integrations') loadIntegrationsConfig();
     }
 
+    window.__allSeenJobs = [];
+    window.__seenJobsByKey = {};
+
+    function safeHttpUrl(u) {
+      const s = String(u || '').trim();
+      if (!s) return '';
+      const clean = s.split('→')[0].trim().split(/\s+/)[0];
+      return /^https?:\/\//i.test(clean) ? clean : '';
+    }
+
+    function syncModalExternalLink() {
+      const ext = document.getElementById('modal-open-external');
+      const u = safeHttpUrl(document.getElementById('modal-url').value);
+      if (u) {
+        ext.href = u;
+        ext.classList.remove('hidden');
+      } else {
+        ext.href = '#';
+        ext.classList.add('hidden');
+      }
+    }
+
     function openFitModal(company = '', role = '', location = '', jobUrl = '', jdText = '') {
+      const cleanUrl = safeHttpUrl(jobUrl);
       document.getElementById('modal-company').value = company;
       document.getElementById('modal-role').value = role;
       document.getElementById('modal-location').value = location;
-      document.getElementById('modal-url').value = jobUrl;
-      if (jdText) document.getElementById('modal-jd').value = jdText;
+      document.getElementById('modal-url').value = cleanUrl;
+      document.getElementById('modal-jd').value = jdText || '';
+      syncModalExternalLink();
       document.getElementById('modal-score-result').classList.add('hidden');
-      document.getElementById('modal-guard-banner').classList.add('hidden');
+      const banner = document.getElementById('modal-guard-banner');
+      if (jdText) {
+        banner.className = 'text-[11px] font-mono px-2.5 py-1.5 rounded bg-blue-100 text-blue-900 border border-blue-200';
+        banner.innerText = 'Loaded scraped JD excerpt • Refreshing full posting details...';
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
       document.getElementById('fit-modal').classList.remove('hidden');
+      if (cleanUrl && (!jdText || jdText.length < 1800)) {
+        fetchAndGuardJobUrl(Boolean(jdText));
+      }
     }
     function closeFitModal() {
       document.getElementById('fit-modal').classList.add('hidden');
@@ -694,11 +739,17 @@
       document.getElementById('preview-modal').classList.remove('hidden');
     }
 
-    async function fetchAndGuardJobUrl() {
-      const url = document.getElementById('modal-url').value.trim();
-      if (!url) return alert('Enter a job posting URL first.');
+    async function fetchAndGuardJobUrl(autoPreserveExisting = false) {
+      const url = safeHttpUrl(document.getElementById('modal-url').value);
+      if (!url) {
+        if (!autoPreserveExisting) alert('Enter a valid http(s) job posting URL first.');
+        return;
+      }
+      document.getElementById('modal-url').value = url;
+      syncModalExternalLink();
       const btn = document.getElementById('btn-fetch-url');
       const banner = document.getElementById('modal-guard-banner');
+      const existingJd = document.getElementById('modal-jd').value.trim();
       btn.innerText = '⏳ Fetching...';
       btn.disabled = true;
       try {
@@ -710,11 +761,16 @@
         const data = await res.json();
         banner.classList.remove('hidden');
         if (!data.ok) {
-          banner.className = 'text-[11px] font-mono px-2.5 py-1.5 rounded bg-amber-100 text-amber-900 border border-amber-300';
-          banner.innerText = `⚠️ ${data.error}`;
+          if (autoPreserveExisting && existingJd) {
+            banner.className = 'text-[11px] font-mono px-2.5 py-1.5 rounded bg-blue-100 text-blue-900 border border-blue-200';
+            banner.innerText = `🛡️ Using scraped Freehire JD excerpt (${data.error})`;
+          } else {
+            banner.className = 'text-[11px] font-mono px-2.5 py-1.5 rounded bg-amber-100 text-amber-900 border border-amber-300';
+            banner.innerText = `⚠️ ${data.error}`;
+          }
           return;
         }
-        if (data.company && !document.getElementById('modal-company').value.trim()) {
+        if (data.company && (!document.getElementById('modal-company').value.trim() || document.getElementById('modal-company').value.includes('privatelimited'))) {
           document.getElementById('modal-company').value = data.company;
         }
         if (data.title && !document.getElementById('modal-role').value.trim()) {
@@ -723,14 +779,16 @@
         if (data.location && !document.getElementById('modal-location').value.trim()) {
           document.getElementById('modal-location').value = data.location;
         }
-        if (data.description) {
+        if (data.description && (!existingJd || data.description.length >= existingJd.length)) {
           document.getElementById('modal-jd').value = data.description;
         }
         const isWarn = (data.guard_verdict || '').includes('⚠');
         banner.className = `text-[11px] font-mono px-2.5 py-1.5 rounded border ${isWarn ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-emerald-100 text-emerald-900 border-emerald-300'}`;
         banner.innerText = `${data.guard_verdict}${data.is_active === false ? ' | ⚠️ POSTING APPEARS CLOSED AT SOURCE' : ' | Active & Sanitized'}`;
       } catch (err) {
-        alert('Error fetching job URL.');
+        banner.classList.remove('hidden');
+        banner.className = 'text-[11px] font-mono px-2.5 py-1.5 rounded bg-amber-100 text-amber-900 border border-amber-300';
+        banner.innerText = existingJd ? '🛡️ Using scraped JD excerpt (network fetch unavailable).' : '⚠️ Error fetching job URL. Paste JD manually or open link in browser.';
       } finally {
         btn.innerText = '🛡️ Fetch & Guard';
         btn.disabled = false;
@@ -786,31 +844,41 @@
       openFitModal(btn.dataset.company || '', btn.dataset.role || '', btn.dataset.location || '', btn.dataset.url || '');
     }
 
+    function openFitFromKey(key) {
+      const j = window.__seenJobsByKey[key];
+      if (!j) return;
+      openFitModal(j.company || '', j.title || '', j.location || '', j.url || '', j.description_excerpt || '');
+    }
+
     async function loadShortlist() {
       try {
         const res = await fetch('/api/shortlist');
         const jobs = await res.json();
         const tbody = document.getElementById('shortlist-table-body');
-        tbody.innerHTML = jobs.map(j => `
+        tbody.innerHTML = jobs.map(j => {
+          const cleanLink = safeHttpUrl(j.link);
+          return `
           <tr class="hover:bg-slate-50 transition">
             <td class="py-3 px-4">
               <span class="font-bold text-slate-900">${esc(j.company)}</span>
               <p class="text-slate-500 text-[11px]">${esc(j.role)}</p>
+              ${j.link_note ? `<span class="inline-block mt-0.5 text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded">${esc(j.link_note)}</span>` : ''}
             </td>
             <td class="py-3 px-4 text-slate-600">${esc(j.location)}</td>
             <td class="py-3 px-4"><span class="text-amber-500 font-medium">${esc(j.fit)}</span></td>
-            <td class="py-3 px-4 space-x-2">
-              <a href="${esc(j.recruiter_search_url)}" target="_blank" class="text-blue-600 hover:underline text-[11px]">Recruiters</a>
-              <a href="${esc(j.peer_search_url)}" target="_blank" class="text-indigo-600 hover:underline text-[11px]">Peers</a>
+            <td class="py-3 px-4 space-x-2 whitespace-nowrap">
+              <a href="${esc(j.recruiter_search_url)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline text-[11px]">Recruiters ↗</a>
+              <a href="${esc(j.peer_search_url)}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline text-[11px]">Peers ↗</a>
             </td>
             <td class="py-3 px-4 text-right space-x-2 whitespace-nowrap">
-              ${j.link ? `<a href="${esc(j.link)}" target="_blank" class="text-slate-500 hover:text-slate-800 underline text-[11px]">Portal</a>` : ''}
-              <button data-company="${esc(j.company)}" data-role="${esc(j.role)}" data-location="${esc(j.location)}" data-url="${esc(j.link)}" onclick="openFitFromBtn(this)" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-2.5 py-1 rounded shadow-sm text-[11px]">
+              ${cleanLink ? `<a href="${esc(cleanLink)}" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:text-blue-900 underline font-medium text-[11px]">Portal ↗</a>` : ''}
+              <button data-company="${esc(j.company)}" data-role="${esc(j.role)}" data-location="${esc(j.location)}" data-url="${esc(cleanLink)}" onclick="openFitFromBtn(this)" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-2.5 py-1 rounded shadow-sm text-[11px]">
                 Score &amp; Tailor
               </button>
             </td>
           </tr>
-        `).join('');
+        `;
+        }).join('');
       } catch (err) {
         console.error('Error loading shortlist:', err);
       }
@@ -885,15 +953,38 @@
       }
     }
 
+    function applySeenJobsFilter() {
+      const q = (document.getElementById('seen-filter-text')?.value || '').trim().toLowerCase();
+      const region = document.getElementById('seen-filter-region')?.value || 'all';
+      const filtered = (window.__allSeenJobs || []).filter(j => {
+        const hay = `${j.company || ''} ${j.title || ''} ${j.location || ''} ${j.portal || ''}`.toLowerCase();
+        if (q && !hay.includes(q)) return false;
+        if (region === 'india' && !/(india|bengaluru|bangalore|mumbai|hyderabad|pune|chennai|gurgaon|gurugram|noida|delhi)/i.test(j.location || '')) return false;
+        if (region === 'high' && !(j.fit === 'high' || (typeof j.rank_score === 'number' && j.rank_score >= 70))) return false;
+        return true;
+      });
+      renderSeenJobsRows(filtered);
+    }
+
     function renderSeenJobs(jobs) {
+      window.__allSeenJobs = jobs || [];
+      window.__seenJobsByKey = {};
+      window.__allSeenJobs.forEach(j => { window.__seenJobsByKey[j.key] = j; });
+      applySeenJobsFilter();
+    }
+
+    function renderSeenJobsRows(jobs) {
       document.getElementById('seen-jobs-count').innerText = jobs.length;
       const tbody = document.getElementById('seen-jobs-table-body');
       if (!jobs.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400">No scraped jobs stored yet. Click "Run Live Scrape" above.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400">No matching scraped jobs found. Clear filters or click "Run Live Scrape" above.</td></tr>';
         return;
       }
       tbody.innerHTML = jobs.map(j => {
         const guardWarn = (j.guard || 'clean').includes('⚠');
+        const postUrl = safeHttpUrl(j.url);
+        const recUrl = safeHttpUrl(j.recruiter_search_url);
+        const peerUrl = safeHttpUrl(j.peer_search_url);
         const scoreBadge = j.rank_score != null
           ? `<span class="px-2 py-0.5 rounded-full font-bold ${j.rank_score >= 75 ? 'bg-emerald-100 text-emerald-800' : j.rank_score >= 60 ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'}">${j.rank_score}/100 (${esc(j.rank_verdict)})</span>`
           : `<span class="px-2 py-0.5 rounded-full font-bold uppercase ${j.fit === 'high' ? 'bg-emerald-100 text-emerald-800' : j.fit === 'medium' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'}">${esc(j.fit)} fit</span>`;
@@ -913,15 +1004,15 @@
               <div class="text-[10px] font-mono ${guardWarn ? 'text-amber-700 font-bold' : 'text-emerald-700'}">🛡️ ${esc(j.guard || 'clean')}</div>
             </td>
             <td class="py-3 px-4 space-x-2 whitespace-nowrap">
-              <a href="${esc(j.recruiter_search_url)}" target="_blank" class="text-blue-600 hover:underline text-[11px]">Recruiters</a>
-              <a href="${esc(j.peer_search_url)}" target="_blank" class="text-indigo-600 hover:underline text-[11px]">Peers</a>
+              ${recUrl ? `<a href="${esc(recUrl)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline text-[11px]">Recruiters ↗</a>` : ''}
+              ${peerUrl ? `<a href="${esc(peerUrl)}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline text-[11px]">Peers ↗</a>` : ''}
             </td>
             <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
-              <a href="${esc(j.url)}" target="_blank" class="text-slate-500 hover:text-slate-800 underline text-[11px]">Posting</a>
-              <button data-company="${esc(j.company)}" data-role="${esc(j.title)}" data-location="${esc(j.location)}" data-url="${esc(j.url)}" onclick="trackScrapedJob(this)" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-2 py-1 rounded text-[11px]">
+              ${postUrl ? `<a href="${esc(postUrl)}" target="_blank" rel="noopener noreferrer" title="${esc(postUrl)}" class="inline-block bg-slate-50 hover:bg-slate-100 border border-slate-300 text-blue-700 font-semibold px-2 py-1 rounded text-[11px]">Posting ↗</a>` : '<span class="text-slate-400 text-[11px]">No URL</span>'}
+              <button data-company="${esc(j.company)}" data-role="${esc(j.title)}" data-location="${esc(j.location)}" data-url="${esc(postUrl)}" onclick="trackScrapedJob(this)" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-2 py-1 rounded text-[11px]">
                 + Track
               </button>
-              <button data-company="${esc(j.company)}" data-role="${esc(j.title)}" data-location="${esc(j.location)}" data-url="${esc(j.url)}" onclick="openFitFromBtn(this)" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-2.5 py-1 rounded shadow-sm text-[11px]">
+              <button data-key="${esc(j.key)}" onclick="openFitFromKey(this.dataset.key)" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-2.5 py-1 rounded shadow-sm text-[11px]">
                 Fetch &amp; Tailor
               </button>
             </td>
@@ -960,7 +1051,7 @@
           </div>
           <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
             <a href="${esc(v.docx)}" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm">📥 Word (.docx)</a>
-            <a href="${esc(v.md)}" target="_blank" class="text-blue-600 hover:underline text-xs font-medium">View MD →</a>
+            <a href="${esc(v.md)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline text-xs font-medium">View MD ↗</a>
           </div>
         </div>
       `).join('');
@@ -990,7 +1081,7 @@
           </div>
           <div class="pt-2 flex items-center justify-between border-t border-slate-100 text-xs">
             ${a.docx ? `<a href="/download/applications/${esc(a.slug)}/${esc(a.docx)}" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1.5 rounded-lg shadow-sm">📥 ${esc(a.docx)}</a>` : '<span class="text-slate-400">No DOCX</span>'}
-            <a href="/download/applications/${esc(a.slug)}/fit.md" target="_blank" class="text-slate-500 hover:text-slate-800 underline text-[11px]">Raw Fit</a>
+            <a href="/download/applications/${esc(a.slug)}/fit.md" target="_blank" rel="noopener noreferrer" class="text-slate-500 hover:text-slate-800 underline text-[11px]">Raw Fit ↗</a>
           </div>
         </div>
       `).join('');
@@ -1024,7 +1115,7 @@
               <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">★ ${esc(r.score || '8.0')}</span>
             </div>
             ${r.notes ? `<p class="text-[10px] text-slate-600 italic bg-slate-50 p-1.5 rounded">${esc(r.notes)}</p>` : ''}
-            <div class="flex items-center justify-between pt-1 border-t border-slate-100">
+            <div class="flex items-center justify-between pt-1 border-t border-slate-100 gap-1">
               <select data-company="${esc(r.company)}" data-role="${esc(r.role)}" onchange="updateCardStatus(this.dataset.company, this.dataset.role, this.value)" class="text-[10px] bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 text-slate-700">
                 <option value="shortlisted" ${st==='shortlisted'?'selected':''}>Shortlisted</option>
                 <option value="applying" ${st==='applying'?'selected':''}>Applying</option>
@@ -1032,6 +1123,7 @@
                 <option value="interview" ${st==='interview'?'selected':''}>Interview</option>
                 <option value="offer" ${st==='offer'?'selected':''}>Offer</option>
               </select>
+              ${safeHttpUrl(r.link) ? `<a href="${esc(safeHttpUrl(r.link))}" target="_blank" rel="noopener noreferrer" class="text-[10px] text-slate-600 hover:text-blue-700 underline">Posting ↗</a>` : ''}
               <button data-company="${esc(r.company)}" data-role="${esc(r.role)}" onclick="triggerFollowUpPack(this.dataset.company, this.dataset.role)" class="text-[10px] text-blue-600 hover:underline font-semibold">Follow Up →</button>
             </div>
           </div>
@@ -1145,7 +1237,7 @@
       out.innerHTML = `
         <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
           <div><strong>${esc(data.mode_label)}</strong> • Est. Total Study Time: <strong>~${data.total_hours}h</strong></div>
-          <a href="${esc(data.download_url)}" target="_blank" class="text-blue-600 hover:underline font-semibold">📥 Download ${esc(data.filename)}</a>
+          <a href="${esc(data.download_url)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-semibold">📥 Download ${esc(data.filename)}</a>
         </div>
         <div class="overflow-x-auto border border-slate-200 rounded-lg">
           <table class="w-full text-left text-xs">
