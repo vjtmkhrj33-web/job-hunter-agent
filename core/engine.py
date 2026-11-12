@@ -18,7 +18,7 @@ if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
 import posting_guard  # noqa: E402
-from core import portals  # noqa: E402
+from core import portals, salary  # noqa: E402
 
 
 def read_text(path):
@@ -260,15 +260,17 @@ class JobAgentEngine:
                 elif l.startswith("- **Fit:**"):
                     fit_stars = l.replace("- **Fit:**", "").strip()
 
+            comp_clean = company or "Target Company"
             jobs.append({
-                "company": company or "Target Company",
+                "company": comp_clean,
                 "role": role,
                 "location": location,
                 "link": link,
                 "link_note": link_note,
                 "comp": comp,
                 "fit": fit_stars,
-                **portals.build_referral_links(company or "Target Company", role),
+                "salary_benchmark": salary.estimate_market_salary(comp_clean, role, location),
+                **portals.build_referral_links(comp_clean, role),
             })
         return jobs
 
@@ -514,6 +516,7 @@ class JobAgentEngine:
             "proof_points": proof_points,
             "gaps": gaps,
             "matched_keywords": sorted(set(matched_domain + matched_tech)),
+            "salary_benchmark": salary.estimate_market_salary(company, role, location, jd_text),
             "referral_links": portals.build_referral_links(company, role),
         }
 
@@ -526,18 +529,7 @@ class JobAgentEngine:
 
     def _extract_advertised_comp(self, text: str) -> str | None:
         """Extracts verbatim stated compensation range/figure from JD if present; never estimates."""
-        if not text:
-            return None
-        patterns = [
-            r"(?:USD|\$|EUR|€|GBP|£|INR|₹|AED|SGD)\s?\d{2,3}(?:,\d{3})+(?:\s?[-–to]+\s?(?:USD|\$|EUR|€|GBP|£|INR|₹|AED|SGD)?\s?\d{2,3}(?:,\d{3})+)?(?:\s*(?:per\s+year|annually|/\s*yr|pa|p\.a\.|base|ote))?",
-            r"(?:₹|INR|Rs\.?)\s?\d+(?:\.\d+)?\s*(?:L|LPA|Lakhs?|Cr)(?:\s?[-–to]+\s?\d+(?:\.\d+)?\s*(?:L|LPA|Lakhs?|Cr))?",
-            r"\$\s?\d{2,3}k\s?[-–to]+\s?\$?\d{2,3}k(?:\s*(?:base|tc|total|ote))?",
-        ]
-        for pat in patterns:
-            m = re.search(pat, text, flags=re.I)
-            if m:
-                return re.sub(r"\s+", " ", m.group(0)).strip()
-        return None
+        return salary.extract_stated_comp(text)
 
     def _extract_jd_requirements(self, cleaned_text: str, role: str, candidate_lower: str) -> list[dict]:
         """
@@ -843,10 +835,11 @@ class JobAgentEngine:
         hr_score = round(max(1.5, min(5.0, hr_score)), 1)
         hr_verdict = "PASS" if hr_score >= 4.0 else ("CONDITIONAL" if hr_score >= 3.2 else "BLOCK")
 
+        salary_bench = salary.estimate_market_salary(company_clean, role_clean, loc_clean, cleaned_jd)
         comp_obs = (
-            f"Advertised compensation verbatim in JD: {block_g['advertised_comp']} (Reliability: Medium — confirm fixed base vs bonus/equity in recruiter call)."
+            f"Advertised compensation verbatim in JD: {block_g['advertised_comp']} (Market Est. via {salary_bench['source_basis']}: {salary_bench['avg_display']}, range {salary_bench['range_display']})."
             if block_g["advertised_comp"]
-            else "Compensation unstated in JD (Unknown — never guess; verify fixed base + variable/equity band on Day 1 recruiter screen vs $100k–$200k global / Bengaluru I6+ target)."
+            else f"Compensation unstated in JD (verify fixed vs bonus/equity on recruiter call). Probable Market Range ({salary_bench['source_basis']}): {salary_bench['avg_display']} • {salary_bench['range_display']} ({salary_bench['split_note']})."
         )
 
         hr_persona = {
@@ -1141,6 +1134,7 @@ class JobAgentEngine:
             "personas": personas,
             "agent_trace": agent_trace,
             "bar_probes": bar_probes,
+            "salary_benchmark": salary_bench,
             "fit_data": fit_data,
         }
         scrutiny["markdown"] = self.format_scrutiny_markdown(scrutiny)
@@ -1182,6 +1176,7 @@ class JobAgentEngine:
 - **Language Gate:** {s['fit_data']['gates']['language_note']} (`{s['fit_data']['gates']['language_gate']}`)
 - **Role Archetype:** {s['archetype']}
 - **Recommended Master CV:** {s['recommended_variant']}
+- **Market Salary Benchmark:** {s['salary_benchmark']['avg_display']} ({s['salary_benchmark']['range_display']} • {s['salary_benchmark']['source_basis']}; {('Stated in JD: ' + s['salary_benchmark']['stated_in_jd']) if s['salary_benchmark'].get('stated_in_jd') else 'Unstated in JD'})
 - **Career-Ops Global Score:** **{s['global_score_5']} / 5.0** ({s['career_ops_band']}) | Evidence Confidence: **{s['evidence_confidence']}**
 - **Internal Rank Rubric:** {s['rank_score_100']} / 100 ({s['rank_verdict']}) | Legacy UI Score: {s['fit_score_10']} / 10
 
@@ -1993,6 +1988,7 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
                 "gaps": entry.get("gaps") or [],
                 "description_excerpt": entry.get("description_excerpt") or "",
                 "in_tracker": in_tracker,
+                "salary_benchmark": salary.estimate_market_salary(comp, title, entry.get("location") or "", entry.get("description_excerpt") or ""),
                 **portals.build_referral_links(comp, title),
             })
 

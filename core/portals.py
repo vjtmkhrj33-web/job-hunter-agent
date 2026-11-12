@@ -19,6 +19,7 @@ if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
 import posting_guard  # noqa: E402
+from core import salary  # noqa: E402
 from fetch_page import fetch_with_urllib, strip_tags as fp_strip_tags  # noqa: E402
 from job_key import make_key  # noqa: E402
 from page_decode import decode_page  # noqa: E402
@@ -749,6 +750,18 @@ def store_scraped_jobs(hits: list[dict]) -> dict:
             entry["guard"] = "clean" if gv.lower().startswith("clean") else gv[:200]
         if job.get("description"):
             entry["description_excerpt"] = job["description"][:2500]
+        sal = salary.estimate_market_salary(job["company"], job["title"], job.get("location") or "", job.get("description") or "")
+        entry["salary_benchmark"] = {
+            "avg_display": sal["avg_display"],
+            "range_display": sal["range_display"],
+            "stated_in_jd": sal["stated_in_jd"],
+            "tier_label": sal["tier_label"],
+            "split_note": sal["split_note"],
+            "expectation_fit": sal["expectation_fit"],
+            "source_basis": sal["source_basis"],
+            "region": sal["region"],
+            "approx_usd_k": sal["approx_usd_k"],
+        }
         seen[key] = entry
         added_keys.append(key)
 

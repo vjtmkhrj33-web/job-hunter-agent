@@ -269,6 +269,7 @@
               <option value="all">All Regions</option>
               <option value="india">India / Bengaluru Only</option>
               <option value="high">High Fit Only</option>
+              <option value="comp_target">₹50L+ / $100k+ Est.</option>
             </select>
             <button onclick="loadSeenJobs()" class="text-xs text-blue-600 hover:underline font-semibold px-2">🔄 Reload List</button>
           </div>
@@ -279,13 +280,14 @@
               <tr>
                 <th class="py-3 px-4">Company &amp; Role</th>
                 <th class="py-3 px-4">Location / Portal</th>
+                <th class="py-3 px-4">Est. Salary (Market)</th>
                 <th class="py-3 px-4">Score / Guard</th>
                 <th class="py-3 px-4">Referral Links</th>
                 <th class="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody id="seen-jobs-table-body" class="divide-y divide-slate-100">
-              <tr><td colspan="5" class="py-6 text-center text-slate-400">Click "Run Live Scrape" above to fetch live Senior PM &amp; Payments openings.</td></tr>
+              <tr><td colspan="6" class="py-6 text-center text-slate-400">Click "Run Live Scrape" above to fetch live Senior PM &amp; Payments openings.</td></tr>
             </tbody>
           </table>
         </div>
@@ -302,6 +304,7 @@
               <tr>
                 <th class="py-3 px-4">Company &amp; Role</th>
                 <th class="py-3 px-4">Location</th>
+                <th class="py-3 px-4">Est. Salary (Market)</th>
                 <th class="py-3 px-4">Fit Level</th>
                 <th class="py-3 px-4">Referral Links</th>
                 <th class="py-3 px-4 text-right">Actions</th>
@@ -983,6 +986,27 @@
       openFitModal(j.company || '', j.title || '', j.location || '', j.url || '', j.description_excerpt || '');
     }
 
+    function renderSalaryCell(sb) {
+      if (!sb) return '<span class="text-slate-400 text-[11px]">Unverified</span>';
+      const gd = safeHttpUrl(sb.glassdoor_url);
+      const ab = safeHttpUrl(sb.ambitionbox_url);
+      const lv = safeHttpUrl(sb.levels_url);
+      const isIndia = sb.region === 'IN';
+      return `
+        <div class="space-y-0.5 min-w-[165px]">
+          ${sb.stated_in_jd ? `<div class="inline-block bg-emerald-100 text-emerald-900 text-[10px] font-bold px-1.5 py-0.5 rounded">JD Stated: ${esc(sb.stated_in_jd)}</div>` : ''}
+          <div class="font-bold text-slate-900 text-xs">${esc(sb.avg_display)}</div>
+          <div class="text-[11px] text-slate-600 font-medium">${esc(sb.range_display)}</div>
+          <div class="text-[10px] text-slate-500 leading-tight" title="${esc(sb.source_basis)}">${esc(sb.split_note)}</div>
+          <div class="flex flex-wrap gap-1.5 pt-0.5 text-[10px]">
+            ${isIndia && ab ? `<a href="${esc(ab)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-semibold">AmbitionBox ↗</a>` : ''}
+            ${gd ? `<a href="${esc(gd)}" target="_blank" rel="noopener noreferrer" class="text-emerald-700 hover:underline font-semibold">Glassdoor ↗</a>` : ''}
+            ${lv ? `<a href="${esc(lv)}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-semibold">Levels.fyi ↗</a>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
     async function loadShortlist() {
       try {
         const res = await fetch('/api/shortlist');
@@ -998,6 +1022,7 @@
               ${j.link_note ? `<span class="inline-block mt-0.5 text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded">${esc(j.link_note)}</span>` : ''}
             </td>
             <td class="py-3 px-4 text-slate-600">${esc(j.location)}</td>
+            <td class="py-3 px-4">${renderSalaryCell(j.salary_benchmark)}</td>
             <td class="py-3 px-4"><span class="text-amber-500 font-medium">${esc(j.fit)}</span></td>
             <td class="py-3 px-4 space-x-2 whitespace-nowrap">
               <a href="${esc(j.recruiter_search_url)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline text-[11px]">Recruiters ↗</a>
@@ -1093,10 +1118,12 @@
       const q = (document.getElementById('seen-filter-text')?.value || '').trim().toLowerCase();
       const region = document.getElementById('seen-filter-region')?.value || 'all';
       const filtered = (window.__allSeenJobs || []).filter(j => {
-        const hay = `${j.company || ''} ${j.title || ''} ${j.location || ''} ${j.portal || ''}`.toLowerCase();
+        const sb = j.salary_benchmark || {};
+        const hay = `${j.company || ''} ${j.title || ''} ${j.location || ''} ${j.portal || ''} ${sb.avg_display || ''} ${sb.range_display || ''}`.toLowerCase();
         if (q && !hay.includes(q)) return false;
         if (region === 'india' && !/(india|bengaluru|bangalore|mumbai|hyderabad|pune|chennai|gurgaon|gurugram|noida|delhi)/i.test(j.location || '')) return false;
         if (region === 'high' && !(j.fit === 'high' || (typeof j.rank_score === 'number' && j.rank_score >= 70))) return false;
+        if (region === 'comp_target' && !sb.meets_senior_bar) return false;
         return true;
       });
       renderSeenJobsRows(filtered);
@@ -1113,7 +1140,7 @@
       document.getElementById('seen-jobs-count').innerText = jobs.length;
       const tbody = document.getElementById('seen-jobs-table-body');
       if (!jobs.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400">No matching scraped jobs found. Clear filters or click "Run Live Scrape" above.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">No matching scraped jobs found. Clear filters or click "Run Live Scrape" above.</td></tr>';
         return;
       }
       tbody.innerHTML = jobs.map(j => {
@@ -1135,6 +1162,7 @@
               <div>${esc(j.location || '—')}</div>
               <span class="inline-block mt-0.5 bg-slate-100 text-slate-700 text-[10px] px-1.5 py-0.5 rounded">${esc(j.portal)}</span>
             </td>
+            <td class="py-3 px-4">${renderSalaryCell(j.salary_benchmark)}</td>
             <td class="py-3 px-4 space-y-1">
               <div>${scoreBadge}</div>
               <div class="text-[10px] font-mono ${guardWarn ? 'text-amber-700 font-bold' : 'text-emerald-700'}">🛡️ ${esc(j.guard || 'clean')}</div>
@@ -1414,12 +1442,29 @@
         `<div class="flex justify-between py-1 border-b border-slate-200/70"><span>${esc(m.requirement)}</span><span class="font-bold ${m.strength === 'Strong' ? 'text-emerald-700' : m.strength === 'Missing' ? 'text-red-700' : 'text-amber-700'}">${esc(m.strength)}</span></div>`
       ).join('');
 
+      const sb = data.salary_benchmark;
+      const salBox = sb ? `
+        <div class="p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-lg text-[11px] flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <strong>💰 Est. Market Salary:</strong> ${esc(sb.avg_display)} (${esc(sb.range_display)})
+            <span class="text-slate-600">• ${esc(sb.split_note)}</span>
+            ${sb.stated_in_jd ? `<span class="ml-1 font-bold text-emerald-800">[JD Stated: ${esc(sb.stated_in_jd)}]</span>` : ''}
+          </div>
+          <div class="flex gap-2">
+            ${sb.region === 'IN' ? `<a href="${esc(safeHttpUrl(sb.ambitionbox_url))}" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:underline font-semibold">AmbitionBox ↗</a>` : ''}
+            <a href="${esc(safeHttpUrl(sb.glassdoor_url))}" target="_blank" rel="noopener noreferrer" class="text-emerald-700 hover:underline font-semibold">Glassdoor ↗</a>
+            <a href="${esc(safeHttpUrl(sb.levels_url))}" target="_blank" rel="noopener noreferrer" class="text-indigo-700 hover:underline font-semibold">Levels.fyi ↗</a>
+          </div>
+        </div>
+      ` : '';
+
       resDiv.innerHTML = `
         <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200">
           <span class="font-bold text-slate-900 text-sm">Fit: ${data.score}/10 | Rank Rubric: ${data.rank_score}/100 (${esc(data.rank_verdict)})</span>
           <span class="px-2 py-0.5 rounded-full font-bold text-xs ${data.verdict.includes('VETO') ? 'bg-red-100 text-red-800' : data.verdict === 'APPLY' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${esc(data.verdict)}</span>
         </div>
         <div class="text-[11px] font-mono text-slate-600">🛡️ ${esc(data.guard_verdict)} | Eligibility: <strong>${esc(data.gates.eligibility_gate)}</strong> | Language: <strong>${esc(data.gates.language_gate)}</strong></div>
+        ${salBox}
         <div class="text-[11px] bg-white p-2 rounded border border-slate-200">${matchHtml}</div>
         ${(data.red_flags && data.red_flags.length) ? `<div class="p-2 bg-amber-50 border border-amber-200 rounded text-amber-950 text-[11px]"><strong>Recruiter Red Flags:</strong><br>• ${data.red_flags.map(esc).join('<br>• ')}</div>` : ''}
         ${(data.gap_questions && data.gap_questions.length) ? `<div class="p-2 bg-blue-50 border border-blue-200 rounded text-blue-950 text-[11px]"><strong>Batched Gap Questions:</strong><br>${data.gap_questions.map((q, i) => `${i+1}. ${esc(q)}`).join('<br>')}</div>` : ''}
@@ -1698,10 +1743,14 @@
             <span class="px-3 py-1.5 rounded-xl bg-white/90 border border-black/10 text-slate-900">Evidence: ${esc(d.evidence_confidence)}</span>
           </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs pt-2 border-t border-black/10">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs pt-2 border-t border-black/10">
           <div class="bg-white/75 rounded-lg p-2.5"><strong>Archetype:</strong> ${esc(d.archetype)}</div>
           <div class="bg-white/75 rounded-lg p-2.5"><strong>Recommended Master CV:</strong> ${esc(d.recommended_variant)}</div>
           <div class="bg-white/75 rounded-lg p-2.5"><strong>Eligibility / Auth:</strong> ${esc(d.fit_data.gates.eligibility_gate)} (${esc(d.fit_data.gates.eligibility_note)})</div>
+          <div class="bg-white/75 rounded-lg p-2.5">
+            <strong>Est. Market Salary:</strong> ${d.salary_benchmark ? `${esc(d.salary_benchmark.avg_display)} (${esc(d.salary_benchmark.range_display)})` : 'Check Recruiter'}
+            ${d.salary_benchmark ? `<div class="text-[10px] mt-0.5 space-x-2">${d.salary_benchmark.region === 'IN' ? `<a href="${esc(safeHttpUrl(d.salary_benchmark.ambitionbox_url))}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline">AmbitionBox ↗</a>` : ''}<a href="${esc(safeHttpUrl(d.salary_benchmark.glassdoor_url))}" target="_blank" rel="noopener noreferrer" class="text-emerald-700 underline">Glassdoor ↗</a><a href="${esc(safeHttpUrl(d.salary_benchmark.levels_url))}" target="_blank" rel="noopener noreferrer" class="text-indigo-700 underline">Levels.fyi ↗</a></div>` : ''}
+          </div>
         </div>
       `;
 
