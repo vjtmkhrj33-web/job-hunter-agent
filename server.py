@@ -167,6 +167,38 @@ class JobAgentHTTPHandler(SimpleHTTPRequestHandler):
             result = engine.score_jd(company, role, jd_text, location)
             self.send_json(result)
 
+        elif path == "/api/jobs/scrutinize":
+            company = (data.get("company") or "").strip()
+            role = (data.get("role") or "").strip()
+            location = (data.get("location") or "").strip()
+            job_url = (data.get("job_url") or "").strip()
+            jd_text = (data.get("jd_text") or "").strip()
+            fetch_info = None
+            if job_url and not jd_text:
+                fetched = portals.fetch_and_guard_url(job_url)
+                fetch_info = fetched
+                if not fetched.get("ok"):
+                    self.send_json({"ok": False, "error": fetched.get("error", "Could not fetch posting URL")})
+                    return
+                jd_text = fetched.get("description") or ""
+                company = company or fetched.get("company") or "Target Company"
+                role = role or fetched.get("title") or "Senior Product Manager"
+                location = location or fetched.get("location") or "Bengaluru"
+            if not jd_text:
+                self.send_json({"ok": False, "error": "Provide a Job URL or paste JD text before running the panel."})
+                return
+            result = engine.run_agentic_jd_scrutiny(
+                company or "Target Company",
+                role or "Senior Product Manager",
+                jd_text,
+                location or "Bengaluru",
+                job_url=job_url,
+            )
+            result["ok"] = True
+            result["jd_text"] = jd_text
+            result["fetch_info"] = fetch_info
+            self.send_json(result)
+
         elif path == "/api/jobs/tailor":
             company = data.get("company", "Target Company")
             role = data.get("role", "Senior Product Manager")
@@ -290,6 +322,7 @@ class JobAgentHTTPHandler(SimpleHTTPRequestHandler):
                         "has_outreach": "outreach.md" in files,
                         "has_answers": "application_answers.md" in files,
                         "has_quality_check": "pre_submit_check.md" in files,
+                        "has_panel_review": "panel_review.md" in files,
                     })
         return apps
 

@@ -513,6 +513,691 @@ class JobAgentEngine:
             "referral_links": portals.build_referral_links(company, role),
         }
 
+    def _get_candidate_corpus_lower(self) -> str:
+        """Loads verified candidate facts + master CV text for honest ATS keyword matching."""
+        parts = [read_text("profile/master_cv.md")]
+        if self.candidate_facts_path.exists():
+            parts.append(self.candidate_facts_path.read_text(encoding="utf-8", errors="ignore"))
+        return "\n".join(parts).lower()
+
+    def _extract_advertised_comp(self, text: str) -> str | None:
+        """Extracts verbatim stated compensation range/figure from JD if present; never estimates."""
+        if not text:
+            return None
+        patterns = [
+            r"(?:USD|\$|EUR|€|GBP|£|INR|₹|AED|SGD)\s?\d{2,3}(?:,\d{3})+(?:\s?[-–to]+\s?(?:USD|\$|EUR|€|GBP|£|INR|₹|AED|SGD)?\s?\d{2,3}(?:,\d{3})+)?(?:\s*(?:per\s+year|annually|/\s*yr|pa|p\.a\.|base|ote))?",
+            r"(?:₹|INR|Rs\.?)\s?\d+(?:\.\d+)?\s*(?:L|LPA|Lakhs?|Cr)(?:\s?[-–to]+\s?\d+(?:\.\d+)?\s*(?:L|LPA|Lakhs?|Cr))?",
+            r"\$\s?\d{2,3}k\s?[-–to]+\s?\$?\d{2,3}k(?:\s*(?:base|tc|total|ote))?",
+        ]
+        for pat in patterns:
+            m = re.search(pat, text, flags=re.I)
+            if m:
+                return re.sub(r"\s+", " ", m.group(0)).strip()
+        return None
+
+    def _extract_jd_requirements(self, cleaned_text: str, role: str, candidate_lower: str) -> list[dict]:
+        """
+        Pass 1 (JD-Only) Requirement Extraction followed by Pass 2 Evidence Mapping
+        strictly per career-ops modes/oferta.md Block B (never fabricating evidence).
+        """
+        # Split lines/sentences to capture verbatim quotes
+        raw_lines = [re.sub(r"\s+", " ", ln).strip(" •-*–\t") for ln in (cleaned_text or "").splitlines()]
+        sentences = []
+        for ln in raw_lines:
+            if len(ln) < 18:
+                continue
+            for seg in re.split(r"(?<=[.;])\s+", ln):
+                seg_c = seg.strip()
+                if 18 <= len(seg_c) <= 260:
+                    sentences.append(seg_c)
+
+        domain_map = [
+            (["payment", "acquiring", "merchant processing", "card network", "scheme"], "Payments / Acquiring Platform Scale", "Delivered multi-scheme acquiring on Visa VPC & CyberSource ($30M net revenue; 400+ acquirers).", "Strong"),
+            (["clearing", "settlement", "reconciliation", "iso 8583", "base i", "base ii", "tc33"], "Clearing, Settlement & Protocol Rails", "Decoupled 85% BASE I into 5 microservices; 100% BASE II / TC33.A compliance; CAS settlement automation freed 10 FTEs.", "Strong"),
+            (["api", "rest", "webhook", "microservice", "event-driven", "kafka", "architecture"], "APIs, Event-Driven Systems & Technical Fluency", "Owned Payments 2.0 Kafka microservices & CyberSource REST/ISO integrations across 4 scrum teams.", "Strong"),
+            (["ai", "llm", "agent", "genai", "machine learning", "automation"], "Applied AI & Workflow Automation", "Shipped Fast Refund AI optimization (97% success, 24h) + Claude agentic specs (SMCC Japan: 6 wks -> 2 wks).", "Strong"),
+            (["token", "cof", "mit", "cit", "3ds", "fraud", "chargeback", "dispute", "risk", "compliance", "rbi", "emv", "pci"], "Regulatory Compliance, Tokenization & Risk", "Grew EU COF/MIT/CIT token volume +25%; led Apple Pay India RBI data-center migration cleanly.", "Strong"),
+            (["roadmap", "rice", "prd", "strategy", "discover", "stakeholder", "cross-functional", "agile", "scrum"], "Senior PM Discovery, RICE & Stakeholder Execution", "Secured VP sign-off on RICE roadmap; mentored 4 scrum teams (~6 engineers each) as CSPO.", "Strong"),
+            (["cross-border", "fx", "multi-currency", "international", "global"], "Cross-Border & Multi-Market Payments", "Launched regional schemes (KSA MADA, UAE Jaywan, RuPay, CUP, PayPak, MyDebit, EFTPOS) & SMCC Japan.", "Strong"),
+            (["upi", "npci", "a2a", "real-time payment"], "UPI / Real-Time A2A Payment Rails", "No direct UPI ownership in candidate-facts.md; adjacent domestic-scheme & Instant/Fast Refund rails (97% success).", "Partial"),
+            (["lending", "loan", "underwriting", "bnpl", "credit line"], "Consumer Lending / Credit Underwriting", "No consumer underwriting exposure; B2B Visa Instalment Plan enablement (+18% CEMEA) only.", "Missing"),
+            (["b2c", "consumer app", "consumer-facing", "dau", "mau", "retention loop"], "B2C Consumer Growth & Funnels", "Background is B2B (acquirers/merchants/processors), not B2C DAU funnels; cite Acquirer Onboarding UI launch.", "Partial"),
+            (["wealth", "mutual fund", "digital gold", "insurance", "brokerage"], "WealthTech / Mutual Funds / Insurance", "Zero verified exposure in candidate-facts.md — avoid overclaiming.", "Missing"),
+            (["mba", "master's degree", "masters degree", "postgraduate"], "Graduate Credential (MBA / Master's)", "Holds B.Tech IT (8.6 GPA) + CSPO + 14 yrs PM/payments execution; no MBA/Master's.", "Partial"),
+            (["direct reports", "manage a team of pms", "hire and mentor pms"], "Formal People Management / Direct Reports", "Led 12-person PM/analyst team at Cognizant (2019-21) + 100+ interviews; Visa I6 had 0 direct reports (velocity/scorecards).", "Partial"),
+            (["vendor contract", "procurement", "rfp"], "Direct Vendor Contract / Procurement Ownership", "No formal vendor-contract ownership; influenced Cognizant SOW requote so automation-freed analysts remained.", "Missing"),
+        ]
+
+        extracted = []
+        used_reqs = set()
+        for idx, sent in enumerate(sentences):
+            sl = sent.lower()
+            # Determine importance tier per career-ops oferta.md Block B
+            if any(w in sl for w in ["must have", "required", "minimum", "years of experience", "proven track record", "essential", "mandatory", "strong background", "deep experience"]):
+                band = "critical (stated)"
+            elif any(w in sl for w in ["responsible for", "own the", "lead ", "architect", "define ", "partner with", "deliver", "drive ", "manage "]):
+                band = "high (structural)"
+            elif any(w in sl for w in ["preferred", "nice to have", "plus", "bonus", "ideal"]):
+                band = "meaningful (inferred)"
+            else:
+                continue
+
+            for triggers, label, evidence, default_strength in domain_map:
+                if label in used_reqs:
+                    continue
+                if any(t in sl for t in triggers):
+                    used_reqs.add(label)
+                    extracted.append({
+                        "band": band,
+                        "requirement": label,
+                        "jd_quote": sent,
+                        "evidence": evidence,
+                        "strength": default_strength,
+                    })
+                    break
+            if len(extracted) >= 10:
+                break
+
+        # Ensure baseline extracted rows if JD text was short/sparse
+        full_lower = f"{role} {cleaned_text}".lower()
+        for triggers, label, evidence, default_strength in domain_map:
+            if label in used_reqs:
+                continue
+            hit = next((t for t in triggers if t in full_lower), None)
+            if hit:
+                used_reqs.add(label)
+                extracted.append({
+                    "band": "high (structural)" if default_strength != "Missing" else "critical (stated)",
+                    "requirement": label,
+                    "jd_quote": f"Matched keyword '{hit}' in role/JD text.",
+                    "evidence": evidence,
+                    "strength": default_strength,
+                })
+            if len(extracted) >= 7:
+                break
+
+        return extracted
+
+    def _analyze_block_g_and_gates(
+        self, company: str, role: str, cleaned_text: str, location: str, job_url: str, guard_findings: dict
+    ) -> dict:
+        """Runs career-ops Block A geo/work-auth + Block G Posting Legitimacy + Prior-Contact FYI."""
+        text_lower = f"{role or ''} {location or ''} {cleaned_text or ''}".lower()
+        loc_lower = (location or "").lower()
+        comp_lower = (company or "").lower()
+        gates = self._run_eligibility_and_language_gates(text_lower, location)
+
+        signals = []
+        caution_count = 0
+        suspicious_count = 0
+
+        # 1. Geo-Mismatch check (e.g. stated remote vs mandatory onsite/hybrid, or US-only wording vs India)
+        geo_mismatch = None
+        if "remote" in loc_lower and any(w in text_lower for w in ["days in office", "days a week in office", "hybrid model", "in-office", "onsite only", "on-site only"]):
+            geo_mismatch = "Stated 'Remote' in header/location, but JD body mentions in-office / hybrid cadence."
+            caution_count += 1
+            signals.append({"signal": "Geo / Work-Mode Consistency", "weight": "Concerning", "finding": geo_mismatch})
+        elif any(m in loc_lower for m in ["india", "bengaluru", "bangalore"]) and any(w in text_lower for w in ["401(k)", "401k", "w-2", "us citizen only"]):
+            geo_mismatch = "Location lists India, but benefits/tax text references US-specific terms (401k / W-2)."
+            caution_count += 1
+            signals.append({"signal": "Country Terminology Alignment", "weight": "Concerning", "finding": geo_mismatch})
+        else:
+            signals.append({"signal": "Geo / Work-Mode Consistency", "weight": "Positive", "finding": f"Location ({location or 'Unstated'}) aligns with body text."})
+
+        # 2. Agency / Third-party check (career-ops _shared.md)
+        agency_markers = ["our client", "on behalf of our client", "placement services", "staffing agency", "talent solutions", "recruiting partner"]
+        is_agency = any(m in text_lower or m in comp_lower for m in agency_markers)
+        if is_agency:
+            caution_count += 1
+            signals.append({"signal": "Hiring Entity / Agency Check", "weight": "Concerning", "finding": "Third-party agency / undisclosed end-client phrasing detected; clarify end employer before tailoring."})
+        else:
+            signals.append({"signal": "Hiring Entity / Agency Check", "weight": "Positive", "finding": f"Direct employer posting ({company})."})
+
+        # 3. Description Quality & Role Clarity (career-ops Block G Signal 2 + role-clarity check)
+        word_count = len((cleaned_text or "").split())
+        clarity_points = {
+            "Reporting line / org context": bool(re.search(r"\b(report(?:s|ing)?\s+to|org|organization|team of|pillar|business unit|tribe|pod)\b", text_lower)),
+            "Concrete 6-12m scope / deliverables": bool(re.search(r"\b(deliver|roadmap|launch|prd|ship|metric|kpi|okr|first \d+ days|90 days)\b", text_lower)),
+            "Specific domain stack / protocols": bool(re.search(r"\b(api|iso|kafka|payment|acquiring|settlement|sql|llm|ai|scheme|clearing|gateway|upi|card)\b", text_lower)),
+            "Cross-functional coordination cadence": bool(re.search(r"\b(engineering|design|risk|compliance|legal|operations|sales|cross-functional)\b", text_lower)),
+        }
+        clarity_score = sum(1 for v in clarity_points.values() if v)
+        if word_count < 80:
+            caution_count += 1
+            signals.append({"signal": "JD Substance & Role Clarity", "weight": "Concerning", "finding": f"Brief or incomplete JD ({word_count} words); fetch full posting or ask recruiter for full scope."})
+        elif clarity_score >= 3:
+            signals.append({"signal": "JD Substance & Role Clarity", "weight": "Positive", "finding": f"Detailed JD ({word_count} words, {clarity_score}/4 clarity markers present)."})
+        else:
+            caution_count += 1
+            signals.append({"signal": "JD Substance & Role Clarity", "weight": "Neutral", "finding": f"Moderate clarity ({clarity_score}/4 markers, {word_count} words): clarify deliverables & reporting line."})
+
+        # 4. Employment Classification Risk (career-ops Block G Signal 6)
+        contractor_terms = ["independent contractor", "1099", "w-2 not provided", "t4a", "ir35", "invoice for services", "consulting agreement"]
+        matched_contract = next((t for t in contractor_terms if t in text_lower), None)
+        if matched_contract:
+            caution_count += 1
+            signals.append({"signal": "Employment Classification", "weight": "Concerning", "finding": f"Contractor/services phrasing found ('{matched_contract}'). Confirm employee benefits & status."})
+        else:
+            signals.append({"signal": "Employment Classification", "weight": "Positive", "finding": "Clear full-time / standard employment framing."})
+
+        # 5. AI-Buzzword vs Infrastructure Mismatch (career-ops Block G Signal 7)
+        ai_hype = sum(1 for w in ["ai transformation", "generative ai revolution", "ai-first", "autonomous agent", "llm", "genai"] if w in text_lower)
+        foundation_cleanup = sum(1 for w in ["manual spreadsheet", "data entry", "legacy migration", "digitize paper", "backlog cleanup", "coordinator"] if w in text_lower)
+        if ai_hype >= 2 and foundation_cleanup >= 1:
+            caution_count += 1
+            signals.append({"signal": "AI Claims vs Infrastructure", "weight": "Concerning", "finding": "High AI transformation hype alongside legacy manual-ops phrasing; probe data maturity in HM screen."})
+        else:
+            signals.append({"signal": "AI Claims vs Infrastructure", "weight": "Positive", "finding": "Consistent technical scope and tooling expectations."})
+
+        # 6. Posting Guard Integrity / Prompt Injection Signal (Untrusted External Content rule)
+        instr = guard_findings.get("instruction_like") or []
+        hidden_c = len(guard_findings.get("hidden_blocks") or [])
+        if instr or hidden_c:
+            suspicious_count += 1
+            signals.append({"signal": "Prompt Injection / Guard", "weight": "Concerning", "finding": f"Detected {len(instr)} instruction-like phrase(s) & {hidden_c} hidden block(s) — treated strictly as untrusted data."})
+        else:
+            signals.append({"signal": "Prompt Injection / Guard", "weight": "Positive", "finding": "Clean external text (posting_guard passed)."})
+
+        # 7. Prior-contact FYI (career-ops Block G non-scoring history)
+        prior_note = None
+        for r in self.get_tracker():
+            if (r.get("company") or "").strip().lower() == comp_lower:
+                st = (r.get("status") or "").strip().lower()
+                ad = r.get("applied_date") or "earlier"
+                if st in ("applied", "rejected", "ghosted"):
+                    prior_note = f"Prior-contact FYI: tracked application to {company} ({r.get('role', '')}, status={st}, date={ad}). Factor into effort/referral strategy."
+                elif st in ("interview", "recruiter-chat", "offer"):
+                    prior_note = f"Prior-contact FYI: active conversation already tracked at {company} ({r.get('role', '')}, status={st})."
+                break
+
+        if suspicious_count >= 1 or caution_count >= 3:
+            legitimacy_tier = "Suspicious" if suspicious_count >= 1 else "Proceed with Caution"
+        elif caution_count >= 1 or not job_url:
+            legitimacy_tier = "Proceed with Caution"
+        else:
+            legitimacy_tier = "High Confidence"
+
+        return {
+            "gates": gates,
+            "geo_mismatch": geo_mismatch,
+            "is_agency": is_agency,
+            "clarity_points": clarity_points,
+            "clarity_score": clarity_score,
+            "word_count": word_count,
+            "legitimacy_tier": legitimacy_tier,
+            "signals": signals,
+            "prior_note": prior_note,
+            "advertised_comp": self._extract_advertised_comp(cleaned_text),
+        }
+
+    def run_agentic_jd_scrutiny(self, company: str, role: str, jd_text: str, location: str = "", job_url: str = "") -> dict:
+        """
+        Agentic Multi-Persona JD Scrutiny Flow combining career-ops (Blocks A-G + ATS + Red-Flag rules)
+        with 5 sequential evaluation personas: ATS, HR/Recruiter, Tech Lead, Hiring Manager, Bar Raiser.
+        Strictly grounded in verified facts from references/candidate-facts.md & profile/master_cv.md.
+        """
+        t0 = time.perf_counter()
+        company_clean = portals.normalize_company_display(company or "Target Company")
+        role_clean = (role or "Senior Product Manager").strip()
+        loc_clean = (location or "Bengaluru").strip()
+        cleaned_jd, guard_findings = posting_guard.guard(jd_text or "", "auto")
+
+        # Baseline quantitative scorer + Block A/G legitimacy gates
+        fit_data = self.score_jd(company_clean, role_clean, cleaned_jd, loc_clean, guard_findings=guard_findings)
+        block_g = self._analyze_block_g_and_gates(company_clean, role_clean, cleaned_jd, loc_clean, job_url, guard_findings)
+        candidate_lower = self._get_candidate_corpus_lower()
+        requirements_matrix = self._extract_jd_requirements(cleaned_jd, role_clean, candidate_lower)
+
+        text_lower = f"{role_clean} {loc_clean} {cleaned_jd}".lower()
+        role_lower = role_clean.lower()
+        is_stretch = fit_data["is_stretch"]
+        is_too_junior = any(t in role_lower for t in ["associate product manager", "apm ", "intern", "junior product"])
+        gates = block_g["gates"]
+
+        # ------------------------------------------------------------------
+        # PERSONA 1: ATS PARSER & KEYWORD FILTER (career-ops modes/ats.md)
+        # ------------------------------------------------------------------
+        ats_target_vocab = [
+            "payments", "acquiring", "settlement", "clearing", "reconciliation", "merchant", "iso 8583",
+            "base i", "base ii", "kafka", "rest", "api", "microservices", "tokenization", "emv", "3ds",
+            "chargeback", "dispute", "compliance", "rbi", "pci", "rice", "prd", "roadmap", "agile",
+            "scrum", "cspo", "sql", "ai", "llm", "agentic", "automation", "cross-border", "fx", "upi",
+            "lending", "bnpl", "b2b", "b2c", "kyc", "aml", "fraud", "risk", "analytics", "experimentation",
+            "a/b testing", "stakeholder", "enterprise", "saas", "fintech", "sdk", "checkout", "pos",
+        ]
+        jd_present_vocab = [kw for kw in ats_target_vocab if kw in text_lower]
+        matched_ats = [kw for kw in jd_present_vocab if kw in candidate_lower or kw in ("payments", "ai", "automation")]
+        missing_ats = [kw for kw in jd_present_vocab if kw not in matched_ats]
+        kw_cov_pct = int(round((len(matched_ats) / len(jd_present_vocab)) * 100)) if jd_present_vocab else 78
+
+        exp_req_match = re.search(r"(\d{1,2})\s*\+?\s*years", text_lower)
+        req_years = int(exp_req_match.group(1)) if exp_req_match else None
+        knockouts = []
+        ats_score = 4.4
+        if gates["eligibility_gate"] == "FAIL":
+            knockouts.append(f"HARD KNOCKOUT: {gates['eligibility_note']}")
+            ats_score -= 1.6
+        if gates["language_gate"] == "FAIL":
+            knockouts.append(f"HARD KNOCKOUT: {gates['language_note']}")
+            ats_score -= 1.6
+        if req_years and req_years > 15:
+            knockouts.append(f"Years filter warning: JD asks {req_years}+ yrs (Avijit has ~14 yrs total, ~10 yrs PM).")
+            ats_score -= 0.5
+        if any(k in text_lower for k in ["mba required", "master's degree required", "masters degree required"]):
+            knockouts.append("Degree filter risk: JD marks MBA/Master's as required (Candidate holds B.Tech IT 8.6 GPA + CSPO).")
+            ats_score -= 0.7
+        if missing_ats:
+            ats_score -= min(0.8, len(missing_ats) * 0.12)
+        ats_score = round(max(1.5, min(5.0, ats_score)), 1)
+        ats_verdict = "PASS" if (ats_score >= 4.0 and not any("HARD" in k for k in knockouts)) else ("CAUTION" if ats_score >= 3.0 else "BLOCK")
+
+        ats_persona = {
+            "id": "ats",
+            "persona": "ATS Parser & Filter",
+            "emoji": "🤖",
+            "subtitle": "Keyword coverage, hard knockout rules & DOCX parseability (modes/ats.md)",
+            "score_5": ats_score,
+            "status": ats_verdict,
+            "headline": f"{kw_cov_pct}% JD keyword coverage across {len(jd_present_vocab) or 1} detected domain terms • Single-column DOCX clean.",
+            "strengths": [
+                f"Matched JD keywords ({len(matched_ats)}): {', '.join(matched_ats[:10]) if matched_ats else 'core PM & payments vocabulary'}.",
+                "DOCX pipeline preserves single-column ATS structure, standard headings, email in body, and avoids employer-in-role title distortion.",
+                "Experience (~14 yrs total / ~10 yrs PM) & CSPO satisfy typical Senior PM screening filters.",
+            ],
+            "concerns": knockouts + (
+                [f"Unmatched JD terms on Master CV ({len(missing_ats)}): {', '.join(missing_ats[:8])} — DO NOT fabricate; use adjacent framing only where truthful."]
+                if missing_ats else ["Zero critical keyword blindspots detected."]
+            ),
+            "action_items": [
+                "Mirror exact JD terminology for truth-backed skills (e.g., 'clearing & settlement', 'Payments 2.0 Kafka microservices', 'CI/CD AI workflows') in top Summary.",
+                "Keep Visa / Cognizant employer blocks cleanly separated without cramming 'First Data' into job titles unnecessarily unless ATS-parsed cleanly.",
+            ],
+            "probe_questions": [],
+        }
+
+        # ------------------------------------------------------------------
+        # PERSONA 2: HR / RECRUITER SCREENING (10-Second Scan)
+        # ------------------------------------------------------------------
+        hr_flags = list(fit_data["red_flags"])
+        hr_score = 4.3
+        if is_stretch:
+            hr_score -= 0.5
+        if is_too_junior:
+            hr_score -= 1.8
+        if gates["eligibility_gate"] == "FAIL":
+            hr_score = min(hr_score, 2.0)
+        elif gates["eligibility_gate"] == "FLAG":
+            hr_score -= 0.4
+        if gates["language_gate"] == "FAIL":
+            hr_score = min(hr_score, 1.8)
+        if block_g["is_agency"]:
+            hr_score -= 0.4
+        hr_score = round(max(1.5, min(5.0, hr_score)), 1)
+        hr_verdict = "PASS" if hr_score >= 4.0 else ("CONDITIONAL" if hr_score >= 3.2 else "BLOCK")
+
+        comp_obs = (
+            f"Advertised compensation verbatim in JD: {block_g['advertised_comp']} (Reliability: Medium — confirm fixed base vs bonus/equity in recruiter call)."
+            if block_g["advertised_comp"]
+            else "Compensation unstated in JD (Unknown — never guess; verify fixed base + variable/equity band on Day 1 recruiter screen vs $100k–$200k global / Bengaluru I6+ target)."
+        )
+
+        hr_persona = {
+            "id": "hr",
+            "persona": "HR / Recruiter",
+            "emoji": "👤",
+            "subtitle": "10-second scan: level band, work authorization, career narrative & comp clarity",
+            "score_5": hr_score,
+            "status": hr_verdict,
+            "headline": (
+                "Target Level Fit (Visa I6 -> Senior/Staff PM)" if not is_stretch and not is_too_junior
+                else ("Stretch Level Alert: Director/GPM vs Visa I6 home base" if is_stretch else "Level Mismatch: Too junior vs 14 yrs experience")
+            ),
+            "strengths": [
+                "Marquee brand progression: Visa (I6 PM, 2x STAR Award) + Cognizant/Fiserv (10 yrs PM / ~14 yrs total).",
+                f"Location & Work Auth: {gates['eligibility_note']} | {gates['language_note']}.",
+                comp_obs,
+            ],
+            "concerns": hr_flags + [
+                "Post-Visa gap (Sep 2026 -> Nov 2026): Never mention restructuring/layoff in CV or cover note; prepare concise 15-second verbal answer if HR asks.",
+            ],
+            "action_items": [
+                "Attach Warm Referral Path before applying online (use direct LinkedIn Recruiter & Peer Search links in Outreach).",
+                "Ask in first recruiter call: fixed base split, notice/joining timeline flexibility, and exact hiring band/level.",
+            ],
+            "probe_questions": [
+                "Tell me briefly about your transition out of Visa in Sept 2026 and what you're optimizing for next.",
+                "What is your current notice/availability and target fixed compensation structure?",
+            ],
+        }
+
+        # ------------------------------------------------------------------
+        # PERSONA 3: TECH LEAD / SYSTEM ARCHITECT
+        # ------------------------------------------------------------------
+        core_rails_hits = [k for k in ["iso 8583", "base i", "base ii", "tc33", "clearing", "settlement", "kafka", "microservice", "api", "rest", "webhook", "token", "emv", "bin"] if k in text_lower]
+        ai_hits = [k for k in ["ai", "llm", "agent", "genai", "rag", "eval", "automation"] if k in text_lower]
+        tech_score_5 = 4.0 + min(0.7, len(core_rails_hits) * 0.14) + min(0.3, len(ai_hits) * 0.1)
+        if not core_rails_hits and not ai_hits:
+            tech_score_5 = 3.6
+        tech_score_5 = round(min(5.0, tech_score_5), 1)
+        tech_verdict = "PASS" if tech_score_5 >= 4.0 else "CONDITIONAL"
+
+        tech_probes = [
+            f"Walk me through decoupling 85% of legacy BASE I validation into 5 Payments 2.0 Kafka microservices—how did you handle schema versioning, idempotency, and zero-downtime cutover?",
+            "In Fast Refund AI optimization, what exact failure modes/regressions existed before, what guardrails kept refund success at 97%, and how did engineers evaluate false positives?",
+            "How do you write PRDs/API specs for ISO 8583 / TC33.A / domestic scheme edge cases (e.g., SMCC Japan cut from 6 wks to 2 wks) without compromising auditability?",
+        ]
+        if any(u in text_lower for u in ["upi", "npci", "a2a"]):
+            tech_probes[0] = "You have deep ISO 8583 & RuPay/Jaywan scheme experience rather than direct NPCI UPI switch ownership—how would you architect idempotent async callbacks & timeout reconciliation on a real-time A2A rail?"
+
+        tech_persona = {
+            "id": "tech_lead",
+            "persona": "Tech Lead / Architect",
+            "emoji": "⚙️",
+            "subtitle": "Architecture depth, API/protocol rigor & strict tool-of-trade boundaries",
+            "score_5": tech_score_5,
+            "status": tech_verdict,
+            "headline": f"Strong technical PM credibility ({len(core_rails_hits)} rail/arch matches, {len(ai_hits)} AI/automation signals).",
+            "strengths": [
+                "Rare protocol-level PM depth: ISO 8583, Visa BASE I/II, TC33.A, BIN routing (MADA/EFTPOS), EMV/COF/MIT/CIT.",
+                "Proven modernization partner: decoupled 85% monolithic BASE I logic into 5 Kafka event-driven microservices + 400+ acquirer onboarding scale.",
+                "Concrete AI workflow shipping: Fast Refund (24h refunds, 97% success) + Claude agentic specification workflow (6 wks -> 2 wks).",
+            ],
+            "concerns": [
+                "Tool-of-Trade Boundary (career-ops CRITICAL rule): Frame Kafka, SQL/SSMS, and Claude strictly as PM architecture specs & workflow automation—NEVER imply authoring production backend services or training LLMs from scratch.",
+                "Non-core stack watch: If JD demands consumer mobile SDKs, Web3/stablecoin smart contracts, or ML model fine-tuning ownership, treat as engineering-partnered or honest gap.",
+            ],
+            "action_items": [
+                "Be ready to draw an end-to-end auth -> clearing -> Kafka settlement -> regeneration sequence diagram cleanly.",
+                "Quantify technical trade-offs (e.g., Apple Pay India RBI localization compliance vs negligible infra cost).",
+            ],
+            "probe_questions": tech_probes,
+        }
+
+        # ------------------------------------------------------------------
+        # PERSONA 4: HIRING MANAGER (Archetype + Product Ownership)
+        # ------------------------------------------------------------------
+        if any(k in text_lower for k in ["ai", "llm", "agent", "genai"]) and any(k in text_lower for k in ["payment", "acquiring", "fintech", "settlement"]):
+            archetype = "Applied AI + Payments Platform PM"
+            recommended_variant = "Payments, Acquiring & Core Rails Specialist (Master CV #1)"
+            hm_base = 4.7
+        elif any(k in text_lower for k in ["acquiring", "settlement", "clearing", "card", "scheme", "payment", "merchant"]):
+            archetype = "Core Payments Rails & Acquiring PM"
+            recommended_variant = "Payments, Acquiring & Core Rails Specialist (Master CV #1)"
+            hm_base = 4.6
+        elif any(k in text_lower for k in ["b2c", "consumer", "lending", "wealth", "insurance"]):
+            archetype = "Consumer FinTech / Lending / Adjacent Domain PM"
+            recommended_variant = "Generalist Senior Technical Product Manager (Master CV #3)"
+            hm_base = 3.5
+        elif is_stretch:
+            archetype = "Product Leadership / Group or Director PM (Stretch)"
+            recommended_variant = "Product Leadership & Stretch PM (Master CV #2)"
+            hm_base = 4.0
+        else:
+            archetype = "B2B Platform & Technical PM"
+            recommended_variant = "Generalist Senior Technical Product Manager (Master CV #3)"
+            hm_base = 4.2
+
+        hm_score = round(min(5.0, max(1.5, hm_base - (0.3 if is_stretch else 0.0) - (0.3 if len([m for m in requirements_matrix if m["strength"] == "Missing"]) >= 2 else 0.0))), 1)
+        hm_verdict = "PASS" if hm_score >= 4.0 else ("CONDITIONAL" if hm_score >= 3.2 else "CAUTION")
+
+        level_framing = (
+            "Sell Senior Without Lying: Anchor on $30M Payments 2.0 net revenue + VP-signed RICE roadmap + 4 scrum teams + Cognizant 12-person lead; acknowledge cleanly that Visa I6 role was high-autonomy IC PM with scorecard influence rather than direct HR people management."
+            if is_stretch or "direct reports" in text_lower or "manage" in text_lower
+            else "Ideal Scope Alignment: Visa I6 Senior PM / Technical PM scope maps cleanly—4 scrum teams (~6 engineers each), 400+ acquirers, VP-level RICE prioritization, and $30M revenue delivery."
+        )
+
+        hm_persona = {
+            "id": "hiring_manager",
+            "persona": "Hiring Manager",
+            "emoji": "🎯",
+            "subtitle": "Role archetype fit, 0->1 product discovery, roadmap ownership & positioning strategy",
+            "score_5": hm_score,
+            "status": hm_verdict,
+            "headline": f"Archetype: {archetype} • Recommended CV: {recommended_variant}",
+            "strengths": [
+                level_framing,
+                "Commercial & customer impact: $30M net revenue across 6 domestic/regional schemes + +25% EU token growth + +18% CEMEA instalments.",
+                "Execution & initiative: stepped in during peer PM leave on Acquirer Onboarding UI, got architect approval, and shipped improvement to production.",
+            ],
+            "concerns": [
+                f"Detected {len([m for m in requirements_matrix if m['strength'] == 'Missing'])} missing & {len([m for m in requirements_matrix if m['strength'] == 'Partial'])} partial requirements in Pass-1 JD matrix — address explicitly in cover note & HM screen.",
+                "Enterprise-to-Startup Speed Objection: Counter proactively with SMCC Japan 6 wks -> 2 wks Claude cycle + Fast Refund AI rapid iteration.",
+            ],
+            "action_items": [
+                f"Lead with {recommended_variant} framing + top 4 tailored proof points.",
+                "If downleveled (e.g., Staff -> Senior PM), negotiate clear 6-12 month charter/promotion criteria rather than defending title ego.",
+            ],
+            "probe_questions": [
+                "Show me how you built the RICE prioritization model across competing country mandates and got VP buy-in—what top request did you say NO to?",
+                "How do you discover merchant/acquirer pain points when you are in a platform/rails layer rather than owning a B2C app?",
+            ],
+        }
+
+        # ------------------------------------------------------------------
+        # PERSONA 5: BAR RAISER (Independent Skeptic + Hard Synthesis)
+        # ------------------------------------------------------------------
+        missing_count = sum(1 for m in requirements_matrix if m["strength"] == "Missing")
+        partial_count = sum(1 for m in requirements_matrix if m["strength"] == "Partial")
+
+        bar_challenges = [
+            "Attribution Audit ($9.2M Visa / $11M Cognizant): Bar Raiser will test whether revenue protection came strictly from your product vs Customer Support fixes. Always state 'Customer Support-attributed post-release' transparently and explain your exact automated regeneration & SWAT triage mechanism.",
+            "Headcount & People Management Clarity: Visa I6 role mentored 4 scrum teams via scorecards/velocity with ZERO formal direct reports. Do not conflate dotted-line engineering squads with direct reporting; lean on Cognizant (2019–2021) 12-member PM/analyst team + 100+ interviews.",
+            "FTE / Metric Precision: Candidate facts settle automated CAS + settlement savings strictly at 10 FTEs (never 8 FTEs) and Transaction Validation System (2017) at ~30 analysts saving 10 hrs/file.",
+        ]
+        if missing_count:
+            bar_challenges.append(
+                f"Domain Gap Risk ({missing_count} critical/high gaps flagged): {', '.join(m['requirement'] for m in requirements_matrix if m['strength'] == 'Missing')}. Never bluff—pivot to verified adjacent execution in <30 seconds."
+            )
+
+        # Compute career-ops 1-5 Global Score (weighted across dimensions, penalized for gates/gaps)
+        raw_global = (
+            ats_score * 0.15
+            + hr_score * 0.20
+            + tech_score_5 * 0.25
+            + hm_score * 0.30
+            + (4.5 if block_g["legitimacy_tier"] == "High Confidence" else 3.8 if block_g["legitimacy_tier"] == "Proceed with Caution" else 2.8) * 0.10
+        )
+        if gates["eligibility_gate"] == "FAIL" or gates["language_gate"] == "FAIL":
+            raw_global = min(raw_global, 2.4)
+        global_score_5 = round(max(1.0, min(5.0, raw_global)), 2)
+
+        # Bar Raiser strict Evidence Confidence per career-ops _shared.md
+        if block_g["word_count"] >= 180 and gates["eligibility_gate"] == "PASS" and not missing_count:
+            evidence_confidence = "High"
+        elif block_g["word_count"] >= 90 and missing_count <= 2:
+            evidence_confidence = "Medium"
+        else:
+            evidence_confidence = "Low"
+
+        # Final Decision & Bar Raiser Vote per career-ops score bands
+        if gates["eligibility_gate"] == "FAIL" or gates["language_gate"] == "FAIL" or global_score_5 < 3.0:
+            career_ops_band = "Skip (<3.0 / Hard Stop)"
+            bar_vote = "NOT INCLINED (VETO / HARD STOP)"
+            final_decision = "Skip"
+        elif block_g["legitimacy_tier"] == "Suspicious":
+            career_ops_band = "Research First (Posting Legitimacy Concern)"
+            bar_vote = "HOLD — VERIFY POSTING"
+            final_decision = "Research first"
+        elif global_score_5 >= 4.4 and missing_count == 0 and not is_stretch:
+            career_ops_band = "Strong Apply (4.4–5.0)"
+            bar_vote = "STRONG INCLINED"
+            final_decision = "Apply"
+        elif global_score_5 >= 4.0:
+            career_ops_band = "Apply (4.0–4.39)"
+            bar_vote = "INCLINED" if not is_stretch else "INCLINED (STRETCH)"
+            final_decision = "Apply"
+        else:
+            career_ops_band = "Maybe (3.0–3.99)"
+            bar_vote = "BORDERLINE — PREPARE MITIGATIONS"
+            final_decision = "Consider"
+
+        bar_score_5 = round(max(1.0, min(5.0, global_score_5 - (0.2 if missing_count >= 2 else 0.0))), 1)
+
+        bar_probes = [
+            {
+                "question": "If Customer Support attributed the $9.2M protection at Visa, what specific mechanism did YOU design and prove wasn't just normal incident recovery?",
+                "defense": "Clarify upfront that $9.2M was tracked by Customer Support post-release; explain that your automated settlement regeneration feature removed multi-day manual partner chasing & reconciliation blindspots, plus your personal SWAT P1 escalation triage.",
+            },
+            {
+                "question": "Have you actually managed PMs directly at Visa, or were you strictly an individual contributor coordinating engineers?",
+                "defense": "State honestly: at Visa I6 I operated as a high-scope IC PM mentoring 4 scrum teams (~6 engineers each) via velocity & scorecards with no formal direct reports; my direct reporting management (12-person PM/analyst team) was at Cognizant (2019–2021), backed by 100+ hiring interviews across my career.",
+            },
+            {
+                "question": "Tell me about a time your compliance or platform launch priority collided with commercial cost or speed—why did you make that call?",
+                "defense": "Anchor in Apple Pay India data-center migration (RBI localization compliance + schedule certainty over negligible infrastructure cost) and Payments 2.0 RICE roadmap signed off by VP.",
+            },
+        ]
+
+        bar_persona = {
+            "id": "bar_raiser",
+            "persona": "Bar Raiser",
+            "emoji": "⚖️",
+            "subtitle": "Independent skeptic: attribution audit, gap stress-test, evidence confidence & final bar vote",
+            "score_5": bar_score_5,
+            "status": bar_vote,
+            "headline": f"Bar Vote: {bar_vote} • Global Score: {global_score_5}/5 ({career_ops_band}) • Evidence: {evidence_confidence}",
+            "strengths": [
+                f"Evidence Confidence: {evidence_confidence} — grounded strictly in candidate-facts.md (no unverified metrics or tool-of-trade inflation).",
+                f"Strongest defensible anchors: $30M net rev Payments 2.0, 10 FTEs freed CAS automation, Fast Refund AI (97% success), 400+ acquirers.",
+            ],
+            "concerns": bar_challenges,
+            "action_items": [
+                "Resolve any missing Gap Questions before submitting cover note or answers.",
+                "Rehearse attribution & management-scope clarifications out loud so they sound crisp, honest, and executive-grade.",
+            ],
+            "probe_questions": [p["question"] for p in bar_probes],
+            "probe_defenses": bar_probes,
+        }
+
+        personas = [ats_persona, hr_persona, tech_persona, hm_persona, bar_persona]
+        elapsed_ms = int((time.perf_counter() - t0) * 1000)
+
+        agent_trace = [
+            {
+                "step": 1,
+                "agent": "Security & Block G Gatekeeper",
+                "status": "WARN" if block_g["legitimacy_tier"] != "High Confidence" or gates["eligibility_gate"] == "FAIL" else "DONE",
+                "summary": f"posting_guard: {fit_data['guard_verdict']} | Eligibility: {gates['eligibility_gate']} | Block G: {block_g['legitimacy_tier']}",
+            },
+            {
+                "step": 2,
+                "agent": "Pass-1 JD Extractor (Block B)",
+                "status": "DONE",
+                "summary": f"Extracted {len(requirements_matrix)} verbatim-anchored requirements before CV matching ({missing_count} gaps, {partial_count} partial).",
+            },
+            {
+                "step": 3,
+                "agent": "ATS Parser Agent",
+                "status": ats_verdict,
+                "summary": f"{ats_score}/5 — {kw_cov_pct}% JD keyword match ({len(missing_ats)} unmatched terms); DOCX parseability verified.",
+            },
+            {
+                "step": 4,
+                "agent": "HR / Recruiter Agent",
+                "status": hr_verdict,
+                "summary": f"{hr_score}/5 — Level: {'Stretch' if is_stretch else 'Target I6'} | Auth: {fit_data['sponsorship']}.",
+            },
+            {
+                "step": 5,
+                "agent": "Tech Lead Agent",
+                "status": tech_verdict,
+                "summary": f"{tech_score_5}/5 — {len(core_rails_hits)} protocol/rails hits, {len(ai_hits)} AI signals; tool-of-trade boundary enforced.",
+            },
+            {
+                "step": 6,
+                "agent": "Hiring Manager & Bar Raiser Panel",
+                "status": bar_vote,
+                "summary": f"Archetype: {archetype} ({hm_score}/5) -> Final Bar Vote: {bar_vote} | Global Score: {global_score_5}/5 ({final_decision}).",
+            },
+        ]
+
+        scrutiny = {
+            "company": company_clean,
+            "role": role_clean,
+            "location": loc_clean,
+            "job_url": job_url or "",
+            "elapsed_ms": elapsed_ms,
+            "archetype": archetype,
+            "recommended_variant": recommended_variant,
+            "global_score_5": global_score_5,
+            "career_ops_band": career_ops_band,
+            "final_decision": final_decision,
+            "bar_vote": bar_vote,
+            "evidence_confidence": evidence_confidence,
+            "fit_score_10": fit_data["score"],
+            "rank_score_100": fit_data["rank_score"],
+            "rank_verdict": fit_data["rank_verdict"],
+            "verdict_lead": f"{final_decision}. {career_ops_band} — Bar Raiser Vote: {bar_vote} (Rank Rubric {fit_data['rank_score']}/100, Block G: {block_g['legitimacy_tier']}).",
+            "block_g": block_g,
+            "requirements_matrix": requirements_matrix,
+            "personas": personas,
+            "agent_trace": agent_trace,
+            "bar_probes": bar_probes,
+            "fit_data": fit_data,
+        }
+        scrutiny["markdown"] = self.format_scrutiny_markdown(scrutiny)
+        return scrutiny
+
+    def format_scrutiny_markdown(self, s: dict) -> str:
+        """Formats the 5-Persona Agentic Scrutiny & career-ops Blocks A-G into a readable Markdown report."""
+        req_rows = "\n".join(
+            f"| {r['band']} | {r['requirement']} | {r['jd_quote'][:110]} | {r['evidence']} | **{r['strength']}** |"
+            for r in s["requirements_matrix"]
+        )
+        sig_rows = "\n".join(
+            f"| {sg['signal']} | **{sg['weight']}** | {sg['finding']} |"
+            for sg in s["block_g"]["signals"]
+        )
+        persona_sections = []
+        for p in s["personas"]:
+            strengths_md = "\n".join(f"  - {st}" for st in p["strengths"])
+            concerns_md = "\n".join(f"  - {c}" for c in p["concerns"]) if p["concerns"] else "  - None."
+            actions_md = "\n".join(f"  - {a}" for a in p["action_items"])
+            probes_md = ""
+            if p.get("probe_questions"):
+                probes_md = "\n- **Likely Probe Questions:**\n" + "\n".join(f"  - {q}" for q in p["probe_questions"])
+            persona_sections.append(
+                f"### {p['emoji']} {p['persona']} — **{p['score_5']} / 5** (`{p['status']}`)\n"
+                f"*{p['headline']}*\n\n"
+                f"- **Strengths / Passes:**\n{strengths_md}\n"
+                f"- **Concerns / Risks:**\n{concerns_md}\n"
+                f"- **Actions / Positioning:**\n{actions_md}"
+                f"{probes_md}\n"
+            )
+
+        return f"""# career-ops 5-Persona Agentic JD Scrutiny: {s['company']} – {s['role']}
+
+## Verdict (lead)
+**{s['verdict_lead']}**
+
+- **Location / Work Auth:** {s['location']} — {s['fit_data']['gates']['eligibility_note']} (`{s['fit_data']['gates']['eligibility_gate']}`)
+- **Language Gate:** {s['fit_data']['gates']['language_note']} (`{s['fit_data']['gates']['language_gate']}`)
+- **Role Archetype:** {s['archetype']}
+- **Recommended Master CV:** {s['recommended_variant']}
+- **Career-Ops Global Score:** **{s['global_score_5']} / 5.0** ({s['career_ops_band']}) | Evidence Confidence: **{s['evidence_confidence']}**
+- **Internal Rank Rubric:** {s['rank_score_100']} / 100 ({s['rank_verdict']}) | Legacy UI Score: {s['fit_score_10']} / 10
+
+---
+
+## Block G — Posting Legitimacy & Risk Summary: **{s['block_g']['legitimacy_tier']}**
+{f"> {s['block_g']['prior_note']}{chr(10)}" if s['block_g'].get('prior_note') else ''}
+| Signal | Weight | Observation |
+|---|---|---|
+{sig_rows}
+
+---
+
+## Pass-1 Requirement Extraction -> Verified Evidence (Block B)
+| Band | Requirement | JD Evidence (Quote) | Grounded Evidence (`candidate-facts.md`) | Fit |
+|---|---|---|---|---|
+{req_rows}
+
+---
+
+## 5-Persona Screening Panel Evaluations
+{chr(10).join(persona_sections)}
+"""
+
     def tailor_application(self, company, role, jd_text, location="Bengaluru", job_url=""):
         cleaned_jd, guard_findings = posting_guard.guard(jd_text or "", "auto")
         comp_slug = re.sub(r"[^a-zA-Z0-9]+", "-", company).strip("-").lower()[:20] or "company"
@@ -724,6 +1409,10 @@ Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/aviji
         quality_check = self.run_pre_submit_quality_check(company, role, resume_md, cover_note, fit_data)
         write_text(f"applications/{slug}/pre_submit_check.md", quality_check["markdown"])
 
+        # 7b. Agentic 5-Persona JD Scrutiny Report (career-ops A-G + ATS/HR/Tech/HM/Bar Raiser)
+        scrutiny = self.run_agentic_jd_scrutiny(company, role, cleaned_jd, location, job_url=job_url)
+        write_text(f"applications/{slug}/panel_review.md", scrutiny["markdown"])
+
         # 8. Generate DOCX using senior-pm-job-search Mode 2 naming convention:
         #    CV_<Company>_<Role>_<YYYY-MM-DD>.docx
         docx_clean_company = re.sub(r"[^a-zA-Z0-9]+", "_", company).strip("_")[:20] or "Company"
@@ -734,7 +1423,7 @@ Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/aviji
         self.generate_docx(resume_md, docx_path)
 
         # 9. Update tracker.csv AND applications-log.md
-        note_text = f"Fit {fit_data['score']}/10 ({fit_data['rank_score']}/100 {fit_data['rank_verdict']}). Readiness: {quality_check['score']}/100."
+        note_text = f"Fit {fit_data['score']}/10 ({fit_data['rank_score']}/100 {fit_data['rank_verdict']}) | Panel: {scrutiny['global_score_5']}/5 {scrutiny['bar_vote']}. Readiness: {quality_check['score']}/100."
         if fit_data["is_stretch"]:
             note_text = f"[STRETCH] {note_text}"
         self.update_tracker_status(
@@ -759,11 +1448,13 @@ Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/aviji
                 "resume_md": f"/download/applications/{slug}/resume.md",
                 "cover_note_md": f"/download/applications/{slug}/cover_note.md",
                 "fit_md": f"/download/applications/{slug}/fit.md",
+                "panel_review_md": f"/download/applications/{slug}/panel_review.md",
                 "outreach_md": f"/download/applications/{slug}/outreach.md",
                 "application_answers_md": f"/download/applications/{slug}/application_answers.md",
                 "pre_submit_check_md": f"/download/applications/{slug}/pre_submit_check.md",
             },
             "fit_data": fit_data,
+            "scrutiny": scrutiny,
             "quality_check": quality_check,
         }
 

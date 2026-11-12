@@ -62,6 +62,9 @@
         <button onclick="switchTab('discovery')" class="nav-tab px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 whitespace-nowrap" data-tab="discovery">
           🌐 Live Scraper & Rank
         </button>
+        <button onclick="switchTab('scrutiny')" class="nav-tab px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 whitespace-nowrap" data-tab="scrutiny">
+          🕵️ 5-Persona JD Panel
+        </button>
         <button onclick="switchTab('applications')" class="nav-tab px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 whitespace-nowrap" data-tab="applications">
           📁 Tailored Packs
         </button>
@@ -104,6 +107,7 @@
           </p>
           <div class="flex flex-wrap gap-2 mt-4">
             <button onclick="switchTab('discovery')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition">🌐 Open Live Scraper</button>
+            <button onclick="switchTab('scrutiny')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition">🕵️ 5-Persona JD Scrutiny</button>
             <button onclick="openFitModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition">+ Score / Tailor Job URL</button>
             <button onclick="switchTab('skills')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3.5 py-2 rounded-lg transition">🧠 Run Upskill Heatmap</button>
           </div>
@@ -305,6 +309,130 @@
             </thead>
             <tbody id="shortlist-table-body" class="divide-y divide-slate-100"></tbody>
           </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2B: AGENTIC 5-PERSONA JD SCRUTINY PANEL (career-ops) -->
+    <section id="tab-scrutiny" class="tab-content space-y-6">
+      <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-5 text-white shadow-md border border-indigo-800/40">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div class="inline-flex items-center gap-2 bg-indigo-900/70 border border-indigo-700/60 rounded-full px-3 py-0.5 text-[11px] text-indigo-200 mb-2">
+              <span>⚡ Powered by career-ops (Blocks A–G, ATS &amp; Red-Flag Engine)</span>
+              <span>•</span>
+              <span>Zero-Hallucination Grounding</span>
+            </div>
+            <h2 class="text-xl font-bold tracking-tight">Agentic 5-Persona JD Scrutiny Panel</h2>
+            <p class="text-xs text-slate-300 mt-1 max-w-3xl">
+              Evaluates every job posting through a multi-agent gauntlet: <strong>🤖 ATS Parser</strong>, <strong>👤 HR / Recruiter</strong>, <strong>⚙️ Tech Lead</strong>, <strong>🎯 Hiring Manager</strong>, and an independent <strong>⚖️ Bar Raiser</strong>—exposing knockouts, attribution risks, and exact interview probes before you tailor or apply.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2 text-xs">
+            <button onclick="loadScrutinyPreset('visa_like')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg font-medium transition">
+              🧪 Load Payments AI Sample
+            </button>
+            <button onclick="clearScrutinyPanel()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-lg font-medium transition">
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrutiny Input Form -->
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4 text-xs">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div class="md:col-span-2">
+            <label class="block font-semibold text-slate-700 mb-1">Job Posting URL (Optional — auto-fetches &amp; runs posting_guard)</label>
+            <input id="scrutiny-url" type="url" placeholder="https://boards.greenhouse.io/... or LinkedIn / Lever / Ashby URL" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Company</label>
+            <input id="scrutiny-company" type="text" placeholder="e.g. Razorpay, Stripe, Adyen" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Location</label>
+            <input id="scrutiny-location" type="text" placeholder="Bengaluru / Dubai / London" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="md:col-span-1">
+            <label class="block font-semibold text-slate-700 mb-1">Role Title</label>
+            <input id="scrutiny-role" type="text" placeholder="e.g. Senior Product Manager, Payments" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          </div>
+          <div class="md:col-span-2 flex items-end justify-end gap-2">
+            <button id="btn-run-scrutiny" onclick="runScrutinyPanel()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-5 py-2 rounded-lg shadow-sm transition">
+              🕵️ Run 5-Persona Agentic Scrutiny
+            </button>
+            <button onclick="handoffScrutinyToTailor()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-lg shadow-sm transition">
+              🚀 Tailor Full Pack from This JD
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Job Description Text (Paste JD or leave blank if providing a supported URL above)</label>
+          <textarea id="scrutiny-jd" rows="6" placeholder="Paste full job description text here for deepest Pass-1 requirement extraction &amp; 5-persona scrutiny..." class="w-full border border-slate-300 rounded-lg p-3 font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+        </div>
+      </div>
+
+      <!-- Agent Pipeline Stepper -->
+      <div id="scrutiny-pipeline-box" class="hidden bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-bold text-slate-800 uppercase tracking-wider">Multi-Agent Evaluation Trace</span>
+          <span id="scrutiny-elapsed" class="text-[11px] font-mono text-slate-500"></span>
+        </div>
+        <div id="scrutiny-trace-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 text-[11px]"></div>
+      </div>
+
+      <!-- Executive Verdict + 5 Persona Results -->
+      <div id="scrutiny-results" class="hidden space-y-6">
+        <!-- Lead Verdict Card -->
+        <div id="scrutiny-lead-card" class="rounded-2xl border p-5 shadow-sm space-y-3"></div>
+
+        <!-- 5 Persona Scorecards Grid -->
+        <div id="scrutiny-personas-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+
+        <!-- Bar Raiser Interview Probe Drill -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <h3 class="font-bold text-slate-900 text-sm">⚖️ Hardest Bar Raiser Probe Questions &amp; Verified Defenses</h3>
+            <span class="text-[11px] text-slate-500">Anchored in candidate-facts.md</span>
+          </div>
+          <div id="scrutiny-probes-list" class="space-y-3 text-xs"></div>
+        </div>
+
+        <!-- Two-Pass Requirement Matrix & Block G -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <h3 class="font-bold text-slate-900 text-sm">Pass-1 JD Requirements vs Grounded Facts (Block B)</h3>
+              <button onclick="copyScrutinyMarkdown()" class="text-xs text-indigo-600 hover:underline font-semibold">📋 Copy Panel Report (.md)</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                  <tr>
+                    <th class="py-2.5 px-3">Priority</th>
+                    <th class="py-2.5 px-3">Requirement &amp; Quote</th>
+                    <th class="py-2.5 px-3">Facts Bank Match</th>
+                    <th class="py-2.5 px-3">Fit</th>
+                  </tr>
+                </thead>
+                <tbody id="scrutiny-req-tbody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 class="font-bold text-slate-900 text-sm">Block G — Legitimacy &amp; Risk</h3>
+              <span id="scrutiny-legit-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full"></span>
+            </div>
+            <div id="scrutiny-prior-note" class="hidden text-[11px] bg-blue-50 border border-blue-200 text-blue-900 p-2 rounded"></div>
+            <div id="scrutiny-blockg-signals" class="space-y-2 text-xs"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -620,12 +748,17 @@
         <div id="modal-score-result" class="hidden p-4 rounded-xl border bg-slate-50 space-y-2.5"></div>
       </div>
 
-      <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2">
-        <button onclick="calculateFitOnly()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold px-4 py-2 rounded-lg text-xs transition">
-          🔍 Guard &amp; Score Fit Only
-        </button>
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <button onclick="calculateFitOnly()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold px-3.5 py-2 rounded-lg text-xs transition">
+            🔍 Quick Score
+          </button>
+          <button onclick="launchScrutinyFromModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3.5 py-2 rounded-lg text-xs transition">
+            🕵️ 5-Persona Panel Screen
+          </button>
+        </div>
         <button id="btn-generate-pack" onclick="generateFullApplicationPack()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow-sm transition">
-          🚀 Generate Tailored Pack (CV .docx + Fit + Outreach + Answers)
+          🚀 Generate Tailored Pack (CV .docx + Panel + Outreach)
         </button>
       </div>
     </div>
@@ -870,8 +1003,11 @@
               <a href="${esc(j.recruiter_search_url)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline text-[11px]">Recruiters ↗</a>
               <a href="${esc(j.peer_search_url)}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline text-[11px]">Peers ↗</a>
             </td>
-            <td class="py-3 px-4 text-right space-x-2 whitespace-nowrap">
+            <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
               ${cleanLink ? `<a href="${esc(cleanLink)}" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:text-blue-900 underline font-medium text-[11px]">Portal ↗</a>` : ''}
+              <button data-company="${esc(j.company)}" data-role="${esc(j.role)}" data-location="${esc(j.location)}" data-url="${esc(cleanLink)}" onclick="openScrutinyFromBtn(this)" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-2.5 py-1 rounded shadow-sm text-[11px]">
+                🕵️ 5-Lens
+              </button>
               <button data-company="${esc(j.company)}" data-role="${esc(j.role)}" data-location="${esc(j.location)}" data-url="${esc(cleanLink)}" onclick="openFitFromBtn(this)" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-2.5 py-1 rounded shadow-sm text-[11px]">
                 Score &amp; Tailor
               </button>
@@ -1012,6 +1148,9 @@
               <button data-company="${esc(j.company)}" data-role="${esc(j.title)}" data-location="${esc(j.location)}" data-url="${esc(postUrl)}" onclick="trackScrapedJob(this)" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-2 py-1 rounded text-[11px]">
                 + Track
               </button>
+              <button data-key="${esc(j.key)}" onclick="openScrutinyFromKey(this.dataset.key)" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-2 py-1 rounded shadow-sm text-[11px]">
+                🕵️ 5-Lens
+              </button>
               <button data-key="${esc(j.key)}" onclick="openFitFromKey(this.dataset.key)" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-2.5 py-1 rounded shadow-sm text-[11px]">
                 Fetch &amp; Tailor
               </button>
@@ -1073,6 +1212,7 @@
           </div>
           <div class="grid grid-cols-2 gap-2 text-xs">
             <button onclick="previewAppFile('${esc(a.slug)}', 'fit.md')" class="text-left bg-slate-50 hover:bg-blue-50 border border-slate-200 p-2 rounded text-slate-700 font-medium">📊 Fit &amp; Gap Screen</button>
+            ${a.has_panel_review ? `<button onclick="previewAppFile('${esc(a.slug)}', 'panel_review.md')" class="text-left bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 p-2 rounded text-indigo-900 font-semibold">🕵️ 5-Persona Panel</button>` : `<button onclick="previewAppFile('${esc(a.slug)}', 'jd.md')" class="text-left bg-slate-50 hover:bg-blue-50 border border-slate-200 p-2 rounded text-slate-700 font-medium">📋 Sanitized JD</button>`}
             <button onclick="previewAppFile('${esc(a.slug)}', 'resume.md')" class="text-left bg-slate-50 hover:bg-blue-50 border border-slate-200 p-2 rounded text-slate-700 font-medium">📄 Tailored CV (.md)</button>
             <button onclick="previewAppFile('${esc(a.slug)}', 'cover_note.md')" class="text-left bg-slate-50 hover:bg-blue-50 border border-slate-200 p-2 rounded text-slate-700 font-medium">✉️ Cover Note (&lt;150w)</button>
             <button onclick="previewAppFile('${esc(a.slug)}', 'outreach.md')" class="text-left bg-slate-50 hover:bg-blue-50 border border-slate-200 p-2 rounded text-slate-700 font-medium">🤝 Outreach &amp; Links</button>
@@ -1410,6 +1550,273 @@
       cfg.drive_storage.google_drive_mirror_folder = mirror_folder;
       await fetch('/api/integrations/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg) });
       alert('Paths saved.');
+    }
+
+    window.__lastScrutiny = null;
+
+    function openScrutinyWithData(company, role, location, jobUrl, jdText, autoRun = true) {
+      document.getElementById('scrutiny-company').value = company || '';
+      document.getElementById('scrutiny-role').value = role || '';
+      document.getElementById('scrutiny-location').value = location || '';
+      document.getElementById('scrutiny-url').value = safeHttpUrl(jobUrl || '');
+      document.getElementById('scrutiny-jd').value = jdText || '';
+      switchTab('scrutiny');
+      if (autoRun && (jdText || safeHttpUrl(jobUrl || ''))) {
+        runScrutinyPanel();
+      }
+    }
+
+    function openScrutinyFromBtn(btn) {
+      openScrutinyWithData(btn.dataset.company, btn.dataset.role, btn.dataset.location, btn.dataset.url, '', true);
+    }
+
+    function openScrutinyFromKey(key) {
+      const j = window.__seenJobsByKey[key];
+      if (!j) return;
+      openScrutinyWithData(j.company, j.title, j.location, j.url, j.description_excerpt || '', true);
+    }
+
+    function launchScrutinyFromModal() {
+      const company = document.getElementById('modal-company').value.trim();
+      const role = document.getElementById('modal-role').value.trim();
+      const location = document.getElementById('modal-location').value.trim();
+      const job_url = document.getElementById('modal-url').value.trim();
+      const jd_text = document.getElementById('modal-jd').value.trim();
+      closeFitModal();
+      openScrutinyWithData(company, role, location, job_url, jd_text, true);
+    }
+
+    function clearScrutinyPanel() {
+      ['scrutiny-url', 'scrutiny-company', 'scrutiny-role', 'scrutiny-location', 'scrutiny-jd'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      document.getElementById('scrutiny-pipeline-box').classList.add('hidden');
+      document.getElementById('scrutiny-results').classList.add('hidden');
+      window.__lastScrutiny = null;
+    }
+
+    function loadScrutinyPreset(kind) {
+      if (kind === 'visa_like') {
+        document.getElementById('scrutiny-company').value = 'Razorpay';
+        document.getElementById('scrutiny-role').value = 'Senior Product Manager, Global Payments & Settlement';
+        document.getElementById('scrutiny-location').value = 'Bengaluru, India';
+        document.getElementById('scrutiny-url').value = '';
+        document.getElementById('scrutiny-jd').value = `We are seeking a Senior Product Manager (8+ years experience) to own merchant acquiring, card scheme clearing, and event-driven settlement microservices.\n\nResponsibilities:\n- Own the end-to-end roadmap (RICE prioritization) across 3 engineering pods, risk, and compliance.\n- Architect REST APIs, Kafka settlement pipelines, ISO 8583 / BASE I-II card network integrations, and cross-border tokenization flows.\n- Leverage AI/LLM workflow automation to cut reconciliation exceptions and speed up merchant onboarding.\n\nRequirements:\n- Proven track record in acquiring platforms, settlement reconciliation, and RBI regulatory compliance.\n- Strong SQL/analytics, PRD authorship, and CSPO/Agile delivery with cross-functional engineers.\n- Nice to have: experience with UPI 2.0 real-time A2A routing and consumer lending workflows.`;
+        runScrutinyPanel();
+      }
+    }
+
+    async function runScrutinyPanel() {
+      const company = document.getElementById('scrutiny-company').value.trim();
+      const role = document.getElementById('scrutiny-role').value.trim();
+      const location = document.getElementById('scrutiny-location').value.trim();
+      const job_url = safeHttpUrl(document.getElementById('scrutiny-url').value);
+      const jd_text = document.getElementById('scrutiny-jd').value.trim();
+
+      if (!jd_text && !job_url) {
+        return alert('Paste JD text or enter a public job posting URL first.');
+      }
+
+      const btn = document.getElementById('btn-run-scrutiny');
+      const pipeBox = document.getElementById('scrutiny-pipeline-box');
+      const traceGrid = document.getElementById('scrutiny-trace-grid');
+      const resBox = document.getElementById('scrutiny-results');
+
+      btn.innerText = '⏳ Running 5 Agents...';
+      btn.disabled = true;
+      pipeBox.classList.remove('hidden');
+      resBox.classList.add('hidden');
+
+      const pendingStages = ['Gatekeeper + Block G', 'Pass-1 Extractor', '🤖 ATS Parser', '👤 HR / Recruiter', '⚙️ Tech Lead', '⚖️ HM + Bar Raiser'];
+      traceGrid.innerHTML = pendingStages.map((s, idx) => `
+        <div class="p-2.5 rounded-lg border border-indigo-200 bg-indigo-50/70 animate-pulse">
+          <div class="font-bold text-indigo-950">${idx+1}. ${s}</div>
+          <div class="text-indigo-700 text-[10px] mt-0.5">Evaluating...</div>
+        </div>
+      `).join('');
+
+      try {
+        const res = await fetch('/api/jobs/scrutinize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company, role, location, job_url, jd_text })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          traceGrid.innerHTML = `<div class="col-span-6 p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">⚠️ ${esc(data.error || 'Scrutiny failed')}</div>`;
+          return;
+        }
+        window.__lastScrutiny = data;
+        if (data.company && !document.getElementById('scrutiny-company').value.trim()) document.getElementById('scrutiny-company').value = data.company;
+        if (data.role && !document.getElementById('scrutiny-role').value.trim()) document.getElementById('scrutiny-role').value = data.role;
+        if (data.location && !document.getElementById('scrutiny-location').value.trim()) document.getElementById('scrutiny-location').value = data.location;
+        if (data.jd_text && !jd_text) document.getElementById('scrutiny-jd').value = data.jd_text;
+        renderScrutinyResult(data);
+      } catch (err) {
+        traceGrid.innerHTML = `<div class="col-span-6 p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs">Error connecting to scrutiny engine.</div>`;
+      } finally {
+        btn.innerText = '🕵️ Run 5-Persona Agentic Scrutiny';
+        btn.disabled = false;
+      }
+    }
+
+    function renderScrutinyResult(d) {
+      document.getElementById('scrutiny-elapsed').innerText = `Completed in ${d.elapsed_ms ?? 0}ms • Strictly facts-bank grounded`;
+
+      // 1. Agent Trace Strip
+      const traceGrid = document.getElementById('scrutiny-trace-grid');
+      traceGrid.innerHTML = (d.agent_trace || []).map(t => {
+        const isWarn = /CAUTION|CONDITIONAL|WARN|BORDERLINE|HOLD/i.test(t.status);
+        const isBad = /BLOCK|FAIL|VETO|NOT INCLINED|SKIP/i.test(t.status);
+        const cls = isBad ? 'border-red-200 bg-red-50 text-red-950' : isWarn ? 'border-amber-200 bg-amber-50 text-amber-950' : 'border-emerald-200 bg-emerald-50 text-emerald-950';
+        return `
+          <div class="p-2.5 rounded-lg border ${cls}">
+            <div class="flex items-center justify-between gap-1 font-bold">
+              <span>${t.step}. ${esc(t.agent)}</span>
+            </div>
+            <div class="text-[10px] font-mono font-bold mt-0.5">${esc(t.status)}</div>
+            <p class="text-[10px] opacity-90 mt-1 leading-snug">${esc(t.summary)}</p>
+          </div>
+        `;
+      }).join('');
+
+      // 2. Lead Verdict Card
+      const lead = document.getElementById('scrutiny-lead-card');
+      const isGood = d.final_decision === 'Apply';
+      const isSkip = d.final_decision === 'Skip';
+      lead.className = `rounded-2xl border p-5 shadow-sm space-y-3 ${isSkip ? 'bg-red-50 border-red-200 text-red-950' : isGood ? 'bg-emerald-50 border-emerald-200 text-emerald-950' : 'bg-amber-50 border-amber-200 text-amber-950'}`;
+      lead.innerHTML = `
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wider opacity-80">career-ops Final Call • ${esc(d.company)} — ${esc(d.role)}</div>
+            <h3 class="text-lg font-extrabold mt-0.5">${esc(d.verdict_lead)}</h3>
+          </div>
+          <div class="flex flex-wrap gap-2 text-xs font-bold whitespace-nowrap">
+            <span class="px-3 py-1.5 rounded-xl bg-white/90 border border-black/10 text-slate-900">Global Score: ${d.global_score_5}/5.0</span>
+            <span class="px-3 py-1.5 rounded-xl bg-white/90 border border-black/10 text-slate-900">Rank Rubric: ${d.rank_score_100}/100</span>
+            <span class="px-3 py-1.5 rounded-xl bg-white/90 border border-black/10 text-slate-900">Evidence: ${esc(d.evidence_confidence)}</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs pt-2 border-t border-black/10">
+          <div class="bg-white/75 rounded-lg p-2.5"><strong>Archetype:</strong> ${esc(d.archetype)}</div>
+          <div class="bg-white/75 rounded-lg p-2.5"><strong>Recommended Master CV:</strong> ${esc(d.recommended_variant)}</div>
+          <div class="bg-white/75 rounded-lg p-2.5"><strong>Eligibility / Auth:</strong> ${esc(d.fit_data.gates.eligibility_gate)} (${esc(d.fit_data.gates.eligibility_note)})</div>
+        </div>
+      `;
+
+      // 3. 5 Persona Cards
+      const pGrid = document.getElementById('scrutiny-personas-grid');
+      pGrid.innerHTML = (d.personas || []).map((p, idx) => {
+        const isBlock = /BLOCK|VETO|NOT INCLINED/i.test(p.status);
+        const isWarn = /CAUTION|CONDITIONAL|BORDERLINE/i.test(p.status);
+        const badgeCls = isBlock ? 'bg-red-100 text-red-800 border-red-200' : isWarn ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200';
+        const spanFull = idx === 4 ? 'lg:col-span-2 border-indigo-300 ring-1 ring-indigo-100' : 'border-slate-200';
+        return `
+          <div class="bg-white rounded-xl border ${spanFull} shadow-sm p-5 space-y-3 text-xs">
+            <div class="flex items-start justify-between gap-2 pb-2 border-b border-slate-100">
+              <div>
+                <h4 class="font-bold text-slate-900 text-sm">${p.emoji} ${esc(p.persona)}</h4>
+                <p class="text-[11px] text-slate-500">${esc(p.subtitle)}</p>
+              </div>
+              <div class="text-right whitespace-nowrap">
+                <div class="text-sm font-extrabold text-slate-900">${p.score_5} / 5</div>
+                <span class="inline-block mt-0.5 text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeCls}">${esc(p.status)}</span>
+              </div>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-lg font-medium text-slate-800 border border-slate-200/80">${esc(p.headline)}</div>
+            <div class="space-y-1">
+              <div class="font-bold text-emerald-800 uppercase text-[10px]">Strengths &amp; Passes</div>
+              <ul class="list-disc pl-4 space-y-1 text-slate-700">${(p.strengths || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+            </div>
+            ${(p.concerns && p.concerns.length) ? `
+            <div class="space-y-1">
+              <div class="font-bold text-amber-800 uppercase text-[10px]">Risks, Knockouts &amp; Audit Notes</div>
+              <ul class="list-disc pl-4 space-y-1 text-amber-950 bg-amber-50/70 p-2.5 rounded-lg border border-amber-200/80">${p.concerns.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+            </div>` : ''}
+            <div class="space-y-1">
+              <div class="font-bold text-blue-800 uppercase text-[10px]">Persona Action Plan</div>
+              <ul class="list-disc pl-4 space-y-1 text-slate-700">${(p.action_items || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+            </div>
+            ${(p.probe_questions && p.probe_questions.length && idx !== 4) ? `
+            <div class="pt-2 border-t border-slate-100">
+              <div class="font-bold text-indigo-800 uppercase text-[10px] mb-1">Technical / Recruiter Probe Questions</div>
+              <ol class="list-decimal pl-4 space-y-1 text-slate-600">${p.probe_questions.map(q => `<li>${esc(q)}</li>`).join('')}</ol>
+            </div>` : ''}
+          </div>
+        `;
+      }).join('');
+
+      // 4. Bar Raiser Probes
+      document.getElementById('scrutiny-probes-list').innerHTML = (d.bar_probes || []).map((bp, i) => `
+        <div class="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1.5">
+          <div class="font-bold text-slate-900">Q${i+1}: ${esc(bp.question)}</div>
+          <div class="text-emerald-900 bg-emerald-50 border border-emerald-200 p-2 rounded"><strong>Grounded Defense Hook:</strong> ${esc(bp.defense)}</div>
+        </div>
+      `).join('');
+
+      // 5. Pass-1 Requirement Matrix
+      document.getElementById('scrutiny-req-tbody').innerHTML = (d.requirements_matrix || []).map(r => {
+        const fCls = r.strength === 'Strong' ? 'bg-emerald-100 text-emerald-800' : r.strength === 'Missing' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800';
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-3 whitespace-nowrap font-mono text-[10px] text-slate-600">${esc(r.band)}</td>
+            <td class="py-2.5 px-3">
+              <div class="font-bold text-slate-900">${esc(r.requirement)}</div>
+              <div class="text-[11px] text-slate-500 italic">"${esc(r.jd_quote)}"</div>
+            </td>
+            <td class="py-2.5 px-3 text-slate-700">${esc(r.evidence)}</td>
+            <td class="py-2.5 px-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${fCls}">${esc(r.strength)}</span></td>
+          </tr>
+        `;
+      }).join('');
+
+      // 6. Block G Legitimacy
+      const bg = d.block_g || {};
+      const lBadge = document.getElementById('scrutiny-legit-badge');
+      lBadge.innerText = bg.legitimacy_tier || 'Proceed with Caution';
+      lBadge.className = `text-[10px] font-bold px-2 py-0.5 rounded-full ${bg.legitimacy_tier === 'High Confidence' ? 'bg-emerald-100 text-emerald-800' : bg.legitimacy_tier === 'Suspicious' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`;
+      const pNote = document.getElementById('scrutiny-prior-note');
+      if (bg.prior_note) {
+        pNote.innerText = bg.prior_note;
+        pNote.classList.remove('hidden');
+      } else {
+        pNote.classList.add('hidden');
+      }
+      document.getElementById('scrutiny-blockg-signals').innerHTML = (bg.signals || []).map(sg => `
+        <div class="p-2 rounded border ${sg.weight === 'Concerning' ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}">
+          <div class="flex justify-between font-bold text-[11px]">
+            <span>${esc(sg.signal)}</span>
+            <span class="${sg.weight === 'Concerning' ? 'text-amber-700' : sg.weight === 'Positive' ? 'text-emerald-700' : 'text-slate-600'}">${esc(sg.weight)}</span>
+          </div>
+          <p class="text-[11px] text-slate-600 mt-0.5">${esc(sg.finding)}</p>
+        </div>
+      `).join('');
+
+      document.getElementById('scrutiny-results').classList.remove('hidden');
+    }
+
+    function handoffScrutinyToTailor() {
+      const company = document.getElementById('scrutiny-company').value.trim();
+      const role = document.getElementById('scrutiny-role').value.trim();
+      const location = document.getElementById('scrutiny-location').value.trim();
+      const job_url = document.getElementById('scrutiny-url').value.trim();
+      const jd_text = document.getElementById('scrutiny-jd').value.trim();
+      if (!jd_text && !job_url) return alert('Enter or run scrutiny on a JD first.');
+      openFitModal(company, role, location, job_url, jd_text);
+    }
+
+    function copyScrutinyMarkdown() {
+      if (!window.__lastScrutiny || !window.__lastScrutiny.markdown) return alert('Run the 5-Persona Scrutiny panel first.');
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(window.__lastScrutiny.markdown).then(() => {
+          alert('Full career-ops 5-Persona Scrutiny report copied to clipboard (Markdown).');
+        }).catch(() => {
+          document.getElementById('preview-modal-title').innerText = '5-Persona Panel Report (Markdown)';
+          document.getElementById('preview-modal-body').innerText = window.__lastScrutiny.markdown;
+          document.getElementById('preview-modal').classList.remove('hidden');
+        });
+      }
     }
 
     window.onload = () => { loadDashboard(); };
