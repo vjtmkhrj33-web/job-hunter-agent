@@ -1276,14 +1276,22 @@ class JobAgentEngine:
         )
         master_cv_text = read_text("profile/master_cv.md")
         if master_cv_text.strip():
+            # Replace the **headline** line so the JD-tuned title propagates
+            # into resume.md AND the generate_docx DOCX renderer.
+            # The new master_cv.md uses: **Senior Product Manager | ...**
             resume_md = re.sub(
-                r"(?m)^(# AVIJIT MUKHERJEE\r?\n)\*\*.*?\*\*$",
-                rf"\1**{headline}**",
+                r"(?m)^\*\*Senior Product Manager[^\n]*\*\*$",
+                f"**{headline}**",
                 master_cv_text,
                 count=1,
             )
         else:
-            resume_md = f"# AVIJIT MUKHERJEE\n**{headline}**\nBengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/avijitmukherjeepm\n"
+            resume_md = (
+                "# AVIJIT MUKHERJEE\n"
+                f"**{headline}**\n"
+                "Bengaluru, India  |  +91 9038415509  |  "
+                "vjtmkhrj33@gmail.com  |  linkedin.com/in/avijitmukherjeepm\n"
+            )
         write_text(f"applications/{slug}/resume.md", resume_md)
 
         # 4. Write cover_note.md (<180 words, no reason for leaving Visa, grounded proof points from canonical Master CV)
@@ -1565,38 +1573,78 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
         }
 
     def generate_docx(self, markdown_text, output_path):
+        """
+        Generates an ATS-safe single-column DOCX from Markdown.
+
+        ATS formatting rules (aligned with Master CV: Avijit_Mukherjee_ATS_Optimized_CV.docx):
+        - Single-column layout; no tables, text-boxes, or graphics.
+        - Standard ATS section headings: PROFESSIONAL SUMMARY, CAREER HIGHLIGHTS,
+          CORE SKILLS, PROFESSIONAL EXPERIENCE, EDUCATION & CERTIFICATIONS,
+          AWARDS & LANGUAGES.
+        - Contact info in document body (name, headline, contact line all centred);
+          never placed in a Word header or footer.
+        - Reverse-chronological order; consistent Employer | Location + date formatting.
+        - Bullet label pattern: **Bold Label:** narrative so ATS indexes keyword labels.
+        - Font: Calibri 9.5 pt body; 10.5 pt section headings; 10 pt role sub-headings.
+        - Margins: 0.55 in top/bottom, 0.65 in left/right on US Letter (8.5 x 11 in).
+        - Thin rule (CBD5E1) under every section heading for visual scan-ability.
+        """
         doc = docx.Document()
         for section in doc.sections:
-            section.top_margin = Inches(0.55)
+            section.top_margin    = Inches(0.55)
             section.bottom_margin = Inches(0.55)
-            section.left_margin = Inches(0.65)
-            section.right_margin = Inches(0.65)
-            section.page_width = Inches(8.5)
-            section.page_height = Inches(11.0)
+            section.left_margin   = Inches(0.65)
+            section.right_margin  = Inches(0.65)
+            section.page_width    = Inches(8.5)
+            section.page_height   = Inches(11.0)
 
         style_normal = doc.styles["Normal"]
-        font = style_normal.font
-        font.name = "Calibri"
-        font.size = Pt(9.5)
-        font.color.rgb = RGBColor(33, 37, 41)
+        style_normal.font.name  = "Calibri"
+        style_normal.font.size  = Pt(9.5)
+        style_normal.font.color.rgb = RGBColor(33, 37, 41)
 
+        # ── Candidate name (centred, 17 pt, bold, near-black) ─────────────────
         p_name = doc.add_paragraph()
         p_name.paragraph_format.space_after = Pt(2)
         p_name.alignment = WD_ALIGN_PARAGRAPH.CENTER
         r_name = p_name.add_run("AVIJIT MUKHERJEE")
-        r_name.font.size = Pt(17)
-        r_name.font.bold = True
+        r_name.font.size  = Pt(17)
+        r_name.font.bold  = True
         r_name.font.color.rgb = RGBColor(15, 23, 42)
 
+        # ── Headline / role title (centred, 10 pt bold mid-blue) ──────────────
+        # Reads dynamically from markdown so JD-tailored titles propagate.
+        headline_text = "Senior Product Manager | Payments Platforms, Merchant Acquiring & Agentic AI"
+        for raw_line in markdown_text.split("\n"):
+            stripped = raw_line.strip()
+            if (stripped.startswith("**") and stripped.endswith("**")
+                    and "Senior Product Manager" in stripped):
+                headline_text = stripped.strip("*").strip()
+                break
+        p_headline = doc.add_paragraph()
+        p_headline.paragraph_format.space_before = Pt(0)
+        p_headline.paragraph_format.space_after  = Pt(3)
+        p_headline.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r_headline = p_headline.add_run(headline_text)
+        r_headline.font.size  = Pt(10)
+        r_headline.font.bold  = True
+        r_headline.font.color.rgb = RGBColor(30, 58, 138)
+
+        # ── Contact line (centred, 9 pt, grey) with thin rule below ──────────
         p_contact = doc.add_paragraph()
         p_contact.paragraph_format.space_after = Pt(6)
         p_contact.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r_con = p_contact.add_run("Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/avijitmukherjeepm")
-        r_con.font.size = Pt(9)
+        r_con = p_contact.add_run(
+            "Bengaluru, India  |  +91 9038415509  |  "
+            "vjtmkhrj33@gmail.com  |  linkedin.com/in/avijitmukherjeepm"
+        )
+        r_con.font.size  = Pt(9)
         r_con.font.color.rgb = RGBColor(71, 85, 105)
         add_hr(p_contact, "94A3B8")
 
-        def add_formatted_runs(paragraph, text, size_pt=9.5, bold_color=RGBColor(15, 23, 42)):
+        # ── Inline bold helper (**text** spans inside paragraphs) ────────────
+        def add_formatted_runs(paragraph, text, size_pt=9.5,
+                               bold_color=RGBColor(15, 23, 42)):
             for part in re.split(r"(\*\*.*?\*\*)", text):
                 if not part:
                     continue
@@ -1609,102 +1657,132 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
                     r_seg = paragraph.add_run(part)
                     r_seg.font.size = Pt(size_pt)
 
-        lines = markdown_text.split("\n")
-        in_header = True
+        lines            = markdown_text.split("\n")
+        in_header        = True   # True until first ## section heading
+        headline_consumed = False  # prevents duplicate headline emission
+
         for line in lines:
             l = line.strip()
-            if not l or l.startswith("# AVIJIT") or "linkedin.com" in l or l == "---":
+
+            # Skip: blank, name line, contact line, dividers
+            if not l:
+                continue
+            if l.startswith("# AVIJIT"):
+                continue
+            if "linkedin.com/in/avijitmukherjeepm" in l:
+                continue
+            if l == "---":
+                continue
+            # Skip the **Headline** markdown line (already written above)
+            if in_header and l.startswith("**") and l.endswith("**") and not headline_consumed:
+                headline_consumed = True
                 continue
 
-            if in_header and not l.startswith("## ") and l.startswith("**") and l.endswith("**"):
-                p_head = doc.add_paragraph()
-                p_head.paragraph_format.space_before = Pt(0)
-                p_head.paragraph_format.space_after = Pt(3)
-                p_head.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                r_head = p_head.add_run(l.replace("**", "").strip())
-                r_head.font.size = Pt(10)
-                r_head.font.bold = True
-                r_head.font.color.rgb = RGBColor(30, 58, 138)
-                continue
-
+            # ── ## Section heading ───────────────────────────────────────────
             if l.startswith("## "):
                 in_header = False
-                section_title = l.replace("## ", "").strip()
+                section_title = l[3:].strip()
                 p = doc.add_paragraph()
-                p.paragraph_format.space_before = Pt(8)
-                p.paragraph_format.space_after = Pt(2)
-                p.paragraph_format.keep_with_next = True
+                p.paragraph_format.space_before   = Pt(8)
+                p.paragraph_format.space_after     = Pt(2)
+                p.paragraph_format.keep_with_next  = True
                 r = p.add_run(section_title.upper())
-                r.font.size = Pt(10.5)
-                r.font.bold = True
+                r.font.size  = Pt(10.5)
+                r.font.bold  = True
                 r.font.color.rgb = RGBColor(15, 23, 42)
                 add_hr(p, "CBD5E1")
+
+            # ── ### Employer / sub-section heading ──────────────────────────
             elif l.startswith("### "):
                 p = doc.add_paragraph()
-                p.paragraph_format.space_before = Pt(6)
-                p.paragraph_format.space_after = Pt(1)
-                p.paragraph_format.keep_with_next = True
-                r = p.add_run(l.replace("### ", "").strip())
-                r.font.bold = True
-                r.font.size = Pt(10)
+                p.paragraph_format.space_before   = Pt(6)
+                p.paragraph_format.space_after     = Pt(1)
+                p.paragraph_format.keep_with_next  = True
+                r = p.add_run(l[4:].strip())
+                r.font.bold  = True
+                r.font.size  = Pt(10)
                 r.font.color.rgb = RGBColor(15, 23, 42)
-            elif l.startswith("**") and ":**" not in l and ("|" in l or "–" in l or "-" in l or any(kw in l for kw in ["Manager", "Analyst", "Lead", "Executive", "SME", "Engineer", "Officer", "VP", "Head"])):
+
+            # ── **Role Title** | Location line (bold italic, mid-blue) ──────
+            elif (
+                l.startswith("**")
+                and ":**" not in l
+                and (
+                    "|" in l
+                    or "\u2013" in l
+                    or any(kw in l for kw in [
+                        "Manager", "Analyst", "Lead", "Executive", "SME",
+                        "Engineer", "Officer", "VP", "Head", "Owner",
+                    ])
+                )
+            ):
                 p = doc.add_paragraph()
-                p.paragraph_format.space_before = Pt(0)
-                p.paragraph_format.space_after = Pt(1)
-                p.paragraph_format.keep_with_next = True
+                p.paragraph_format.space_before   = Pt(2)
+                p.paragraph_format.space_after     = Pt(1)
+                p.paragraph_format.keep_with_next  = True
                 if "|" in l:
-                    parts = l.split("|")
-                    role_part = parts[0].replace("**", "").strip()
-                    loc_part = " | " + parts[1].replace("**", "").strip()
-                    r_role = p.add_run(role_part)
-                    r_role.font.bold = True
+                    parts_role = l.split("|", 1)
+                    role_text  = parts_role[0].replace("**", "").strip()
+                    loc_text   = "  |  " + parts_role[1].replace("**", "").strip()
+                    r_role = p.add_run(role_text)
+                    r_role.font.bold   = True
                     r_role.font.italic = True
-                    r_role.font.size = Pt(9.5)
+                    r_role.font.size   = Pt(9.5)
                     r_role.font.color.rgb = RGBColor(30, 58, 138)
-                    r_loc = p.add_run(loc_part)
-                    r_loc.font.size = Pt(9.5)
+                    r_loc = p.add_run(loc_text)
+                    r_loc.font.size   = Pt(9.5)
                     r_loc.font.color.rgb = RGBColor(100, 116, 139)
                 else:
-                    r = p.add_run(l.replace("**", "").strip())
-                    r.font.bold = True
+                    role_clean = l.replace("**", "").strip()
+                    r = p.add_run(role_clean)
+                    r.font.bold   = True
                     r.font.italic = True
-                    r.font.size = Pt(9.5)
+                    r.font.size   = Pt(9.5)
                     r.font.color.rgb = RGBColor(30, 58, 138)
+
+            # ── *Date range* italic line ────────────────────────────────────
             elif (
                 (l.startswith("*") and l.endswith("*") and not l.startswith("**"))
                 or (l.startswith("_") and l.endswith("_"))
-                or re.search(r"\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}\b", l)
-            ) and not (l.startswith("- ") or l.startswith("• ")):
+                or re.search(
+                    r"\b(?:January|February|March|April|May|June|July|August|September|"
+                    r"October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
+                    r"\s+\d{4}\b",
+                    l,
+                )
+            ) and not (l.startswith("- ") or l.startswith("\u2022 ")):
                 date_text = l.strip("*_ ").strip()
                 p = doc.add_paragraph()
-                p.paragraph_format.space_before = Pt(0)
-                p.paragraph_format.space_after = Pt(2)
-                p.paragraph_format.keep_with_next = True
+                p.paragraph_format.space_before   = Pt(0)
+                p.paragraph_format.space_after     = Pt(2)
+                p.paragraph_format.keep_with_next  = True
                 r = p.add_run(date_text)
                 r.font.italic = True
-                r.font.size = Pt(9)
+                r.font.size   = Pt(9)
                 r.font.color.rgb = RGBColor(100, 116, 139)
-            elif l.startswith("- ") or l.startswith("• "):
+
+            # ── Bullet point (- or bullet character) ────────────────────────
+            elif l.startswith("- ") or l.startswith("\u2022 "):
                 p = doc.add_paragraph()
-                p.paragraph_format.space_before = Pt(1)
-                p.paragraph_format.space_after = Pt(2)
-                p.paragraph_format.left_indent = Inches(0.2)
-                p.paragraph_format.line_spacing = 1.12
-                r_b = p.add_run("•  ")
-                r_b.font.size = Pt(9)
+                p.paragraph_format.space_before   = Pt(1)
+                p.paragraph_format.space_after     = Pt(2)
+                p.paragraph_format.left_indent     = Inches(0.2)
+                p.paragraph_format.line_spacing    = 1.12
+                r_b = p.add_run("\u2022  ")
+                r_b.font.size  = Pt(9)
                 r_b.font.color.rgb = RGBColor(30, 58, 138)
                 content = l[2:].strip()
                 add_formatted_runs(p, content, size_pt=9.5)
+
+            # ── Normal paragraph (summary text, skill lines, etc.) ──────────
             else:
                 p = doc.add_paragraph()
                 p.paragraph_format.space_before = Pt(2)
-                p.paragraph_format.space_after = Pt(3)
+                p.paragraph_format.space_after  = Pt(3)
                 p.paragraph_format.line_spacing = 1.15
                 add_formatted_runs(p, l, size_pt=9.5)
 
         doc.save(str(output_path))
-
     def evaluate_mock_answer(self, question, answer):
         ans_lower = answer.lower()
         word_count = len(answer.split())

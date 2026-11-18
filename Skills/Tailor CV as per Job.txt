@@ -1,41 +1,77 @@
-Ask me these while Scoring a Job 
+TAILOR CV AS PER JOB DESCRIPTION
+=================================
 
 [PASTE JOB DESCRIPTION]
 Company: [COMPANY]
 Role: [ROLE]
 Link: [LINK]
 
-Compare it against my master CV and selected CV variant.Tailor my CV for the job description above.
+Compare it against my ATS-Optimized Master CV (Avijit_Mukherjee_ATS_Optimized_CV) and produce a
+tailored version as described below.
 
-Use my [SELECTED VARIANT] master CV as the source of truth.
+SOURCE OF TRUTH
+---------------
+Use profile/master_cv.md as the single canonical source for all claims, metrics, and evidence.
+Every statement on the tailored CV must trace to a verified fact in that file or in
+references/candidate-facts.md. Never invent or extrapolate.
 
-Instructions:
-1. Identify the 3–5 requirements the employer weights most heavily.
-2. Rewrite the headline and executive summary around those requirements, using only truthful evidence.
-3. Reorder experience bullets so the most relevant proof appears first.
-4. Rewrite the top 3–4 bullets per relevant role using the Google XYZ formula.
-5. Mirror the job description’s terminology only where it accurately matches my experience.
-6. Add a targeted “Core Skills” section using only skills I actually have.
-7. Keep the CV ATS-safe, maximum two pages, no tables, graphics, or columns.
-8. Do not add unsupported experience, tools, certifications, metrics, or seniority.
-9. If the JD requires something I lack, state it clearly under “Honest gaps” rather than hiding it.
+SECTION STRUCTURE (ATS-SAFE — do not change headings or order)
+-------------------------------
+1. Name + Headline (tailored to JD keywords, still truthful)
+2. Contact block (unchanged)
+3. PROFESSIONAL SUMMARY (4-5 lines, rewritten around top 3-5 JD requirements)
+4. CAREER HIGHLIGHTS (keep bullets most relevant to JD; drop weakest if space tight)
+5. CORE SKILLS (re-ordered so most JD-relevant categories lead; never add false skills)
+6. PROFESSIONAL EXPERIENCE (reverse-chronological, bullets reordered by JD relevance)
+7. EDUCATION & CERTIFICATIONS
+8. AWARDS & LANGUAGES
 
-Output:
-A. Final tailored CV in Markdown.
-B. Change log: original bullet → tailored bullet → reason.
-C. Keywords incorporated naturally.
+ATS FORMATTING RULES (must be preserved in every tailored output)
+-----------------------------------------------------------------
+- Single-column layout; no tables, text boxes, columns, icons, or graphics.
+- Section headings exactly as above (all-caps in DOCX, title case in Markdown).
+- Contact info in document body only (never in Word header/footer).
+- Bullet label pattern: **Bold Label:** narrative — preserves ATS keyword indexing.
+- Font: Calibri 9.5 pt body, 10.5 pt section headings, 10 pt role sub-headings (DOCX).
+- Margins: 0.55 in top/bottom, 0.65 in left/right, US Letter 8.5 x 11 in.
+- Target 2 pages; use 3 only if seniority evidence justifies it.
+- File naming: CV_<Company>_<Role>_<YYYY-MM-DD>.docx
+
+TAILORING INSTRUCTIONS
+----------------------
+1. Identify the 3-5 requirements the employer weights most heavily (look for repetition,
+   ordering, and "must-have" language in the JD).
+2. Rewrite the headline and Professional Summary around those requirements using only
+   truthful evidence from the master CV.
+3. Re-order experience bullets within each role so the most JD-relevant proof appears first.
+4. Rewrite the top 3-4 bullets per relevant role using the Google XYZ formula:
+   "Accomplished [X] as measured by [Y] by doing [Z]."
+5. Mirror the JD's exact terminology only where it accurately maps to real experience.
+6. Re-order CORE SKILLS categories so the most JD-relevant category leads.
+7. Never add unsupported tools, certifications, metrics, or titles.
+8. If the JD requires something genuinely lacking, state it in the Honest Gaps section
+   below — do not conceal or pad around it.
+
+OUTPUT REQUIRED
+---------------
+A. Final tailored CV in Markdown (preserving the ATS section structure above).
+B. Change log table:
+   | Section | Original text | Tailored text | Reason |
+C. Keywords incorporated (list naturally; no stuffing).
 D. Honest gaps and suggested ways to address them without fabrication.
-E. A recruiter’s 10-second first impression: what they will notice and any remaining concern.
+E. Recruiter 10-second impression: what they will notice and any remaining concern.
 
+SCORING & FIT ANALYSIS
+-----------------------
 Return:
-1. Match score out of 100, with a breakdown:
+1. Match score out of 100 with breakdown:
    - Must-have skills: score and evidence
    - Nice-to-have skills: score and evidence
    - Domain relevance
    - Seniority fit
-   - Location/work-mode fit
-2. A fit-gap table:
-   | Job requirement | My evidence | Fit level | How to position it truthfully | Gap? |
-3. The 5 most important keywords and themes to reflect in my CV and cover letter.
-4. Requirements I do not meet. Do not conceal or invent around them.
-5. A recommendation: Apply / Apply with positioning / Skip, plus reasoning.
+   - Location / work-mode fit
+2. Fit-gap table:
+   | JD requirement | Evidence in master CV | Fit level | How to position truthfully | Gap? |
+3. Top 5 most important keywords / themes to reflect in CV and cover letter.
+4. Requirements not met — do not conceal or invent around them.
+5. Recommendation: Apply / Apply with positioning / Skip — with reasoning.
