@@ -1,51 +1,58 @@
-# Achievements for STAR stories (Source of Truth)
+# Achievements for STAR stories (Source of Truth — Synced 2026-11-18)
 
 For each story: Situation, Task, Action (what I personally did), Result (numbers), What I would do differently.
 
 ## Verified Master Metrics & Achievements
-1. **Domestic-Scheme Processing through Cybersource (Payments 2.0 / Kafka):**
-   - Delivered domestic-scheme processing across KSA, RuPay, CUP, Jaywan (UAE), PayPak, and MyDebit.
-   - Result: $30M net revenue contribution.
-2. **CAS Self-Service Automation:**
-   - Automated CAS self-service testing and settlement-file retrieval for acquirers, merchants, and partners.
-   - Result: Cut turnaround to under 24 hours; eliminated 8 FTEs of manual effort per sprint.
-3. **Settlement File Generation Architecture:**
-   - Shifted from a centralized 400+ file per release model to on-demand, scoped partner access.
-   - Result: Eliminated release churn and coordination bottlenecks.
-4. **Tokenization (COF / MIT / CIT) Simplification (Europe):**
-   - Streamlined technical implementation flows for European acquirers.
-   - Result: 25% increase in token-based transaction volume.
-5. **Visa Instalment Plan (CEMEA):**
-   - Simplified integration specifications across CEMEA partners.
-   - Result: 18% increase in regional instalment business volume.
-6. **High-Volume AFD / Fuel Acceptance (VPC):**
-   - Mapped Automated Fuel Dispenser (AFD) acceptance framework for US and EU markets on VPC.
-   - Result: Associated with $70M in transaction processing revenue.
-7. **P1 Incident Resolution & Settlement Regeneration (Visa):**
-   - Resolved critical production settlement failures across CEMEA, APAC, Europe, and the Americas; introduced automated settlement regeneration workflows.
-   - Result: Protected $9.2M in revenue.
-8. **SMCC Japan Cross-Border Integration via Agentic AI:**
-   - Architected specifications, auto-generated interface mappings, and validated edge cases (EDQP, PIF, force-refund) using a Claude-based agentic toolchain.
-   - Result: Delivered integration in 2 weeks instead of scheduled 6 weeks (67% cycle time reduction).
-9. **Apple Pay India Certification & Fast Refund:**
-   - Executed certification testing and settlement validation on CyberSource.
-   - Result: 0 processing errors and fluent settlement on live launch; authored Fast Refund product specs for India and APAC.
-10. **European Acquiring Expansion (Visa Platform Connect):**
-    - Partnered with Visa Europe on Elavon processing, simplified JCB/Diners clearing in France/Spain (TC33.A), and Greek acquirers.
-    - Result: Onboarded 13 new acquirers and scaled processing capacity by an additional 12,000 TPS.
-11. **Payments 2.0 Platform Modernization & Microservices:**
-    - Authored Payments 2.0 Mapping Document to transition legacy BASE I processors onto Visa Intelligence Auth roadmap; translated business cases into Presto algorithms.
-    - Result: Successfully decoupled 85% of legacy monolithic BASE I validation logic into 5 independent microservices.
-12. **Team Leadership & Operational Accuracy (Cognizant / Fiserv):**
-    - Led a 12-member product team supporting direct enterprise merchants (YUM, Burger King, McDonald’s, petroleum brands).
-    - Result: Increased post-release deployment accuracy from 80% to 97%; reduced P1 production incidents by 19%; protected $11M in merchant revenue.
-13. **Transaction Validation Automation (Cognizant / First Data):**
-    - Built algorithmic validation engine covering 13 technical specs using RPA, Java, ASP.NET, SQL.
-    - Result: Shortened certification project cycles by 57%; saved 10 FTEs of manual effort; contributed to a 32% year-end revenue increase for First Data; protected $2M+ in client revenue.
-14. **Class B Merchant Certification (Cognizant / First Data):**
-    - Managed 100+ enterprise Class B certifications (Walmart, McDonald’s, ExxonMobil, Verifone, NCR).
-    - Result: Achieved 97% first-pass certification rate.
-15. **Awards & Recognition:**
-    - 2-time Visa STAR Award recipient.
-    - Multiple Annual Employee Awards at Cognizant.
-    - Recognized as Cards & Payments Subject Matter Expert (Cognizant, Oct 2015).
+
+1. **Domestic-Scheme Expansion on CyberSource / VPC (Payments 2.0 / Kafka):**
+   - Owned requirements, field mapping, and coordination for six domestic schemes: KSA, RuPay, CUP, UAE Jaywan, PayPak, and MyDebit.
+   - Result: Contributed to $30M in net revenue.
+2. **Agentic AI, 0 to 1 (Claude Transaction-Validation System):**
+   - Led a Claude-based transaction-validation system with human review and shadow-mode evaluation frameworks protecting deterministic controls.
+   - Result: Prevented $7.5M in high-risk exposure in one week of live data; p95 end-to-end latency under 1.2s on ~300-token prompts; p95 time to first token (TTFT) under 350ms.
+3. **Self-Service Settlement Platform (Visa):**
+   - Owned the roadmap for a self-service settlement platform serving 400+ acquiring banks processing batches up to 65K TPS within a 24-hour SLA.
+   - Result: Automated certification and settlement-file delivery to under 24 hours, removing a manual dependency that regularly tied up 8 FTEs (15 at peak).
+4. **AI-Assisted Delivery Acceleration (Visa):**
+   - Used Claude workflows with human review for spike analysis, mapping, and regression design.
+   - Result: Cut delivery schedules by about 50% on average; SMCC Japan integration cut from 6 weeks to 2 weeks (67%); per-feature staffing cut from 1 developer + 2 testers to 1 + 1 (~10 FTEs tracked in Jira).
+5. **Fast Refund (India & APAC):**
+   - Architected the design with the senior engineering lead and architect, led it through release, and trimmed scope to ship sooner.
+   - Result: Release performance testing and monitoring showed refunds within 24 hours at a 97% success rate (clients went live after departure).
+6. **Compliance Pivot (UDAAP & Fair Lending):**
+   - Resolved UDAAP and fair-lending concerns by pivoting from a fully automated rule engine to a hybrid MVP.
+   - Result: Zero regulatory escalations.
+7. **Apple Pay India Settlement Readiness (RBI):**
+   - Moved globally deployed code to the India data center (RBI) for settlement readiness.
+   - Result: Zero processing errors in pilot transactions (go-live followed after departure).
+8. **European Acquiring Capacity Expansion (VPC):**
+   - Simplified card-scheme mapping from authorisation to settlement (Elavon processing, JCB & Diners clearing in France/Spain, EMV for Greek acquirers).
+   - Result: Helped add 13 acquirers and 12,000 TPS of capacity.
+9. **Microservices Modernization Roadmap (Payments 2.0):**
+   - Defined the roadmap to split the legacy validation and transformation engine into five microservices (~85% of the monolith's logic), validating all API fields in one pass.
+   - Result: 85% monolithic logic decoupled into 5 microservices.
+10. **P1 Settlement Revenue Protection & Regeneration (Visa TPM):**
+    - Resolved P1 settlement failures across CEMEA, APAC, Europe, and the Americas and added automated settlement regeneration.
+    - Result: Protected $9.2M in transaction revenue exposure (attributed to Customer Support post-release).
+11. **Tokenization & Visa Instalment Plan Growth (Visa TPM):**
+    - Streamlined COF, MIT, and CIT flows starting from a COF logic gap not on the roadmap; simplified Visa Instalment Plan rules and launched in CEMEA first, then globally.
+    - Result: Grew European token-based transaction volume by 25%; increased Visa Instalment Plan volume by 18% in CEMEA.
+12. **Automated Fuel Dispenser (AFD) Acceptance Framework (Visa TPM):**
+    - Mapped acceptance framework for US/EU markets and decoded Visa/Mastercard fleet specs into ISO field and clearing-file mappings across Fiserv, gateways, and PayFacs.
+    - Result: Key contributor to AFD processing associated with $70M in annual revenue.
+13. **Acquirer Onboarding & Domestic Co-Brand Routing (Visa TPA):**
+    - Set up domestic co-brand routing for Australia (EFTPOS) and Saudi Arabia (MADA) with zero routing rejections; root-caused merchant API payload errors (+18% qualification rates, lower CEMEA scheme penalties); stepped in for absent PM on Acquirer Onboarding Platform (400+ acquirers) with architect approval.
+    - Result: Accelerated partner onboarding by 25%; 100% BASE II compliance with zero audit exceptions.
+14. **Team Leadership & Merchant Revenue Protection (Cognizant Team Lead):**
+    - Led 12-member team of PMs and analysts (10 Kolkata, 2 Chennai; direct reports); standardized API payload verification and pre-release checks.
+    - Result: Raised post-release accuracy from 80% to 97%, cut P1 incidents by 19%, delivered 97% on time, lifted monthly certifications from max 10 to 15–18 (+50% to +80%), protected an estimated $11M in merchant revenue.
+15. **Automated Transaction Validator (Cognizant PM - Automation):**
+    - Built 8-bot validator (Automation Anywhere, Java, ASP.NET, SQL) checking ISO host payload, EMV terminal log, and PTS batch record across Nashville, North, Buypass, and PTS.
+    - Result: Cut certification cycles by 57% within 5 months; replaced 300 analyst-hours/day (~30 analysts) with a 1-hour run (25 analysts moved to Project Lead roles); 100% spec coverage under CI/CD; protected an estimated $2M+ in client revenue; Director Special award (Dec 2017).
+16. **EMV Quick Chip & $1.5M Recovery (Cognizant Project Lead):**
+    - Ran certification for 100+ merchants/ISVs at 97% first-pass rate coordinating a 30-member analyst team; raised quick-service chain's Quick Chip approval rate from 68% to 95% in 6 weeks (15K+ txns/day); traced auth-to-settlement code gap to recover $1.5M in ~1 month (2016).
+    - Result: SME Award (2016) for validating 1,000+ transactions in a single day; Cards & Payments SME (Oct 2015).
+17. **Awards & Recognition:**
+    - Visa STAR Award 2024 and 2025 (KSA launch success; automating certification through self-service solution).
+    - Cognizant Annual Awards: Best Employee 2013–2018 (six consecutive years).
+    - Director Special (Dec 2017); SME Award (2016); 5th at University (B.Tech, GPA 8.6/10).

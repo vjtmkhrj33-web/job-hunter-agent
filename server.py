@@ -330,27 +330,27 @@ class JobAgentHTTPHandler(SimpleHTTPRequestHandler):
         return [
             {
                 "id": "payments_ai",
-                "title": "Payments, Acquiring & Core Rails Specialist",
-                "target_roles": "Senior Payments PM (I6), Acquiring Platform PM, Core Settlement Lead",
+                "title": "Payments Platforms, Merchant Acquiring & Agentic AI (Canonical Master)",
+                "target_roles": "Senior Product Manager (I6), Payments Platform PM, Agentic AI Payments PM",
                 "docx": "/download/profile/master_cv_payments_ai.docx",
                 "md": "/download/profile/master_cv_payments_ai.md",
-                "description": "Emphasizes merchant acquiring, ISO 8583, BASE I/II, domestic schemes (UAE Jaywan, RuPay, KSA), Fast Refund AI, and Kafka settlement.",
+                "description": "Emphasizes 6 domestic schemes ($30M net rev), 65K TPS self-service settlement (400+ banks), 0-to-1 Claude agentic validation ($7.5M prevented in 1 week, p95 <1.2s), and ISO 8583/20022 & BASE I/II rails.",
             },
             {
                 "id": "leadership",
-                "title": "Product Leadership & Stretch PM (Group / Director)",
-                "target_roles": "Group Product Manager, Director of PM (Stretch Application)",
+                "title": "Product Leadership & Stretch PM (Group / Principal / Director)",
+                "target_roles": "Principal PM, Group Product Manager, Director of PM (Stretch Application)",
                 "docx": "/download/profile/master_cv_leadership.docx",
                 "md": "/download/profile/master_cv_leadership.md",
-                "description": "Leads with Cognizant 12-person management, 100+ interviews, RICE VP roadmap sign-off, and $30M net revenue impact.",
+                "description": "Leads with Cognizant 12 direct reports (10 Kolkata, 2 Chennai), 4 scrum teams (~24 people) RICE roadmap with VP sign-off, 300h->1h validator moving 25 analysts to Project Lead roles, and $30M net revenue contribution.",
             },
             {
                 "id": "generalist",
                 "title": "Generalist Senior Technical Product Manager",
-                "target_roles": "Senior Product Manager, Technical PM, Platform PM",
+                "target_roles": "Senior Product Manager, Technical PM, Platform & AI PM",
                 "docx": "/download/profile/master_cv_generalist.docx",
                 "md": "/download/profile/master_cv_generalist.md",
-                "description": "Balanced view of 0->1 discovery, backlog prioritization, CSPO delivery across 4 scrum teams, and microservices modernization.",
+                "description": "Balanced view of 0->1 applied AI (shadow-mode evals, guardrails, p95 <1.2s), ~50% faster Claude delivery, 5-microservice monolith split (~85% logic), and RICE roadmap governance.",
             },
         ]
 
@@ -359,33 +359,33 @@ class JobAgentHTTPHandler(SimpleHTTPRequestHandler):
         questions = [
             {
                 "id": "q1",
-                "category": "Product Sense & Architecture",
-                "question": f"How would you approach modernizing a legacy payment processing platform to support event-driven settlement at {company_clean}?",
-                "star_hook": "Payments 2.0 domestic scheme architecture ($30M net revenue) & Kafka settlement events.",
+                "category": "Agentic AI in Production (0 to 1)",
+                "question": f"How have you designed evaluation frameworks and deterministic guardrails when putting LLMs/agents into regulated payment workflows like {company_clean}?",
+                "star_hook": "0-to-1 Claude transaction-validation system with shadow-mode evals protecting deterministic controls: prevented $7.5M high-risk exposure in 1 week (p95 <1.2s, TTFT <350ms).",
             },
             {
                 "id": "q2",
-                "category": "Operational Efficiency & Automation",
-                "question": "Tell me about a time you identified a massive recurring operational bottleneck and automated it.",
-                "star_hook": "Visa CAS automation freed 10 FTEs (<24h turnaround); Cognizant Transaction Validation System freed ~30 analysts into Project Lead roles.",
+                "category": "Product Sense & Platform Scale",
+                "question": f"How would you approach modernizing a legacy payment processing & settlement platform at {company_clean}?",
+                "star_hook": "6 domestic schemes ($30M net rev contribution); 65K TPS self-service settlement platform (400+ banks, 24h SLA, 8 FTEs regular / 15 peak removed); 5-microservice split (~85% monolith logic).",
             },
             {
                 "id": "q3",
-                "category": "Crisis / Escalation Under Pressure",
-                "question": "How do you handle severe P1 production failures or SWAT escalations that threaten merchant revenue?",
-                "star_hook": "$9.2M Visa protection (attributed to Customer Support post-release), KFC $1.5M auth-to-settlement recapture, SME SWAT & P1 call lead.",
+                "category": "Operational Automation & Delivery Velocity",
+                "question": "Tell me about a time you identified a massive recurring operational bottleneck and automated it at scale.",
+                "star_hook": "Cognizant Automated Transaction Validator (8 bots): 300 analyst-hours/day -> 1h run, -57% cycles, 25 of 30 analysts moved to Project Lead roles; Visa Claude workflows cut schedules ~50% (~10 FTEs in Jira).",
             },
             {
                 "id": "q4",
-                "category": "AI in Regulated Payments",
-                "question": "How have you shipped practical AI improvements in regulated payments without introducing risk?",
-                "star_hook": "Fast Refund AI removed unnecessary spike analysis/regression (24h refunds, 97% success); SMCC Japan Claude specs cut 6 wks to 2 wks.",
+                "category": "Crisis / Escalation & Revenue Protection",
+                "question": "How do you handle severe P1 production failures or SWAT escalations that threaten merchant revenue?",
+                "star_hook": "$9.2M Visa protection (automated settlement regeneration), estimated $11M Cognizant protection, $1.5M recovery in ~1 month (auth-to-settlement code gap), Quick Chip 68% -> 95% in 6 weeks.",
             },
             {
                 "id": "q5",
                 "category": "Regulatory Trade-Off & Influence Without Authority",
-                "question": "Tell me about a difficult trade-off or a time you drove change outside your direct authority.",
-                "star_hook": "Apple Pay India data center move (RBI compliance over negligible cost); Acquirer Onboarding UI change with architect approval; Cognizant SOW requote.",
+                "question": "Tell me about a compliance pivot or a time you drove a high-stakes launch outside your direct authority.",
+                "star_hook": "UDAAP/fair-lending pivot to hybrid MVP (0 escalations); Apple Pay India RBI data-center readiness (0 pilot errors); stepped in on Acquirer Onboarding Platform (400+ banks, +25% speed).",
             },
         ]
         return {
@@ -419,7 +419,34 @@ class JobAgentHTTPHandler(SimpleHTTPRequestHandler):
         }
 
 
+def sync_master_cv_artifacts():
+    """Ensures master_cv.docx and the 3 CV variants stay synced with canonical profile/master_cv.md."""
+    try:
+        profile_dir = BASE_DIR / "profile"
+        master_md = profile_dir / "master_cv.md"
+        master_docx = profile_dir / "master_cv.docx"
+        if not master_md.exists():
+            return
+        needs_sync = (not master_docx.exists()) or (master_md.stat().st_mtime > master_docx.stat().st_mtime)
+        if not needs_sync:
+            for slug in ("master_cv_payments_ai", "master_cv_leadership", "master_cv_generalist"):
+                v_docx = profile_dir / f"{slug}.docx"
+                if (not v_docx.exists()) or (master_md.stat().st_mtime > v_docx.stat().st_mtime):
+                    needs_sync = True
+                    break
+        if needs_sync:
+            if str(profile_dir) not in sys.path:
+                sys.path.insert(0, str(profile_dir))
+            import build_xyz_master_docx
+            import build_variants
+            build_xyz_master_docx.build_master_cv_docx()
+            build_variants.build_all_variants()
+    except Exception as exc:
+        print(f"[Warn] Could not auto-sync master CV DOCX artifacts: {exc}")
+
+
 def run_server(port=8080):
+    sync_master_cv_artifacts()
     server_address = ("", port)
     httpd = HTTPServer(server_address, JobAgentHTTPHandler)
     print("======================================================")

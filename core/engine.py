@@ -84,7 +84,7 @@ class JobAgentEngine:
             "scanner_active": self.scanner_active,
             "last_scan_time": self.last_scan_time or "Never",
             "candidate_name": "Avijit Mukherjee",
-            "primary_domain": "Payments Product Leader (Visa I6 • Acquiring, Settlement, Rails & AI)"
+            "primary_domain": "Senior Product Manager | Payments Platforms, Merchant Acquiring & Agentic AI"
         }
 
     def get_tracker(self):
@@ -352,12 +352,14 @@ class JobAgentEngine:
         is_stretch = any(t in role_lower for t in ["director", "vp ", "vice president", "head of product", "group product manager", "gpm"])
         is_too_junior = any(t in role_lower for t in ["associate product manager", "apm ", "intern", "junior product"])
 
-        # Weighted keywords matching candidate-facts & master CV
+        # Weighted keywords matching candidate-facts & canonical master CV
         domain_keywords = [
             "payment", "acquiring", "settlement", "merchant", "clearing", "reconciliation",
-            "iso 8583", "gateway", "tokenization", "api", "fintech", "card", "scheme",
-            "kafka", "microservices", "digital banking", "jaywan", "rupay", "cross-border",
-            "dispute", "chargeback", "risk", "compliance", "emv", "bin", "base i", "base ii", "b2b"
+            "iso 8583", "iso 20022", "gateway", "tokenization", "tokenisation", "api", "fintech",
+            "card", "scheme", "kafka", "microservices", "digital banking", "jaywan", "rupay",
+            "cross-border", "dispute", "chargeback", "risk", "compliance", "emv", "3ds", "sca",
+            "bin", "base i", "base ii", "sms", "dms", "stip", "payfac", "p2pe", "pci", "fx", "dcc",
+            "udaap", "sama", "pipl", "dpdp", "rbi", "b2b", "fleet", "fuel", "ebt", "fast refund",
         ]
         matched_domain = [kw for kw in domain_keywords if kw in text_lower]
         domain_score = min(10.0, max(4.2, 4.2 + len(matched_domain) * 0.72))
@@ -372,11 +374,12 @@ class JobAgentEngine:
 
         tech_keywords = [
             "api", "kafka", "rest", "architecture", "microservice", "ai", "llm", "agentic",
-            "automation", "specs", "event-driven", "sql", "rice", "prd", "agile", "scrum", "cspo",
-            "rag", "vector database", "mcp", "model context protocol", "tool calling", "prompt",
-            "evals", "guardrails", "embeddings", "fine-tuning", "human-in-the-loop", "inference",
-            "model routing", "hallucination", "context window", "context management", "orchestration",
-            "copilot", "openai", "defect analysis", "acceptance criteria", "sdlc",
+            "automation", "specs", "event-driven", "sql", "rice", "moscow", "okr", "prd", "agile",
+            "scrum", "kanban", "cspo", "rag", "vector database", "mcp", "model context protocol",
+            "tool calling", "prompt", "evals", "evaluation", "guardrails", "shadow-mode", "deterministic",
+            "embeddings", "human-in-the-loop", "latency", "p95", "ttft", "model routing",
+            "ai governance", "ai security", "claude", "copilot", "openai", "power bi", "cohort",
+            "acceptance criteria", "java", "asp.net", "hp tandem", "jcl", "automation anywhere",
         ]
         matched_tech = [kw for kw in tech_keywords if kw in text_lower]
         tech_score = min(10.0, max(5.2, 5.2 + len(matched_tech) * 0.85))
@@ -431,20 +434,20 @@ class JobAgentEngine:
         else:
             verdict = "SKIP"
 
-        # Grounded proof points (aligned with candidate-facts.md: 10 FTEs settled, CS-attributed revenue protected, Fast Refund AI)
+        # Grounded proof points (aligned with canonical Master CV & candidate-facts.md)
         proof_points = [
-            "Delivered domestic-scheme processing (KSA, RuPay, CUP, Jaywan, PayPak, MyDebit) via Payments 2.0 & Kafka on CyberSource ($30M net revenue).",
-            "Automated CAS self-service testing & settlement workflows at Visa, freeing 10 FTEs and cutting turnaround under 24 hours.",
-            "Applied AI in regulated payments (Fast Refund: removed spike analysis/regression -> 24h refunds, 97% success) and Claude agentic specs (SMCC Japan: 6 wks -> 2 wks).",
-            "Revenue protection (attributed to Customer Support after releases): $9.2M at Visa via automated settlement regeneration and $11M at Cognizant/Fiserv; $1.5M KFC auth-to-settlement recapture.",
-            "Scaled Visa Platform Connect acquirer onboarding from 100+ to 400+ acquirers and grew European token volume by 25% (COF/MIT/CIT) + CEMEA instalments by 18%."
+            "Contributed to $30M in net revenue by bringing six domestic schemes (KSA, RuPay, CUP, UAE Jaywan, PayPak, MyDebit) onto CyberSource / VPC.",
+            "Led a 0-to-1 Claude-based agentic transaction-validation system with shadow-mode evaluation frameworks protecting deterministic controls, preventing $7.5M in high-risk exposure in one week of live data (p95 <1.2s; TTFT <350ms).",
+            "Owned the roadmap for a self-service settlement platform serving 400+ acquiring banks processing batches up to 65K TPS in a 24-hour SLA, removing a manual dependency tying up 8 FTEs (15 at peak).",
+            "Cut delivery schedules ~50% on average with Claude workflows and human review (SMCC Japan: 6 weeks to 2, 67%), saving ~10 FTEs tracked in Jira; built Cognizant's Automated Transaction Validator turning 300 analyst-hours/day into a 1-hour run.",
+            "Protected $9.2M at Visa (post-release Customer Support attribution) and an estimated $11M at Cognizant/Fiserv; recovered $1.5M in ~1 month by tracing an auth-to-settlement code gap; grew EU token volume +25% and CEMEA instalments +18%."
         ]
 
-        # Match Table & Known Gaps checks strictly against candidate-facts.md
+        # Match Table & Known Gaps checks strictly against canonical Master CV & candidate-facts.md
         match_table = [
-            {"requirement": "Payments / Acquiring / Settlement Rails", "evidence": "14 yrs (Visa VPC/CyberSource, Cognizant Fiserv); ISO 8583, BASE I/II, Kafka", "strength": "Strong" if any(k in text_lower for k in ["payment", "acquiring", "settlement", "card", "fintech"]) else "Moderate"},
-            {"requirement": "Senior PM Scope & Strategy (RICE / Roadmaps)", "evidence": "Visa Level I6 PM; RICE roadmap signed off by VP; 4 scrum teams (~6 each)", "strength": "Strong"},
-            {"requirement": "AI / Agentic Workflow Productization", "evidence": "Fast Refund AI optimization (97% success) + Claude/Agentic PM workflows", "strength": "Strong" if any(k in text_lower for k in ["ai", "llm", "agent", "automation"]) else "Moderate"},
+            {"requirement": "Payments / Acquiring / Settlement Rails", "evidence": "~14 yrs (Visa VPC/CyberSource, Cognizant First Data/Fiserv); 400+ acquirers, 65K TPS, ISO 8583/20022, BASE I/II, Kafka", "strength": "Strong" if any(k in text_lower for k in ["payment", "acquiring", "settlement", "card", "fintech"]) else "Moderate"},
+            {"requirement": "Senior PM Scope & Strategy (RICE / Roadmaps)", "evidence": "Visa I6 PM; RICE roadmap for 4 scrum teams (~24 people) with VP sign-off; 12-member direct team at Cognizant", "strength": "Strong"},
+            {"requirement": "Agentic AI & Applied AI in Production", "evidence": "0-to-1 Claude validation system ($7.5M prevented in 1 week, p95 <1.2s, shadow-mode evals) + ~50% faster Claude delivery", "strength": "Strong" if any(k in text_lower for k in ["ai", "llm", "agent", "automation"]) else "Moderate"},
         ]
 
         gaps = []
@@ -548,20 +551,20 @@ class JobAgentEngine:
                     sentences.append(seg_c)
 
         domain_map = [
-            (["payment", "acquiring", "merchant processing", "card network", "scheme"], "Payments / Acquiring Platform Scale", "Delivered multi-scheme acquiring on Visa VPC & CyberSource ($30M net revenue; 400+ acquirers).", "Strong"),
-            (["clearing", "settlement", "reconciliation", "iso 8583", "base i", "base ii", "tc33"], "Clearing, Settlement & Protocol Rails", "Decoupled 85% BASE I into 5 microservices; 100% BASE II / TC33.A compliance; CAS settlement automation freed 10 FTEs.", "Strong"),
-            (["api", "rest", "webhook", "microservice", "event-driven", "kafka", "architecture"], "APIs, Event-Driven Systems & Technical Fluency", "Owned Payments 2.0 Kafka microservices & CyberSource REST/ISO integrations across 4 scrum teams.", "Strong"),
-            (["ai", "llm", "agent", "genai", "machine learning", "automation"], "Applied AI & Workflow Automation", "Shipped Fast Refund AI optimization (97% success, 24h) + Claude agentic specs (SMCC Japan: 6 wks -> 2 wks).", "Strong"),
-            (["token", "cof", "mit", "cit", "3ds", "fraud", "chargeback", "dispute", "risk", "compliance", "rbi", "emv", "pci"], "Regulatory Compliance, Tokenization & Risk", "Grew EU COF/MIT/CIT token volume +25%; led Apple Pay India RBI data-center migration cleanly.", "Strong"),
-            (["roadmap", "rice", "prd", "strategy", "discover", "stakeholder", "cross-functional", "agile", "scrum"], "Senior PM Discovery, RICE & Stakeholder Execution", "Secured VP sign-off on RICE roadmap; mentored 4 scrum teams (~6 engineers each) as CSPO.", "Strong"),
-            (["cross-border", "fx", "multi-currency", "international", "global"], "Cross-Border & Multi-Market Payments", "Launched regional schemes (KSA MADA, UAE Jaywan, RuPay, CUP, PayPak, MyDebit, EFTPOS) & SMCC Japan.", "Strong"),
-            (["upi", "npci", "a2a", "real-time payment"], "UPI / Real-Time A2A Payment Rails", "No direct UPI ownership in candidate-facts.md; adjacent domestic-scheme & Instant/Fast Refund rails (97% success).", "Partial"),
-            (["lending", "loan", "underwriting", "bnpl", "credit line"], "Consumer Lending / Credit Underwriting", "No consumer underwriting exposure; B2B Visa Instalment Plan enablement (+18% CEMEA) only.", "Missing"),
-            (["b2c", "consumer app", "consumer-facing", "dau", "mau", "retention loop"], "B2C Consumer Growth & Funnels", "Background is B2B (acquirers/merchants/processors), not B2C DAU funnels; cite Acquirer Onboarding UI launch.", "Partial"),
+            (["payment", "acquiring", "merchant processing", "card network", "scheme"], "Payments / Acquiring Platform Scale", "Contributed to $30M net revenue across 6 domestic schemes on Visa CyberSource/VPC; 400+ acquiring banks.", "Strong"),
+            (["clearing", "settlement", "reconciliation", "iso 8583", "iso 20022", "base i", "base ii", "tc33"], "Clearing, Settlement & Protocol Rails", "Owned self-service settlement platform (65K TPS, 24h SLA, removing 8 FTEs regular / 15 peak); split ~85% monolith into 5 microservices; 100% BASE II compliance.", "Strong"),
+            (["api", "rest", "webhook", "microservice", "event-driven", "kafka", "architecture"], "APIs, Event-Driven Systems & Technical Fluency", "Defined 5-microservice split (~85% monolith logic), REST/JSON & SMS/DMS integrations, and Kafka settlement across 4 scrum teams (~24 people).", "Strong"),
+            (["ai", "llm", "agent", "genai", "machine learning", "automation"], "Applied AI & Agentic Systems in Production", "Led 0-to-1 Claude transaction-validation system ($7.5M exposure prevented in 1 week, shadow-mode evals, p95 <1.2s, TTFT <350ms) + ~50% faster Claude delivery (~10 FTEs in Jira).", "Strong"),
+            (["token", "cof", "mit", "cit", "3ds", "sca", "fraud", "chargeback", "dispute", "risk", "compliance", "rbi", "emv", "pci", "p2pe", "udaap"], "Regulatory Compliance, Tokenisation & Risk", "Grew EU COF/MIT/CIT token volume +25%; resolved UDAAP/fair-lending via hybrid MVP (0 escalations); handled Apple Pay India RBI data-center readiness (0 pilot errors).", "Strong"),
+            (["roadmap", "rice", "prd", "strategy", "discover", "stakeholder", "cross-functional", "agile", "scrum"], "Senior PM Discovery, RICE & Stakeholder Execution", "Prioritised RICE roadmap for 4 scrum teams (~24 people) with VP sign-off; led 12 direct reports at Cognizant; CSPO & 2x Visa STAR Award winner.", "Strong"),
+            (["cross-border", "fx", "dcc", "multi-currency", "international", "global"], "Cross-Border & Multi-Market Payments", "Owned 6 domestic schemes (KSA, RuPay, CUP, UAE Jaywan, PayPak, MyDebit), EFTPOS/MADA co-brand routing, SMCC Japan (6 wks -> 2 wks), and +13 EU acquirers.", "Strong"),
+            (["upi", "npci", "a2a", "real-time payment"], "UPI / Real-Time A2A Payment Rails", "No direct UPI ownership in candidate-facts.md; adjacent domestic-scheme & Fast Refund rails (24h refunds, 97% success in release testing).", "Partial"),
+            (["lending", "loan", "underwriting", "bnpl", "credit line"], "Consumer Lending / Credit Underwriting", "No consumer underwriting exposure; B2B Visa Instalment Plan (+18% CEMEA) and UDAAP/fair-lending hybrid MVP only.", "Missing"),
+            (["b2c", "consumer app", "consumer-facing", "dau", "mau", "retention loop"], "B2C Consumer Growth & Funnels", "Background is B2B (acquirers/merchants/processors), not B2C DAU funnels; cite Acquirer Onboarding Platform (+25% onboarding speed).", "Partial"),
             (["wealth", "mutual fund", "digital gold", "insurance", "brokerage"], "WealthTech / Mutual Funds / Insurance", "Zero verified exposure in candidate-facts.md — avoid overclaiming.", "Missing"),
-            (["mba", "master's degree", "masters degree", "postgraduate"], "Graduate Credential (MBA / Master's)", "Holds B.Tech IT (8.6 GPA) + CSPO + 14 yrs PM/payments execution; no MBA/Master's.", "Partial"),
-            (["direct reports", "manage a team of pms", "hire and mentor pms"], "Formal People Management / Direct Reports", "Led 12-person PM/analyst team at Cognizant (2019-21) + 100+ interviews; Visa I6 had 0 direct reports (velocity/scorecards).", "Partial"),
-            (["vendor contract", "procurement", "rfp"], "Direct Vendor Contract / Procurement Ownership", "No formal vendor-contract ownership; influenced Cognizant SOW requote so automation-freed analysts remained.", "Missing"),
+            (["mba", "master's degree", "masters degree", "postgraduate"], "Graduate Credential (MBA / Master's)", "Holds B.Tech IT (8.6/10 GPA, 5th at University) + CSPO + 3 AI certifications + ~14 yrs execution; no MBA/Master's.", "Partial"),
+            (["direct reports", "manage a team of pms", "hire and mentor pms"], "Formal People Management / Direct Reports", "Led 12 direct reports (PMs/analysts) at Cognizant (2019–21) + 100+ interviews; Visa I6 led 4 scrum teams (~24 people) without formal direct reports.", "Partial"),
+            (["vendor contract", "procurement", "rfp"], "Direct Vendor Contract / Procurement Ownership", "No formal vendor-contract ownership; influenced Cognizant SOW requote moving 25 of 30 analysts into Project Lead roles.", "Missing"),
         ]
 
         extracted = []
@@ -755,15 +758,16 @@ class JobAgentEngine:
         # ------------------------------------------------------------------
         ats_target_vocab = [
             "payments", "acquiring", "settlement", "clearing", "reconciliation", "merchant", "iso 8583",
-            "base i", "base ii", "kafka", "rest", "api", "microservices", "tokenization", "emv", "3ds",
-            "chargeback", "dispute", "compliance", "rbi", "pci", "rice", "prd", "roadmap", "agile",
-            "scrum", "cspo", "sql", "ai", "llm", "agentic", "automation", "cross-border", "fx", "upi",
-            "lending", "bnpl", "b2b", "b2c", "kyc", "aml", "fraud", "risk", "analytics", "experimentation",
-            "a/b testing", "stakeholder", "enterprise", "saas", "fintech", "sdk", "checkout", "pos",
-            "rag", "vector database", "embeddings", "prompt engineering", "context management", "evals",
-            "guardrails", "hallucination", "tool calling", "mcp", "model context protocol", "fine-tuning",
-            "model routing", "inference", "context window", "human-in-the-loop", "orchestration",
-            "copilot", "openai", "defect analysis", "acceptance criteria", "latency", "sdlc",
+            "iso 20022", "base i", "base ii", "sms", "dms", "stip", "kafka", "rest", "api", "microservices",
+            "tokenization", "tokenisation", "emv", "3ds", "sca", "chargeback", "dispute", "compliance",
+            "rbi", "pci", "p2pe", "udaap", "sama", "pipl", "dpdp", "payfac", "rice", "moscow", "okr",
+            "prd", "roadmap", "agile", "scrum", "kanban", "cspo", "sql", "power bi", "ai", "llm", "agentic",
+            "automation", "cross-border", "fx", "dcc", "upi", "lending", "bnpl", "b2b", "b2c", "kyc", "aml",
+            "fraud", "risk", "analytics", "experimentation", "a/b testing", "stakeholder", "enterprise",
+            "saas", "fintech", "sdk", "checkout", "pos", "rag", "vector database", "embeddings",
+            "prompt engineering", "evals", "evaluation", "guardrails", "shadow-mode", "deterministic",
+            "tool calling", "mcp", "model routing", "latency", "p95", "ttft", "human-in-the-loop",
+            "ai governance", "ai security", "claude", "copilot", "openai", "acceptance criteria",
         ]
         jd_present_vocab = [kw for kw in ats_target_vocab if kw in text_lower]
         matched_ats = [kw for kw in jd_present_vocab if kw in candidate_lower or kw in ("payments", "ai", "automation")]
@@ -854,12 +858,12 @@ class JobAgentEngine:
                 else ("Stretch Level Alert: Director/GPM vs Visa I6 home base" if is_stretch else "Level Mismatch: Too junior vs 14 yrs experience")
             ),
             "strengths": [
-                "Marquee brand progression: Visa (I6 PM, 2x STAR Award) + Cognizant/Fiserv (10 yrs PM / ~14 yrs total).",
+                "Marquee brand progression: Visa (I6 PM, 2x STAR Award 2024 & 2025) + Cognizant/First Data/Fiserv (Best Employee 2013–2018; ~14 yrs payments, ~10 yrs PM).",
                 f"Location & Work Auth: {gates['eligibility_note']} | {gates['language_note']}.",
                 comp_obs,
             ],
             "concerns": hr_flags + [
-                "Post-Visa gap (Sep 2026 -> Nov 2026): Never mention restructuring/layoff in CV or cover note; prepare concise 15-second verbal answer if HR asks.",
+                "Career Break - Professional Development (Oct 2026 - Present): Framed proactively on Master CV with 3 completed applied-AI certifications; never mention restructuring/layoff on paper.",
             ],
             "action_items": [
                 "Attach Warm Referral Path before applying online (use direct LinkedIn Recruiter & Peer Search links in Outreach).",
@@ -883,12 +887,12 @@ class JobAgentEngine:
         tech_verdict = "PASS" if tech_score_5 >= 4.0 else "CONDITIONAL"
 
         tech_probes = [
-            f"Walk me through decoupling 85% of legacy BASE I validation into 5 Payments 2.0 Kafka microservices—how did you handle schema versioning, idempotency, and zero-downtime cutover?",
-            "In Fast Refund AI optimization, what exact failure modes/regressions existed before, what guardrails kept refund success at 97%, and how did engineers evaluate false positives?",
-            "How do you write PRDs/API specs for ISO 8583 / TC33.A / domestic scheme edge cases (e.g., SMCC Japan cut from 6 wks to 2 wks) without compromising auditability?",
+            "Walk me through your 0-to-1 Claude transaction-validation system ($7.5M prevented in 1 week, p95 <1.2s, TTFT <350ms)—how did your shadow-mode evaluation framework protect deterministic controls?",
+            f"Walk me through splitting ~85% of the legacy validation/transformation monolith into 5 microservices and running batch settlement up to 65K TPS in a 24h SLA—how did you handle single-pass validation and zero-downtime cutover?",
+            "How did you resolve UDAAP/fair-lending concerns by pivoting from a fully automated rule engine to a hybrid MVP, and how do you structure human-in-the-loop guardrails?",
         ]
         if any(u in text_lower for u in ["upi", "npci", "a2a"]):
-            tech_probes[0] = "You have deep ISO 8583 & RuPay/Jaywan scheme experience rather than direct NPCI UPI switch ownership—how would you architect idempotent async callbacks & timeout reconciliation on a real-time A2A rail?"
+            tech_probes[1] = "You have deep ISO 8583/20022 & RuPay/Jaywan scheme experience rather than direct NPCI UPI switch ownership—how would you architect idempotent async callbacks & timeout reconciliation on a real-time A2A rail?"
 
         tech_persona = {
             "id": "tech_lead",
@@ -899,17 +903,17 @@ class JobAgentEngine:
             "status": tech_verdict,
             "headline": f"Strong technical PM credibility ({len(core_rails_hits)} rail/arch matches, {len(ai_hits)} AI/automation signals).",
             "strengths": [
-                "Rare protocol-level PM depth: ISO 8583, Visa BASE I/II, TC33.A, BIN routing (MADA/EFTPOS), EMV/COF/MIT/CIT.",
-                "Proven modernization partner: decoupled 85% monolithic BASE I logic into 5 Kafka event-driven microservices + 400+ acquirer onboarding scale.",
-                "Concrete AI workflow shipping: Fast Refund (24h refunds, 97% success) + Claude agentic specification workflow (6 wks -> 2 wks).",
+                "Rare protocol-level PM depth: ISO 8583/20022, BASE I/II, SMS/DMS, STIP, EMV 3DS 2.x/SCA, BIN routing (EFTPOS/MADA), COF/MIT/CIT.",
+                "Proven modernization & scale: 65K TPS self-service settlement platform (400+ acquirers, 24h SLA) + 5-microservice roadmap (~85% monolith logic).",
+                "Production Agentic AI: 0-to-1 Claude transaction-validation system ($7.5M high-risk exposure prevented in 1 week, shadow-mode evals, p95 <1.2s, TTFT <350ms) + ~50% faster Claude delivery.",
             ],
             "concerns": [
-                "Tool-of-Trade Boundary (career-ops CRITICAL rule): Frame Kafka, SQL/SSMS, and Claude strictly as PM architecture specs & workflow automation—NEVER imply authoring production backend services or training LLMs from scratch.",
+                "Tool-of-Trade Boundary (career-ops CRITICAL rule): Clearly separate Production AI (agentic workflows, shadow-mode evals, guardrails, latency p95/TTFT) from Studied AI knowledge (RAG, embeddings, vector DBs, MCP, model routing).",
                 "Non-core stack watch: If JD demands consumer mobile SDKs, Web3/stablecoin smart contracts, or ML model fine-tuning ownership, treat as engineering-partnered or honest gap.",
             ],
             "action_items": [
-                "Be ready to draw an end-to-end auth -> clearing -> Kafka settlement -> regeneration sequence diagram cleanly.",
-                "Quantify technical trade-offs (e.g., Apple Pay India RBI localization compliance vs negligible infra cost).",
+                "Be ready to draw an end-to-end auth -> clearing -> Kafka/batch settlement (65K TPS) -> shadow-mode AI validation sequence diagram cleanly.",
+                "Quantify technical trade-offs (UDAAP hybrid MVP pivot, Apple Pay India RBI localization, Fast Refund scope trimming).",
             ],
             "probe_questions": tech_probes,
         }
@@ -942,9 +946,9 @@ class JobAgentEngine:
         hm_verdict = "PASS" if hm_score >= 4.0 else ("CONDITIONAL" if hm_score >= 3.2 else "CAUTION")
 
         level_framing = (
-            "Sell Senior Without Lying: Anchor on $30M Payments 2.0 net revenue + VP-signed RICE roadmap + 4 scrum teams + Cognizant 12-person lead; acknowledge cleanly that Visa I6 role was high-autonomy IC PM with scorecard influence rather than direct HR people management."
+            "Sell Senior Without Lying: Anchor on $30M net revenue contribution + $7.5M agentic AI validation system + VP-signed RICE roadmap across 4 scrum teams (~24 people) + Cognizant 12 direct reports; acknowledge cleanly that Visa I6 was high-autonomy IC PM without formal direct reports."
             if is_stretch or "direct reports" in text_lower or "manage" in text_lower
-            else "Ideal Scope Alignment: Visa I6 Senior PM / Technical PM scope maps cleanly—4 scrum teams (~6 engineers each), 400+ acquirers, VP-level RICE prioritization, and $30M revenue delivery."
+            else "Ideal Scope Alignment: Visa I6 Senior PM / Product Owner scope maps cleanly—4 scrum teams (~24 people), 400+ acquiring banks (65K TPS), VP-signed RICE prioritisation, and $30M revenue contribution."
         )
 
         hm_persona = {
@@ -957,20 +961,20 @@ class JobAgentEngine:
             "headline": f"Archetype: {archetype} • Recommended CV: {recommended_variant}",
             "strengths": [
                 level_framing,
-                "Commercial & customer impact: $30M net revenue across 6 domestic/regional schemes + +25% EU token growth + +18% CEMEA instalments.",
-                "Execution & initiative: stepped in during peer PM leave on Acquirer Onboarding UI, got architect approval, and shipped improvement to production.",
+                "Commercial & customer impact: contributed to $30M net revenue across 6 domestic schemes + $7.5M prevented in 1 week via agentic AI + +25% EU token volume + +18% CEMEA instalments.",
+                "Execution & initiative: stepped in during peer PM leave on Acquirer Onboarding Platform (400+ acquirers, +25% onboarding speed), resolved UDAAP concerns via hybrid MVP, and shipped Claude prototypes to pilot clients.",
             ],
             "concerns": [
                 f"Detected {len([m for m in requirements_matrix if m['strength'] == 'Missing'])} missing & {len([m for m in requirements_matrix if m['strength'] == 'Partial'])} partial requirements in Pass-1 JD matrix — address explicitly in cover note & HM screen.",
-                "Enterprise-to-Startup Speed Objection: Counter proactively with SMCC Japan 6 wks -> 2 wks Claude cycle + Fast Refund AI rapid iteration.",
+                "Enterprise-to-Startup Speed Objection: Counter proactively with ~50% faster Claude delivery (SMCC Japan 6 wks -> 2 wks), Fast Refund scope trimming, and 0-to-1 Claude agentic validation system.",
             ],
             "action_items": [
                 f"Lead with {recommended_variant} framing + top 4 tailored proof points.",
                 "If downleveled (e.g., Staff -> Senior PM), negotiate clear 6-12 month charter/promotion criteria rather than defending title ego.",
             ],
             "probe_questions": [
-                "Show me how you built the RICE prioritization model across competing country mandates and got VP buy-in—what top request did you say NO to?",
-                "How do you discover merchant/acquirer pain points when you are in a platform/rails layer rather than owning a B2C app?",
+                "Show me how you built the RICE prioritisation model across 4 scrum teams (~24 people) and got VP sign-off—what top request did you say NO to?",
+                "How did you discover the unroadmapped COF logic gap (+25% EU tokens) and Visa Instalment Plan gap (+18% CEMEA) from a platform/rails seat?",
             ],
         }
 
@@ -981,9 +985,10 @@ class JobAgentEngine:
         partial_count = sum(1 for m in requirements_matrix if m["strength"] == "Partial")
 
         bar_challenges = [
-            "Attribution Audit ($9.2M Visa / $11M Cognizant): Bar Raiser will test whether revenue protection came strictly from your product vs Customer Support fixes. Always state 'Customer Support-attributed post-release' transparently and explain your exact automated regeneration & SWAT triage mechanism.",
-            "Headcount & People Management Clarity: Visa I6 role mentored 4 scrum teams via scorecards/velocity with ZERO formal direct reports. Do not conflate dotted-line engineering squads with direct reporting; lean on Cognizant (2019–2021) 12-member PM/analyst team + 100+ interviews.",
-            "FTE / Metric Precision: Candidate facts settle automated CAS + settlement savings strictly at 10 FTEs (never 8 FTEs) and Transaction Validation System (2017) at ~30 analysts saving 10 hrs/file.",
+            "Attribution Audit ($9.2M Visa / $11M Cognizant / $7.5M Agentic AI): Bar Raiser will probe exact attribution. Clarify $7.5M was high-risk exposure prevented in 1 week of live data under shadow-mode evaluation; $9.2M Visa was Customer Support-attributed post-release via automated settlement regeneration; $11M Cognizant was estimated merchant exposure prevented via upstream validation.",
+            "Headcount & People Management Clarity: Visa I6 role prioritised for 4 scrum teams (~24 people) with ZERO formal direct reports. Do not conflate dotted-line engineering squads with direct reporting; lean on Cognizant (2019–2021) 12 direct reports (10 Kolkata, 2 Chennai) + 100+ hiring interviews.",
+            "FTE Metric Precision: Keep the two Visa FTE numbers strictly separated—Settlement automation removed a manual dependency regularly tying up 8 FTEs (15 at peak), while Claude AI-assisted delivery cut per-feature staffing (1 dev + 2 testers -> 1 + 1), saving ~10 FTEs tracked in Jira.",
+            "Departure-Timing Honesty (Fast Refund & Apple Pay India): Both Fast Refund (24h / 97% in release testing) and Apple Pay India (0 pilot errors) went live with clients after your Sep 2026 departure—state that cleanly, exactly as on the Master CV.",
         ]
         if missing_count:
             bar_challenges.append(
@@ -1058,8 +1063,8 @@ class JobAgentEngine:
             "status": bar_vote,
             "headline": f"Bar Vote: {bar_vote} • Global Score: {global_score_5}/5 ({career_ops_band}) • Evidence: {evidence_confidence}",
             "strengths": [
-                f"Evidence Confidence: {evidence_confidence} — grounded strictly in candidate-facts.md (no unverified metrics or tool-of-trade inflation).",
-                f"Strongest defensible anchors: $30M net rev Payments 2.0, 10 FTEs freed CAS automation, Fast Refund AI (97% success), 400+ acquirers.",
+                f"Evidence Confidence: {evidence_confidence} — grounded strictly in canonical Master CV & candidate-facts.md (no unverified metrics or tool-of-trade inflation).",
+                f"Strongest defensible anchors: $30M net rev contribution (6 domestic schemes), $7.5M agentic AI validation (1 wk live data, p95 <1.2s), 65K TPS self-service settlement (400+ acquirers), ~50% faster Claude delivery (~10 FTEs in Jira).",
             ],
             "concerns": bar_challenges,
             "action_items": [
@@ -1263,124 +1268,42 @@ class JobAgentEngine:
 """
         write_text(f"applications/{slug}/fit.md", fit_md)
 
-        # 3. Write resume.md (Strictly aligned with candidate-facts.md: 10 FTEs, CS attribution, avijitmukherjeepm, no leave reason)
-        headline = f"Senior Product Manager – {role}" if "Product" in role else "Senior Payments Product Leader"
-        resume_md = f"""# AVIJIT MUKHERJEE
-**{headline}**
-Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/avijitmukherjeepm/
-
----
-
-## PROFESSIONAL SUMMARY
-
-Payments & AI-enabled product leader with nearly 14 years of experience across acquiring platforms, transaction processing, payment APIs, and settlement infrastructure, including nearly 10 years in product management at Visa (CyberSource / Visa Platform Connect) and Cognizant (Fiserv / First Data). Generated $30M in net revenue by launching domestic-scheme processing across KSA, RuPay, CUP, Jaywan, PayPak, and MyDebit, and protected over $22M in transaction/merchant revenue (Visa figures attributed to Customer Support post-release). Certified Scrum Product Owner (CSPO) and 2-time Visa STAR Award recipient combining deep payments rails mastery (ISO 8583, BASE I/II, Kafka) with hands-on Generative AI & agentic product workflows (Fast Refund: 24h refunds, 97% success rate; SMCC Japan specs cut from 6 weeks to 2 weeks).
-
----
-
-## CORE COMPETENCIES
-
-- **Product Strategy & Delivery:** Product Roadmaps (RICE), PRDs & Business Cases, Backlog Prioritization, CSPO Agile Delivery (4 Scrum Teams), KPI Scorecards & Release Governance, P1 Escalation Leadership
-- **Payments & Acquiring:** Merchant Processing, Authorization, Clearing & Settlement, Domestic & Regional Schemes (Jaywan, RuPay, KSA, CUP, MyDebit), Network Tokenization (COF/MIT/CIT), Interchange & EMV Compliance
-- **Architecture & Rails:** ISO 8583, Visa BASE I & BASE II, TC33.A, Kafka Event-Driven Architecture, REST APIs, Microservices, Payments 2.0
-
-### Applied AI & Agentic Product Management
-
-- Applied **Generative AI and agentic workflows** using Claude and other AI tools across Product Management activities including PRDs, business cases, acceptance criteria, defect analysis and solution architecture, reducing manual effort by **50%** across selected workflows.
-- Used **Claude and an agentic toolchain** to support the architecture and delivery of **EDQP, PIF and force-refund capabilities for SMCC Japan**, accelerating solution definition and implementation.
-- Applied AI-assisted analysis to **payment and settlement validation**, comparing transaction data across processing stages, identifying data misalignment and supporting root-cause analysis and remediation.
-- Integrated AI into product workflows while maintaining **human validation, business rules and engineering review** for production decisions.
-- Working knowledge of **LLMs, RAG, embeddings, vector databases, tool calling, MCP, model routing, evals, guardrails, hallucination management and AI workflow orchestration**.
-
-### AI & GenAI Product Management
-
-**Generative AI:** LLMs, Prompt Engineering, Context Management, RAG, Embeddings, Vector Databases, Fine-tuning, Hallucination Management, Guardrails, Evals
-
-**AI Product Architecture:** APIs, Tool Calling, MCP, Model Routing, AI Workflows, Agentic Workflows, Human-in-the-Loop
-
-**Applied AI:** Claude, Gemini, OpenAI Tools, Copilot, AI-assisted PRDs, Business Cases, Acceptance Criteria, Defect Analysis, Solution Architecture, Product Discovery & SDLC Automation
-
----
-
-## PROFESSIONAL EXPERIENCE
-
-### VISA
-**Product Manager (I6) – CyberSource / Visa Platform Connect (VPC)** | Bengaluru, India  
-*Jan 2025 – Sep 2026*
-
-- Generated $30M in net revenue by launching multi-scheme domestic processing and Kafka event-driven settlement microservices across KSA, RuPay, CUP, UAE Jaywan, PayPak, and MyDebit.
-- Freed 10 FTEs of recurring effort by automating CAS self-service testing and on-demand scoped settlement-file retrieval across 400+ files/release, cutting file turnaround under 24 hours.
-- Shipped AI optimization for Fast Refund in India/APAC by eliminating redundant spike analysis and regression effort, achieving 24-hour refunds at a 97% success rate and higher daily transaction throughput.
-- Accelerated cross-border integration delivery by 67% (6 weeks to 2 weeks) for SMCC Japan (EDQP, PIF, force-refund) using a Claude-based agentic specification and edge-case validation workflow.
-- Executed the Apple Pay India data center migration to meet RBI localization compliance, choosing regulatory compliance and market readiness over negligible cost impact.
-- Expanded European acquiring capacity across 13 new acquirers (+12,000 TPS) via Elavon VPC integration and TC33.A clearing support for JCB and Diners in France/Spain.
-
-### VISA
-**Technical Product Manager – Visa Platform Connect (VPC)** | Bengaluru, India  
-*Mar 2024 – Dec 2024*
-
-- Protected $9.2M in transaction revenue (attributed to Customer Support post-release impact reports) by introducing automated settlement regeneration workflows and serving as SME escalation lead on SWAT & client P1 calls.
-- Grew token-based transaction volume by 25% across European acquirers by simplifying COF, MIT, and CIT implementation flows, and increased CEMEA Visa Instalment Plan volume by 18%.
-- Recommended and secured VP sign-off on a RICE-prioritized platform roadmap while mentoring 4 scrum teams (~6 engineers/team) using velocity, burndown tracking, and individual scorecards.
-- Supported Automated Fuel Dispenser (AFD) acceptance frameworks associated with $70M in processing throughput across US and EU markets while maintaining zero major post-release rollbacks.
-
-### VISA
-**Technical Product Analyst – Visa Platform Connect (VPC)** | Bengaluru, India  
-*Oct 2021 – Feb 2024*
-
-- Scaled financial partner onboarding from 100+ to 400+ acquiring institutions (engaged almost daily across acquirers), stepping in on the Acquirer Onboarding Platform to drive an architect-approved UI/design improvement to production.
-- Defined BIN lookup and co-brand routing logic for Australian (EFTPOS) and Saudi Arabian (MADA) schemes with zero routing rejection errors in production.
-- Decoupled 85% of legacy monolithic BASE I validation logic into 5 microservices under Payments 2.0 while maintaining 100% BASE II clearing compliance (TC33.A, TC05/06, IPM, CAPN).
-
-### COGNIZANT
-**Team Lead – Product Managers (Fiserv / First Data Account)** | Kolkata, India  
-*Jul 2019 – Sep 2021*
-
-- Managed a 12-member product and analyst team across 100+ enterprise merchant relationships (YUM/KFC, Burger King, McDonald’s), protecting $11M in merchant revenue via upstream payment-flow validation.
-- Recovered $1.5M in missing KFC (YUM group) settlement revenue by diagnosing an authorization-to-settlement code gap where database records failed to propagate downstream.
-- Raised post-release accuracy from 80% to 97%, cut P1 incidents by 19%, and reduced MTTR by 40% while influencing a Cognizant SOW requote so automation-freed analysts remained retained on the account.
-
-### COGNIZANT
-**Product Manager – Transaction Validation Automation (First Data Account)** | Chennai, India  
-*Jul 2017 – Jun 2019*
-
-- Built the Transaction Validation System (2017) across 13 payment specs, cutting merchant certification cycle times by 57% and saving ~30 analysts 10 hours per file—enabling First Data to transition those analysts into Project Lead roles.
-- Contributed to a 32% year-end revenue increase for First Data, protected $2M+ in client revenue, and reached 99%+ automated validation accuracy.
-
-### COGNIZANT
-**Certification Project Manager / Payments SME & Process Executive (First Data / Nationstar)** | Kolkata, India  
-*Jan 2013 – Jun 2017*
-
-- Delivered 100+ merchant and ISV certifications (Walmart, McDonald’s, ExxonMobil, Verifone, NCR) at a 97% first-pass success rate; awarded for validating 1,000+ transaction payloads against ISO standards.
-- Recognized as Cards & Payments SME (Oct 2015); interviewed 100+ hiring candidates across career and trained 20+ junior analysts at 30% faster ramp-up.
-
----
-
-## EDUCATION & CERTIFICATIONS
-
-- **Bachelor of Technology (B.Tech) – Information Technology** | West Bengal University of Technology (2012) | GPA: 8.6
-- **Certified Scrum Product Owner (CSPO)** – Scrum Alliance | **PLM & VPL Core Product** – Visa
-- **Honors:** 2-time Visa STAR Award recipient | Multiple Cognizant Annual Employee Awards | Cards & Payments SME (2015)
-"""
+        # 3. Write resume.md dynamically from canonical profile/master_cv.md (single source of truth)
+        headline = (
+            f"Senior Product Manager – {role} | Payments Platforms, Merchant Acquiring and Agentic AI"
+            if role and "product" in role.lower() and role.lower() != "senior product manager"
+            else "Senior Product Manager | Payments Platforms, Merchant Acquiring and Agentic AI"
+        )
+        master_cv_text = read_text("profile/master_cv.md")
+        if master_cv_text.strip():
+            resume_md = re.sub(
+                r"(?m)^(# AVIJIT MUKHERJEE\r?\n)\*\*.*?\*\*$",
+                rf"\1**{headline}**",
+                master_cv_text,
+                count=1,
+            )
+        else:
+            resume_md = f"# AVIJIT MUKHERJEE\n**{headline}**\nBengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/avijitmukherjeepm\n"
         write_text(f"applications/{slug}/resume.md", resume_md)
 
-        # 4. Write cover_note.md (<150 words, no reason for leaving Visa, grounded proof points)
+        # 4. Write cover_note.md (<180 words, no reason for leaving Visa, grounded proof points from canonical Master CV)
         cover_note = f"""# Cover Note: {company} – {role}
 
 **Subject:** {role} – Avijit Mukherjee
 
 Hi [Hiring Team / {company} Product Leadership],
 
-As a payments product leader with nearly 14 years across Visa (CyberSource / VPC) and Cognizant (Fiserv), {company}’s focus on {role} directly matches my experience taking regulated payment platforms from spec to production:
+As a Senior Product Manager with almost 14 years in payments technology (nearly 10 in product management across Visa and Cognizant / Fiserv), {company}’s focus on {role} directly matches my experience taking regulated acquiring, settlement, and applied AI systems from spec to production:
 
-• **Multi-Scheme Scale & Revenue:** Launched domestic-scheme processing (KSA, RuPay, Jaywan) on Payments 2.0 & Kafka ($30M net revenue) and scaled acquirer onboarding to 400+ partners.
-• **Automation & AI Delivery:** Shipped AI optimization on Fast Refund (24h refunds, 97% success) and automated settlement retrieval freeing 10 FTEs.
-• **Operational Resilience:** Protected $9.2M at Visa (Customer Support-attributed) and $11M at Fiserv while leading SWAT/P1 escalations.
+• **Domestic-Scheme Revenue & Scale:** Contributed to $30M in net revenue across six domestic schemes (KSA, RuPay, CUP, UAE Jaywan, PayPak, MyDebit) and owned a self-service settlement platform serving 400+ acquiring banks at up to 65K TPS in a 24-hour SLA.
+• **Agentic AI in Production:** Led a 0-to-1 Claude-based transaction-validation system with shadow-mode evaluation frameworks protecting deterministic controls, preventing $7.5M in high-risk exposure in one week of live data (p95 <1.2s; TTFT <350ms), and cut delivery schedules ~50% on average (~10 FTEs tracked in Jira).
+• **Operational Resilience & Automation:** Protected $9.2M at Visa (post-release Customer Support attribution) and an estimated $11M at Cognizant/Fiserv, and built the Automated Transaction Validator turning 300 analyst-hours/day into a 1-hour run.
 
-Certified Scrum Product Owner (CSPO) and 2-time Visa STAR Award recipient—I would welcome 15 minutes to discuss how this background supports {company}.
+Certified Scrum Product Owner (CSPO) and two-time Visa STAR Award winner (2024, 2025)—I would welcome 15 minutes to discuss how this background supports {company}.
 
 Best regards,
 Avijit Mukherjee
-Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/avijitmukherjeepm/
+Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/avijitmukherjeepm
 """
         write_text(f"applications/{slug}/cover_note.md", cover_note)
 
@@ -1395,23 +1318,23 @@ Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/aviji
 ---
 
 ### 1. Referral Ask (First-Degree Connection, < 90 words)
-> Hi [Name], I noticed {company} has an opening for {role}. Having spent nearly 14 years leading core payment platforms, scheme expansions ($30M net revenue), and AI delivery workflows at Visa and Fiserv, I see strong alignment with your team. Would you be open to submitting an internal referral or connecting me with the hiring manager? No worries at all if not.
+> Hi [Name], I noticed {company} has an opening for {role}. Having spent almost 14 years in payments technology at Visa and Fiserv—contributing to $30M in net revenue across six domestic schemes, owning a 65K TPS settlement platform, and shipping a Claude agentic validation system that prevented $7.5M in exposure in one week—I see strong alignment. Would you be open to submitting an internal referral or connecting me with the hiring manager? No worries at all if not.
 
 ### 2. Cold Note to Hiring Manager (< 90 words)
 > Hi [Name],
 >
-> I’ve followed {company}’s platform work closely. Most recently at Visa (CyberSource), I launched Payments 2.0 domestic-scheme processing generating $30M in net revenue and shipped AI optimization on Fast Refund (24h refunds, 97% success rate).
+> I’ve followed {company}’s platform work closely. Most recently at Visa (CyberSource / VPC), I contributed to $30M in net revenue across six domestic schemes, owned a 400+-acquirer settlement platform (65K TPS, 24h SLA), and led a Claude-based validation system that prevented $7.5M in high-risk exposure in one week (p95 <1.2s).
 >
-> Would you be open to a 15-minute chat on how my acquiring and settlement background can support your roadmap?
+> Would you be open to a 15-minute chat on how this acquiring, settlement, and applied AI background can support your roadmap?
 >
-> Best, Avijit Mukherjee (linkedin.com/in/avijitmukherjeepm/)
+> Best, Avijit Mukherjee (linkedin.com/in/avijitmukherjeepm)
 
 ### 3. Note to Tech Recruiter (< 70 words)
 > Hi [Name],
 >
-> Reaching out regarding {role} at {company}. I’m a payments product leader (nearly 14 yrs across Visa I6 / Fiserv, CSPO certified) with $30M net revenue launched and 10 FTEs freed through automation.
+> Reaching out regarding {role} at {company}. I’m a Senior Payments PM (almost 14 yrs across Visa I6 & Cognizant/Fiserv, CSPO, 2x Visa STAR Award) with $30M net revenue contribution, a 65K TPS settlement platform, and $7.5M prevented in 1 week via agentic AI validation.
 >
-> Happy to share my tailored CV: linkedin.com/in/avijitmukherjeepm/
+> Happy to share my tailored CV: linkedin.com/in/avijitmukherjeepm
 >
 > Best, Avijit
 
@@ -1479,39 +1402,39 @@ Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/aviji
 
     def generate_application_answers(self, company, role, jd_text):
         return f"""# Application Form Answers: {company} – {role}
-*Grounded strictly in verified facts from Master CV & `references/candidate-facts.md`.*
+*Grounded strictly in verified facts from canonical Master CV & `references/candidate-facts.md`.*
 
 ---
 
 ### 1. Relevant Experience
-I bring nearly 14 years of experience across acquiring platforms, transaction processing, and payment infrastructure, including nearly 10 years in product management at Visa (CyberSource / VPC, level I6) and Cognizant (Fiserv / First Data). I have launched domestic schemes across KSA, RuPay, CUP, and UAE Jaywan on Payments 2.0 and Kafka ($30M net revenue) and shipped AI workflow improvements on Fast Refund.
+I bring almost 14 years in payments technology—nearly 10 in product management—across merchant acquiring, authorisation, clearing, settlement, tokenisation, and agentic AI delivery at Visa (CyberSource / VPC, level I6) and Cognizant (First Data / Fiserv). At Visa, I contributed to $30M in net revenue across six domestic schemes and owned the roadmap for a self-service settlement platform serving 400+ acquiring banks at up to 65K TPS in a 24-hour SLA.
 
-### 2. Product Impact & AI
-At Visa, I applied AI to eliminate redundant spike analysis and regression effort on Fast Refund in India/APAC, delivering refunds within 24 hours at a 97% success rate with higher daily transaction throughput. Separately, our multi-scheme Payments 2.0 rollout drove $30M in net revenue and freed 10 FTEs through self-service settlement automation.
+### 2. Product Impact & Agentic AI
+At Visa, I led a 0-to-1 Claude-based transaction-validation system with human review and shadow-mode evaluation frameworks protecting deterministic controls, preventing $7.5M in high-risk exposure in one week of live data (p95 end-to-end latency under 1.2s on ~300-token prompts; p95 TTFT under 350ms). Separately, Claude workflows with human review cut delivery schedules by ~50% on average (SMCC Japan: 6 weeks to 2 weeks, 67%), saving ~10 FTEs tracked in Jira.
 
-### 3. Regulatory vs. Cost Trade-Off Judgement
-For the Apple Pay India launch, RBI data localization guidelines required moving code to the India data center. I evaluated compliance and market-readiness versus infrastructure cost (which was negligible) and chose regulatory compliance and schedule certainty, completing market launch testing with zero processing errors.
+### 3. Regulatory & Compliance Trade-Off Judgement
+At Visa, I resolved UDAAP and fair-lending concerns by pivoting from a fully automated rule engine to a hybrid MVP with zero regulatory escalations. On Apple Pay India, I handled settlement readiness by moving globally deployed code to the India data center (RBI) with zero processing errors in pilot transactions.
 
 ### 4. Prioritization With Executive Stakeholders
-At Visa I built and recommended a RICE-prioritized roadmap balancing new market schemes, legacy BASE I decoupling (85% across 5 microservices), and partner onboarding across 400+ acquirers, earning formal sign-off from a Vice President.
+At Visa, I prioritised the roadmap with RICE for four scrum teams (about 24 people) with VP sign-off on the final plan, balancing new-client revenue ($30M domestic schemes), automation savings (self-service settlement removing 8 FTEs regular / 15 peak), and P1 loss prevention.
 
 ### 5. Influence Without Authority
-When another PM went on leave for the Acquirer Onboarding Platform, I stepped in, proposed a UX/design improvement, gained architect approval, and drove it to implementation. At Cognizant, I also influenced an SOW requote so analysts freed by automation transitioned into Project Lead roles instead of losing headcount.
+When another PM was absent on the Acquirer Onboarding Platform (400+ acquiring institutions), I stepped in, updated the currency list for a network mandate with architect approval, ran a transitional rollout with an in-portal cutover banner, shipped on the due date, and added batch attribute updates—accelerating partner onboarding by 25%. At Cognizant, after launching the Automated Transaction Validator, 25 of 30 analysts moved into Project Lead roles.
 
 ### 6. Handling High-Severity Production Escalations
-As SME escalation lead on SWAT and client P1 calls at Visa, I provided rapid technical triage to accelerate fixes and protect SLAs—contributing to $9.2M in revenue protection (attributed to Customer Support post-release). At Cognizant/KFC, I traced a code gap between authorization and settlement to recover $1.5M in revenue.
+As SME escalation point on SWAT and P1 calls at Visa, I protected $9.2M in transaction revenue exposure across CEMEA, APAC, Europe, and the Americas by resolving P1 settlement failures and adding automated settlement regeneration. At Cognizant, I protected an estimated $11M in merchant revenue and recovered $1.5M in ~1 month by tracing an authorisation-to-settlement code gap.
 
 ### 7. Automation & Operational Scaling
-Early on First Data (2017), ~30 analysts each spent ~10 hours per file validating settlement payloads. I built an automated Transaction Validation System across 13 specs, cutting certification cycles by 57% and freeing analysts to step into Project Lead roles. Later at Visa, CAS automation freed 10 FTEs.
+At Cognizant (First Data), I built the Automated Transaction Validator (8 bots in Automation Anywhere, Java, ASP.NET, SQL), cutting certification cycles by 57% within five months and turning 300 analyst-hours a day into a 1-hour run (100% spec coverage under CI/CD; Director Special award, Dec 2017). Later at Visa, self-service settlement automation cut certification and settlement-file delivery to under 24 hours across 400+ banks (up to 65K TPS).
 
 ### 8. People Leadership & Mentoring
-I led a 12-member product and analyst team at Cognizant (2019–2021) across 100+ merchant accounts, interviewed 100+ hiring candidates across my career, and at Visa worked with 4 scrum teams (~6 engineers each) driving velocity, burndown, individual scorecards, and annual 360 feedback.
+I led a 12-member team of product managers and analysts at Cognizant (10 in Kolkata, 2 in Chennai; direct reports, Jul 2019–Sep 2021), raising post-release accuracy from 80% to 97%, cutting P1 incidents by 19%, and lifting monthly certifications by +50% to +80%. I have interviewed 100+ candidates across my career, and at Visa prioritised for 4 scrum teams (~24 people) using velocity, burndown, and mentoring.
 
 ### 9. Salary Expectation & Location
 Target total compensation equivalent to USD 100,000–200,000 globally (or competitive Bengaluru Senior PM / I6+ benchmark). Based in Bengaluru; open to relocating abroad within ~6 months where visa sponsorship is offered.
 
 ### 10. Reason for Interest in {company}
-{company}’s platform scale aligns directly with my background in regulated payments rails, merchant/acquirer platforms, and AI-accelerated delivery. I’m eager to bring 14 years of practical execution and product judgement to {role}.
+{company}’s platform scale aligns directly with my background in regulated payments rails, merchant acquiring, settlement infrastructure, and applied agentic AI. I’m eager to bring almost 14 years of practical execution and product judgement to {role}.
 """
 
     def run_pre_submit_quality_check(self, company, role, resume_text, cover_note_text, fit_data=None):
@@ -1523,9 +1446,9 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
         ]
 
         combined = resume_text + "\n" + cover_note_text
-        if "8 fte" in combined.lower():
+        if "avijitmukherjee5889" in combined.lower():
             score -= 10
-            critical_fixes.append("Contains stale '8 FTE' claim; candidate-facts.md settles this at 10 FTEs.")
+            critical_fixes.append("Contains stale LinkedIn URL 'avijitmukherjee5889'; update to 'linkedin.com/in/avijitmukherjeepm'.")
         if "laid off" in combined.lower():
             score -= 15
             critical_fixes.append("Remove reason for leaving Visa from CV / cover note per Rule 4.")
@@ -1555,13 +1478,13 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
 ---
 
 ### Audit Criteria Breakdown:
-1. **Facts Bank Grounding (100%):** Claims trace to `references/candidate-facts.md` (10 FTEs settled, CS-attributed revenue protection, Fast Refund AI 97%, no Visa exit reason exposed).
-2. **CV Hygiene & URL Check:** LinkedIn profile `avijitmukherjeepm`, contact info verified, zero fabricated tools/domains.
+1. **Master CV & Facts Bank Grounding (100%):** Claims trace directly to canonical `profile/master_cv.md` & `references/candidate-facts.md` ($30M contribution, $7.5M agentic AI validation in 1 week, 65K TPS settlement, 8 FTEs regular / 15 peak settlement vs ~10 FTEs Jira AI delivery, no Visa exit reason exposed).
+2. **CV Hygiene & URL Check:** LinkedIn profile `linkedin.com/in/avijitmukherjeepm`, contact info verified, zero fabricated tools/domains, complete Jan 2013 – Present continuity.
 3. **ATS Compatibility (100%):** Single-column layout, conventional headings, saved as `CV_{re.sub(r'[^a-zA-Z0-9]+', '_', company).strip('_')[:20]}_{re.sub(r'[^a-zA-Z0-9]+', '_', role).strip('_')[:25]}_{datetime.now().strftime('%Y-%m-%d')}.docx`.
 4. **Prompt-Injection / Posting Guard:** {fit_data.get('guard_verdict', 'clean') if fit_data else 'clean'}.
 
 ### Critical Fixes Before Applying:
-{chr(10).join(['- ' + fix for fix in critical_fixes]) if critical_fixes else '- None. All claims align with verified facts bank.'}
+{chr(10).join(['- ' + fix for fix in critical_fixes]) if critical_fixes else '- None. All claims align with canonical Master CV & verified facts bank.'}
 
 ### Optional Enhancements:
 {chr(10).join(['- ' + opt for opt in optional_improvements])}
@@ -1582,20 +1505,21 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
                 f"Subject: Following up: {role} application – Avijit Mukherjee\n\n"
                 f"Hi {contact},\n\n"
                 f"I applied for the {role} role at {company} on {applied_date} ({days_elapsed} days ago). "
-                f"Given {company}’s focus on payment infrastructure and platform scale, my nearly 14 years leading acquiring and "
-                f"settlement systems at Visa (CyberSource / VPC)—launching Payments 2.0 rails ($30M net revenue) and shipping AI optimization "
-                f"on Fast Refund (24h refunds, 97% success)—align closely with your team's priorities.\n\n"
+                f"Given {company}’s focus on payment infrastructure and platform scale, my almost 14 years across Visa "
+                f"(CyberSource / VPC) and Cognizant (Fiserv)—contributing to $30M in net revenue across six domestic schemes, "
+                f"owning a 65K TPS self-service settlement platform for 400+ acquiring banks, and leading a Claude-based validation "
+                f"system that prevented $7.5M in high-risk exposure in one week—align closely with your team's priorities.\n\n"
                 f"I’d welcome a brief 15-minute chat. Thanks for considering!\n\n"
-                f"Best regards,\nAvijit Mukherjee\n+91 9038415509 | linkedin.com/in/avijitmukherjeepm/"
+                f"Best regards,\nAvijit Mukherjee\n+91 9038415509 | linkedin.com/in/avijitmukherjeepm"
             ),
             "linkedin_connection_request": (
-                f"Hi {contact}, I applied for {role} at {company}. With nearly 14 yrs leading acquiring & rails at Visa ($30M net rev), "
+                f"Hi {contact}, I applied for {role} at {company}. With ~14 yrs in payments at Visa & Fiserv ($30M schemes, 65K TPS settlement, $7.5M agentic AI validation), "
                 f"I'd love to connect and follow your team's work!"
             )[:300],
             "linkedin_dm": (
                 f"Hi {contact},\n\n"
-                f"Reaching out regarding {company}’s {role} opening. At Visa (CyberSource), I launched Payments 2.0 rails ($30M net revenue) "
-                f"and shipped AI automation on Fast Refund (97% success). Would welcome 15 mins to connect.\n\nBest, Avijit"
+                f"Reaching out regarding {company}’s {role} opening. At Visa (CyberSource / VPC), I contributed to $30M in net revenue across six domestic schemes, "
+                f"owned a 65K TPS settlement platform (400+ banks), and led a Claude validation system preventing $7.5M exposure in 1 week. Would welcome 15 mins to connect.\n\nBest, Avijit"
             ),
             "linkedin_search_strategy": [
                 f"Recruiter Search: {ref['recruiter_search_url']}",
@@ -1610,31 +1534,32 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
             "company": company_clean,
             "role": role or "Senior Product Manager",
             "elevator_pitch_60s": (
-                "I am a Payments Product Leader with nearly 14 years of experience across acquiring platforms, payment APIs, clearing, "
-                "and settlement infrastructure, including nearly 10 years in product management at Visa (level I6) and Cognizant (Fiserv). "
-                "Most recently at Visa CyberSource, I launched domestic-scheme processing across KSA, RuPay, and UAE Jaywan generating $30M "
-                "in net revenue, automated settlement tooling freeing 10 FTEs, and applied AI to Fast Refund to achieve 24-hour refunds at a "
-                "97% success rate. Across 400+ acquirers and 4 scrum teams, I pair deep ISO 8583/Kafka fluency with strong product judgement "
-                f"and regulatory trade-off execution—and that is exactly what excites me about {company_clean}."
+                "I am a Senior Product Manager with almost 14 years in payments technology, nearly 10 in product management, across "
+                "Visa (CyberSource / VPC, level I6) and Cognizant (First Data / Fiserv). Most recently at Visa, I contributed to $30M "
+                "in net revenue by bringing six domestic schemes onto the platform, owned the roadmap for a self-service settlement "
+                "platform serving 400+ acquiring banks at up to 65K TPS within a 24-hour SLA, and led a 0-to-1 Claude transaction-validation "
+                "system with shadow-mode evaluation frameworks that prevented $7.5M in high-risk exposure in one week (p95 <1.2s). "
+                "Two-time Visa STAR Award winner, Cognizant Best Employee six years running, and CSPO—and that blend of regulated rails "
+                f"and applied AI delivery is exactly what excites me about {company_clean}."
             ),
             "perceived_risks_and_mitigations": [
                 {
                     "risk": "Enterprise network background (Visa/Cognizant) vs fast-moving fintech execution.",
-                    "mitigation": "Cite shipping Fast Refund AI optimization (97% success), stepping in to drive an Acquirer Onboarding UI change to production, and cutting SMCC Japan specs from 6 weeks to 2 weeks."
+                    "mitigation": "Cite shipping 0-to-1 Claude transaction validation ($7.5M prevented in 1 week, p95 <1.2s), cutting delivery schedules ~50% (SMCC Japan 6 wks -> 2 wks), trimming Fast Refund scope to ship sooner, and stepping in on Acquirer Onboarding (+25% onboarding speed)."
                 },
                 {
                     "risk": "Known gaps (UPI, Consumer B2C, Lending, Wealth/Insurance, Direct Reports at Visa).",
-                    "mitigation": "Be transparent without bluffing: anchor in B2B payments rails, Cognizant 12-person leadership + 100+ interviews, and Visa cross-team scorecard mentoring."
+                    "mitigation": "Be transparent without bluffing: anchor in B2B payments rails, Cognizant 12 direct reports (10 Kolkata, 2 Chennai) + 100+ interviews, and Visa 4 scrum teams (~24 people) RICE prioritisation."
                 },
                 {
-                    "risk": "Why did you leave Visa? (Prepare neutrally; never volunteer it on paper.)",
-                    "mitigation": "Keep brief and factual: impacted by organizational restructuring/layoff in Sept 2026; took the window to deepen applied AI for PM skills alongside existing shipped Fast Refund AI work."
+                    "risk": "Career Break - Professional Development (Oct 2026 - Present) / leaving Visa.",
+                    "mitigation": "Keep brief and factual if asked verbally: impacted by organizational restructuring in Sep 2026; used Oct 2026–Present to deepen applied AI PM (completed AI-Native PM Toolkit, ML with scikit-learn, GenAI for Developers) on top of production agentic AI work shipped at Visa."
                 }
             ],
             "questions_to_ask_them": [
-                f"How does {company_clean} balance regulatory compliance obligations against speed-to-market on payment rail launches?",
+                f"How does {company_clean} balance regulatory compliance (e.g. RBI/UDAAP/scheme mandates) against speed-to-market on payment rail launches?",
                 f"What is the highest-leverage bottleneck in {company_clean}'s settlement, reconciliation, or merchant onboarding flow today?",
-                f"How do PMs partner with engineering and risk/compliance on roadmap prioritization here?",
+                f"How does your team design evaluation frameworks and deterministic guardrails when putting LLMs/agents into regulated payment workflows?",
                 f"What does strong Senior PM impact look like in the first 90 days on this product area?"
             ]
         }
@@ -1666,7 +1591,7 @@ Target total compensation equivalent to USD 100,000–200,000 globally (or compe
         p_contact = doc.add_paragraph()
         p_contact.paragraph_format.space_after = Pt(6)
         p_contact.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r_con = p_contact.add_run("Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/avijitmukherjeepm/")
+        r_con = p_contact.add_run("Bengaluru, India | +91 9038415509 | vjtmkhrj33@gmail.com | linkedin.com/in/avijitmukherjeepm")
         r_con.font.size = Pt(9)
         r_con.font.color.rgb = RGBColor(71, 85, 105)
         add_hr(p_contact, "94A3B8")
